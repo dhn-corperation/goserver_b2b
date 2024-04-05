@@ -1,0 +1,128 @@
+package kaoconfig
+
+import (
+	"fmt"
+	"log"
+	"os"
+	"time"
+
+	ini "github.com/BurntSushi/toml"
+	"github.com/go-resty/resty"
+	rotatelogs "github.com/lestrrat/go-file-rotatelogs"
+)
+
+type Config struct {
+	DB               string
+	DBURL            string
+	PORT             string
+	SERVER_PORT      string
+	PROFILE_KEY      string
+	API_SERVER       string
+	CENTER_SERVER    string
+	IMAGE_SERVER     string
+	CHANNEL          string
+	RESPONSE_METHOD  string
+	SENDLIMIT        int
+	PHONE_MSG_FLAG   string
+	NANO_MSG_FLAG    string
+	OTP_MSG_FLAG     string
+	DEBUG            string
+	NANO_IDENTI_CODE string
+	PHONE_TYPE_FLAG  string
+}
+
+var Conf Config
+var Stdlog *log.Logger
+var BasePath string
+var IsRunning bool = true
+var ResultLimit int = 1000
+var Client *resty.Client
+
+func InitConfig() {
+	path := "/root/DHNServer/log/DHNServer"
+	//path := "./log/DHNServer"
+	loc, _ := time.LoadLocation("Asia/Seoul")
+	writer, err := rotatelogs.New(
+		fmt.Sprintf("%s-%s.log", path, "%Y-%m-%d"),
+		rotatelogs.WithLocation(loc),
+		rotatelogs.WithMaxAge(-1),
+		rotatelogs.WithRotationCount(7),
+	)
+
+	if err != nil {
+		log.Fatalf("Failed to Initialize Log File %s", err)
+	}
+
+	log.SetOutput(writer)
+	stdlog := log.New(os.Stdout, "INFO -> ", log.Ldate|log.Ltime)
+	stdlog.SetOutput(writer)
+	Stdlog = stdlog
+
+	Conf = readConfig()
+	BasePath = "/root/DHNServer/"
+	Client = resty.New()
+
+}
+
+func readConfig() Config {
+	var configfile = "/root/DHNServer/config.ini"
+	//var configfile = "./config.ini"
+	_, err := os.Stat(configfile)
+	if err != nil {
+		fmt.Println("Config file is missing : ", configfile)
+	}
+
+	var result Config
+	result.PHONE_TYPE_FLAG = "N"
+	_, err1 := ini.DecodeFile(configfile, &result)
+
+	if err1 != nil {
+		fmt.Println("Config file read error : ", err1)
+	}
+
+	return result
+}
+
+func InitCenterConfig() {
+	path := "/root/DHNCenter/log/DHNCenter"
+	//	path := "./log/DHNCenter"
+	loc, _ := time.LoadLocation("Asia/Seoul")
+	writer, err := rotatelogs.New(
+		fmt.Sprintf("%s-%s.log", path, "%Y-%m-%d"),
+		rotatelogs.WithLocation(loc),
+		rotatelogs.WithMaxAge(-1),
+		rotatelogs.WithRotationCount(7),
+	)
+
+	if err != nil {
+		log.Fatalf("Failed to Initialize Log File %s", err)
+	}
+
+	log.SetOutput(writer)
+	stdlog := log.New(os.Stdout, "INFO -> ", log.Ldate|log.Ltime)
+	stdlog.SetOutput(writer)
+	Stdlog = stdlog
+
+	Conf = readCenterConfig()
+	BasePath = "/root/DHNCenter/"
+	//Client = resty.New()
+
+}
+
+func readCenterConfig() Config {
+	var configfile = "/root/DHNCenter/config.ini"
+	//	var configfile = "./config.ini"
+	_, err := os.Stat(configfile)
+	if err != nil {
+		fmt.Println("Config file is missing : ", configfile)
+	}
+
+	var result Config
+	_, err1 := ini.DecodeFile(configfile, &result)
+
+	if err1 != nil {
+		fmt.Println("Config file read error : ", err1)
+	}
+
+	return result
+}
