@@ -19,37 +19,39 @@ import (
 	"context"
 )
 
-var procCnt_Y int
+var procCnt_N int
 
-func NanoProcess_Y(user_id string, ctx context.Context) {
+func NanoProcess_N(user_id string, ctx context.Context) {
 	//var wg sync.WaitGroup
-	config.Stdlog.Println(user_id, " Nano Process 시작 됨.")
-	procCnt_Y = 0
+	config.Stdlog.Println(user_id, " Nano Process_N 시작 됨.")
+	procCnt_N = 0
 
 	for {
-		if procCnt_Y < 5 {
+		if procCnt_N < 5 {
 
 			select {
 			case <-ctx.Done():
 
 				uid := ctx.Value("user_id")
-				config.Stdlog.Println(uid, " - Nano process가 10초 후에 종료 됨.")
+				config.Stdlog.Println(uid, " - Nano process_N가 10초 후에 종료 됨.")
 				time.Sleep(10 * time.Second)
-				config.Stdlog.Println(uid, " - Nano process 종료 완료")
+				config.Stdlog.Println(uid, " - Nano process_N 종료 완료")
 				return
 			default:
 
 				var count int
 				tickSql := `select
-	length(msgid) as cnt
-from
-	DHN_RESULT dr
-where
-	dr.result = 'P'
-	and dr.send_group is null
-	and ifnull(dr.reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
- 	and userid = '` + user_id + `'
-limit 1
+								length(msgid) as cnt
+							from
+								DHN_RESULT dr
+							where
+								dr.result = 'P'
+								and dr.send_group is null
+								and ifnull(dr.reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
+								and userid = '` + user_id + `'
+								and sms_sender not like '010%'
+								and 
+							limit 1
 			`
 				cnterr := databasepool.DB.QueryRow(tickSql).Scan(&count)
 
@@ -62,11 +64,11 @@ limit 1
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%02d%06d", startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), (startNow.Nanosecond() / 1000))
 
-						upError := updateReqeust_Y(group_no, user_id)
+						upError := updateReqeust_N(group_no, user_id)
 						if upError != nil {
-							config.Stdlog.Println(user_id, "- Nano Group No Update 오류", group_no)
+							config.Stdlog.Println(user_id, "- Nano Group_N No Update 오류", group_no)
 						} else {
-							go resProcess_Y(group_no, user_id)
+							go resProcess_N(group_no, user_id)
 						}
 					}
 				}
@@ -75,7 +77,7 @@ limit 1
 	}
 }
 
-func updateReqeust_Y(group_no string, user_id string) error {
+func updateReqeust_N(group_no string, user_id string) error {
 
 	tx, err := databasepool.DB.Begin()
 	if err != nil {
@@ -92,20 +94,21 @@ func updateReqeust_Y(group_no string, user_id string) error {
 		return err
 	}()
 
-	config.Stdlog.Println(user_id, "- Nano Group No Update 시작", group_no)
+	config.Stdlog.Println(user_id, "- Nano Group_N No Update 시작", group_no)
 
 	gudQuery := `update	DHN_RESULT dr
-set	send_group = '` + group_no + `'
-where result = 'P'
-  and send_group is null
-  and ifnull(reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
-  and userid = '` + user_id + `'
-LIMIT 500
-	`
+						set	send_group = '` + group_no + `'
+					where result = 'P'
+						and send_group is null
+						and ifnull(reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
+						and userid = '` + user_id + `'
+						and sms_sender not like '010%' 
+					LIMIT 500
+						`
 	_, err = tx.Query(gudQuery)
 
 	if err != nil {
-		config.Stdlog.Println(user_id, "-", "Group NO Update - Select error : ( "+group_no+" ) : "+err.Error())
+		config.Stdlog.Println(user_id, "-", "Group_N NO Update - Select error : ( "+group_no+" ) : "+err.Error())
 		config.Stdlog.Println(gudQuery)
 		return err
 	}
@@ -113,17 +116,17 @@ LIMIT 500
 	return nil
 }
 
-func resProcess_Y(group_no string, user_id string) {
+func resProcess_N(group_no string, user_id string) {
 	//defer wg.Done()
 
-	procCnt_Y++
+	procCnt_N++
 	var db = databasepool.DB
 	var stdlog = config.Stdlog
 
 	defer func() {
 		if err := recover(); err != nil {
-			procCnt_Y--
-			stdlog.Println(user_id, "-", group_no, " Nano 문자 처리 중 오류 발생 : ", err)
+			procCnt_N--
+			stdlog.Println(user_id, "-", group_no, " Nano_N 문자 처리 중 오류 발생 : ", err)
 		}
 	}()
 
@@ -138,41 +141,42 @@ func resProcess_Y(group_no string, user_id string) {
 	osmmsValues := []interface{}{}
 
 	var resquery = `SELECT msgid, 
-	code, 
-	message, 
-	message_type, 
-	(case when sms_kind = 'S' then 
-		substr(convert(REMOVE_WS(msg_sms) using euckr),1,100)
-	 else 
-	   convert(REMOVE_WS(msg_sms) using euckr)
-     end) as msg_sms, 
-	phn, 
-	remark1, 
-	remark2,
-	result, 
-	convert(REMOVE_WS(sms_lms_tit) using euckr) as sms_lms_tit, 
-	sms_kind, 
-	sms_sender, 
-	res_dt, 
-	(case when reserve_dt = '00000000000000'  then 
-	        now()
-	      when reserve_dt is null  then 
-	        now()
-	      else
-	         STR_TO_DATE(reserve_dt, '%Y%m%d%H%i%S')
-     end) as  reserve_dt, 
-	(select file1_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file1, 
-	(select file2_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file2, 
-	(select file3_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file3
-	,(case when sms_kind = 'S' then length(convert(REMOVE_WS(msg_sms) using euckr)) else 100 end) as msg_len
-	,userid
-	,(select max(sms_len_check) from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as sms_len_check 
-	FROM DHN_RESULT drr 
-	WHERE send_group = '` + group_no + `' 
-	  and result = 'P'
-      and userid = '` + user_id + `'
-	order by userid
-	`
+						code, 
+						message, 
+						message_type, 
+						(case when sms_kind = 'S' then 
+							substr(convert(REMOVE_WS(msg_sms) using euckr),1,100)
+						else 
+						convert(REMOVE_WS(msg_sms) using euckr)
+						end) as msg_sms, 
+						phn, 
+						remark1, 
+						remark2,
+						result, 
+						convert(REMOVE_WS(sms_lms_tit) using euckr) as sms_lms_tit, 
+						sms_kind, 
+						sms_sender, 
+						res_dt, 
+						(case when reserve_dt = '00000000000000'  then 
+								now()
+							when reserve_dt is null  then 
+								now()
+							else
+								STR_TO_DATE(reserve_dt, '%Y%m%d%H%i%S')
+						end) as  reserve_dt, 
+						(select file1_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file1, 
+						(select file2_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file2, 
+						(select file3_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file3
+						,(case when sms_kind = 'S' then length(convert(REMOVE_WS(msg_sms) using euckr)) else 100 end) as msg_len
+						,userid
+						,(select max(sms_len_check) from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as sms_len_check 
+					FROM DHN_RESULT drr 
+					WHERE send_group = '` + group_no + `' 
+						and result = 'P'
+						and userid = '` + user_id + `'
+						and sms_sender not like '010%' 
+					order by userid
+					`
 
 	resrows, err := db.Query(resquery)
 
@@ -196,7 +200,7 @@ func resProcess_Y(group_no string, user_id string) {
 		phnstr = phn.String
 
 		if tcnt == 0 {
-			stdlog.Println(user_id, "-", group_no, "문자발송 처리 시작 : ", " Process cnt : ", procCnt_Y)
+			stdlog.Println(user_id, "-", group_no, "문자발송 처리 시작 : ", " Process cnt : ", procCnt_N)
 		}
 
 		tcnt++
@@ -380,9 +384,9 @@ func resProcess_Y(group_no string, user_id string) {
 	}
 
 	if scnt > 0 || smscnt > 0 || lmscnt > 0 || fcnt > 0 {
-		stdlog.Println(user_id, "-", group_no, "문자 발송 처리 완료 ( ", tcnt, " ) : 성공 -", scnt, " , SMS -", smscnt, " , LMS -", lmscnt, "실패 - ", fcnt, "  >> Process cnt : ", procCnt_Y)
+		stdlog.Println(user_id, "-", group_no, "문자 발송 처리 완료 ( ", tcnt, " ) : 성공 -", scnt, " , SMS -", smscnt, " , LMS -", lmscnt, "실패 - ", fcnt, "  >> Process cnt : ", procCnt_N)
 	}
-	procCnt_Y--
+	procCnt_N--
 }
 
 /*

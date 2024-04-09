@@ -245,19 +245,38 @@ func resultProc() {
 
 			for nanoUserList.Next() {
 				nanoUserList.Scan(&user_id)
-				ctx, cancel := context.WithCancel(context.Background())
-				ctx = context.WithValue(ctx, "user_id", user_id.String)
-				if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "N") {
+
+				if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "N") { // 기본
+					ctx, cancel := context.WithCancel(context.Background())
+					ctx = context.WithValue(ctx, "user_id", user_id.String)
+
 					go nanoproc.NanoProcess(user_id.String, ctx)
-				} else if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") {
-					go nanoproc.NanoProcess_Y(user_id.String, ctx)
+
+					nanoCtxC[user_id.String] = cancel
+
+					allCtxC["NN"+user_id.String] = cancel
+					allService["NN"+user_id.String] = user_id.String
+				} else if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
+
+					ctxY, cancelY := context.WithCancel(context.Background())
+					ctxY = context.WithValue(ctxY, "user_id", user_id.String)
+
+					ctxN, cancelN := context.WithCancel(context.Background())
+					ctxN = context.WithValue(ctxN, "user_id", user_id.String)
+
+					go nanoproc.NanoProcess_Y(user_id.String, ctxY) // 010으로 시작하는 번호
+					go nanoproc.NanoProcess_N(user_id.String, ctxN) // 010이 아닌 번호
+
+					nanoCtxC[user_id.String+"_Y"] = cancelY
+					allCtxC["NN"+user_id.String+"_Y"] = cancelY
+					allService["NN"+user_id.String+"_Y"] = "NanoService Y"
+
+					nanoCtxC[user_id.String+"_N"] = cancelN
+					allCtxC["NN"+user_id.String+"_N"] = cancelN
+					allService["NN"+user_id.String+"_N"] = "NanoService N"
 				}
 
 				nanoUser[user_id.String] = user_id.String
-				nanoCtxC[user_id.String] = cancel
-
-				allCtxC["NN"+user_id.String] = cancel
-				allService["NN"+user_id.String] = user_id.String
 
 			}
 
@@ -274,6 +293,24 @@ func resultProc() {
 
 			allCtxC["nanosms"] = nscancel
 			allService["nanosms"] = "Nano SMS"
+
+			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
+
+				nlctxG, nlcancelG := context.WithCancel(context.Background())
+
+				go nanoproc.NanoLMSProcess_G(nlctxG)
+
+				allCtxC["nanolmsG"] = nlcancelG
+				allService["nanolmsG"] = "Nano LMS G"
+
+				nsctxG, nscancelG := context.WithCancel(context.Background())
+
+				go nanoproc.NanoSMSProcess_G(nsctxG)
+
+				allCtxC["nanosmsG"] = nscancelG
+				allService["nanosmsG"] = "Nano SMS G"
+
+			}
 		}
 	}
 
@@ -422,11 +459,23 @@ Command :
 		if temp != nil {
 			cancel := nanoCtxC[uid].(context.CancelFunc)
 			cancel()
-			delete(nanoCtxC, uid)
 			delete(nanoUser, uid)
+			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "N") { // 기본
+				delete(nanoCtxC, uid)
 
-			delete(allService, "NN"+uid)
-			delete(allCtxC, "NN"+uid)
+				delete(allService, "NN"+uid)
+				delete(allCtxC, "NN"+uid)
+			} else if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
+				delete(nanoCtxC, uid+"_Y")
+				delete(nanoCtxC, uid+"_N")
+
+				delete(allService, "NN"+uid+"_Y")
+				delete(allService, "NN"+uid+"_N")
+
+				delete(allCtxC, "NN"+uid+"_Y")
+				delete(allCtxC, "NN"+uid+"_N")
+			}
+
 			c.String(200, uid+" 종료 신호 전달 완료")
 		} else {
 			c.String(200, uid+"는 실행 중이지 않습니다.")
@@ -441,15 +490,37 @@ Command :
 		if temp != nil {
 			c.String(200, uid+"이미 실행 중입니다.")
 		} else {
-			ctx, cancel := context.WithCancel(context.Background())
-			ctx = context.WithValue(ctx, "user_id", uid)
-			go nanoproc.NanoProcess(uid, ctx)
-
-			nanoCtxC[uid] = cancel
 			nanoUser[uid] = uid
 
-			allCtxC["NN"+uid] = cancel
-			allService["NN"+uid] = uid
+			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "N") { // 기본
+				ctx, cancel := context.WithCancel(context.Background())
+				ctx = context.WithValue(ctx, "user_id", uid)
+
+				go nanoproc.NanoProcess(uid, ctx)
+
+				nanoCtxC[uid] = cancel
+
+				allCtxC["NN"+uid] = cancel
+				allService["NN"+uid] = uid
+			} else if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
+
+				ctxY, cancelY := context.WithCancel(context.Background())
+				ctxY = context.WithValue(ctxY, "user_id", uid)
+
+				ctxN, cancelN := context.WithCancel(context.Background())
+				ctxN = context.WithValue(ctxN, "user_id", uid)
+
+				go nanoproc.NanoProcess_Y(uid, ctxY) // 010으로 시작하는 번호
+				go nanoproc.NanoProcess_N(uid, ctxN) // 010이 아닌 번호
+
+				nanoCtxC[uid+"_Y"] = cancelY
+				allCtxC["NN"+uid+"_Y"] = cancelY
+				allService["NN"+uid+"_Y"] = "NanoService Y"
+
+				nanoCtxC[uid+"_N"] = cancelN
+				allCtxC["NN"+uid+"_N"] = cancelN
+				allService["NN"+uid+"_N"] = "NanoService N"
+			}
 
 			c.String(200, uid+" 시작 신호 전달 완료")
 		}
