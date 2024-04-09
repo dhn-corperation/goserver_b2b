@@ -124,12 +124,6 @@ func ReqReceive(c *gin.Context) {
 	ctx := c.Request.Context()
 	errlog := config.Stdlog
 
-	// defer func() {
-	// 	if err := recover(); err != nil {
-	// 		errlog.Println("패닉이 발생했습니다:", err)
-	// 	}
-	// }()
-
 	userid := c.Request.Header.Get("userid")
 	userip := c.ClientIP()
 	isValidation := false
@@ -141,8 +135,8 @@ func ReqReceive(c *gin.Context) {
 		from
 			DHN_CLIENT_LIST
 		where
-			user_id = '" + userid + "' 
-			and ip ='" + userip + "' 
+			user_id = ?
+			and ip = ?
 			and use_flag = 'Y'"
 	// val, verr := databasepool.DB.Query(sqlstr)
 
