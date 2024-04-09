@@ -9,3 +9,6 @@
 /src/DHNServer/*.ini
 /src/DHNServer/DHNCenter
 /src/DHNServer/DHNServer
+/logs
+DHNCenter
+DHNServer
