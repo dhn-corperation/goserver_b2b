@@ -16,7 +16,7 @@ import (
 	s "strings"
 	"sync"
 	"time"
-		"context"
+	"context"
 )
 
 var atprocCnt int
@@ -38,9 +38,10 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 			default:
 		
 				var count int
-	
+				ctx := c.Request.Context()
+				//cnterr := databasepool.DB.QueryRowContext(ctx, "SELECT LENGTH(msgid) AS cnt FROM DHN_REQUEST_AT WHERE send_group IS NULL AND IFNULL(reserve_dt,'00000000000000') <= DATE_FORMAT(NOW(), '%Y%m%d%H%i%S') AND userid=?", user_id).Scan(&count)
 				cnterr := databasepool.DB.QueryRow("select length(msgid) as cnt from DHN_REQUEST_AT  where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid='" + user_id + "' limit 1").Scan(&count)
-	
+				
 				if cnterr != nil {
 					//config.Stdlog.Println("DHN_REQUEST Table - select 오류 : " + cnterr.Error())
 				} else {
