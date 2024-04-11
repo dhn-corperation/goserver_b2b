@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"time"
 
 	ini "github.com/BurntSushi/toml"
@@ -39,8 +41,14 @@ var ResultLimit int = 1000
 var Client *resty.Client
 
 func InitConfig() {
-	path := "/root/DHNServer/log/DHNServer"
-	//path := "./log/DHNServer"
+	realpath, _ := os.Executable()
+	dir := filepath.Dir(realpath)
+	logDir := filepath.Join(dir, "logs")
+	err := createDir(logDir)
+	if err != nil {
+		log.Fatalf("Failed to ensure log directory: %s", err)
+	}
+	path := filepath.Join(logDir, "DHNServer")
 	loc, _ := time.LoadLocation("Asia/Seoul")
 	writer, err := rotatelogs.New(
 		fmt.Sprintf("%s-%s.log", path, "%Y-%m-%d"),
@@ -59,16 +67,25 @@ func InitConfig() {
 	Stdlog = stdlog
 
 	Conf = readConfig()
-	BasePath = "/root/DHNServer/"
+	BasePath = dir + "/"
 	Client = resty.New()
 
 }
 
 func readConfig() Config {
-	var configfile = "/root/DHNServer/config.ini"
-	//var configfile = "./config.ini"
+	realpath, _ := os.Executable()
+	dir := filepath.Dir(realpath)
+	var configfile = filepath.Join(dir, "config.ini")
 	_, err := os.Stat(configfile)
 	if err != nil {
+
+		err := createConfig(configfile)
+		if err != nil {
+			Stdlog.Println("Config file create fail")
+		}
+		Stdlog.Println("config.ini 생성완료 작성을 해주세요.")
+
+		system_exit("DHNServer")
 		fmt.Println("Config file is missing : ", configfile)
 	}
 
@@ -84,8 +101,14 @@ func readConfig() Config {
 }
 
 func InitCenterConfig() {
-	path := "/root/DHNCenter/log/DHNCenter"
-	//	path := "./log/DHNCenter"
+	realpath, _ := os.Executable()
+	dir := filepath.Dir(realpath)
+	logDir := filepath.Join(dir, "log")
+	err := createDir(logDir)
+	if err != nil {
+		log.Fatalf("Failed to ensure log directory: %s", err)
+	}
+	path := filepath.Join(logDir, "DHNCenter")
 	loc, _ := time.LoadLocation("Asia/Seoul")
 	writer, err := rotatelogs.New(
 		fmt.Sprintf("%s-%s.log", path, "%Y-%m-%d"),
@@ -104,16 +127,26 @@ func InitCenterConfig() {
 	Stdlog = stdlog
 
 	Conf = readCenterConfig()
-	BasePath = "/root/DHNCenter/"
+	BasePath = dir + "/"
 	//Client = resty.New()
 
 }
 
 func readCenterConfig() Config {
-	var configfile = "/root/DHNCenter/config.ini"
-	//	var configfile = "./config.ini"
+	realpath, _ := os.Executable()
+	dir := filepath.Dir(realpath)
+	var configfile = filepath.Join(dir, "config.ini")
+
 	_, err := os.Stat(configfile)
 	if err != nil {
+
+		err := createConfig(configfile)
+		if err != nil {
+			Stdlog.Println("Config file create fail")
+		}
+		Stdlog.Println("config.ini 생성완료 작성을 해주세요.")
+
+		system_exit("DHNCenter")
 		fmt.Println("Config file is missing : ", configfile)
 	}
 
@@ -125,4 +158,49 @@ func readCenterConfig() Config {
 	}
 
 	return result
+}
+
+func createDir(dirName string) error {
+	err := os.MkdirAll(dirName, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+	return nil
+}
+
+func createConfig(dirName string) error {
+	fo, err := os.Create(dirName)
+	if err != nil {
+		return fmt.Errorf("Config file create fail: %w", err)
+	}
+	configData := []string{
+		`# DB 관련`,
+		`DB = "DB종류"`,
+		`DBURL = "사용자:패스워드@tcp(000.000.000.000:포트번호)/데이터베이스"`,
+		``,
+		`# kakao Server`,
+		`PORT = "서버 포트번호"`,
+		`PROFILE_KEY = "프로필키"`,
+		`API_SERVER = "https://bzm-api.kakao.com/"`,
+		`CENTER_SERVER = "https://bzm-center.kakao.com/"`,
+		`IMAGE_SERVER = "https://bzm-upload-api.kakao.com/"`,
+		`CHANNEL = "채널명"`,
+		``,
+		`#추가할 설정 내용 필요에 따라 작성`,
+	}
+
+	for _, line := range configData {
+		fmt.Fprintln(fo, line)
+	}
+
+	return nil
+}
+
+func system_exit(service_name string) {
+	cmd := exec.Command("systemctl", "stop", service_name)
+	if err := cmd.Run(); err != nil {
+		Stdlog.Println(service_name+" 서비스 종료 실패:", err)
+	} else {
+		Stdlog.Println(service_name + " 서비스가 성공적으로 종료되었습니다.")
+	}
 }

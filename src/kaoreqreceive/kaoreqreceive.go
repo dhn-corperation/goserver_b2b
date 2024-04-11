@@ -121,6 +121,7 @@ func ReqReceive(c *gin.Context) {
 	ftColumnStr := s.Join(ftColumn, ",")
 	atColumnStr := s.Join(atColumn, ",")
 	msgColumnStr := s.Join(msgColumn, ",")
+
 	ctx := c.Request.Context()
 	errlog := config.Stdlog
 
@@ -138,23 +139,21 @@ func ReqReceive(c *gin.Context) {
 			user_id = ?
 			and ip = ?
 			and use_flag = 'Y'`
-	// val, verr := databasepool.DB.Query(sqlstr)
 
 	var cnt int
 	err := databasepool.DB.QueryRowContext(ctx, sqlstr, userid, userip).Scan(&cnt)
 	if err != nil { errlog.Println(err) }
 
-	// val.Next()
-	// val.Scan(&cnt)
+	nonce := s.Split("difn893nfe,Phn", ",")[0]
 
-	//defer val.Close()
-
-	if cnt > 0 { isValidation = true }
+	if cnt > 0 { 
+		isValidation = true 
+	} else {
+		errlog.Println("허용되지 않은 사용자 및 아이피에서 발송 요청!! (userid : ", userid, "/ ip : ", userip, ")")
+	}
 
 	var startNow = time.Now()
 	var startTime = fmt.Sprintf("%02d:%02d:%02d", startNow.Hour(), startNow.Minute(), startNow.Second())
-
-	errlog.Println("메세지 발송 정보 수신 시작!! ", startTime)
 
 	if isValidation {
 
@@ -163,7 +162,7 @@ func ReqReceive(c *gin.Context) {
 		err1 := c.ShouldBindJSON(&msg)
 		if err1 != nil { errlog.Println(err1) }
 
-		errlog.Println("발송 메세지 수신 ( ", userid, ") : ", len(msg), startTime)
+		errlog.Println("발송 메세지 수신 시작 ( ", userid, ") : ", len(msg), startTime)
 
 		reqinsStrs := []string{}
 		//친구톡 value interface 배열 생성
@@ -209,11 +208,23 @@ func ReqReceive(c *gin.Context) {
 				reqinsValues = append(reqinsValues, msg[i].Imagelink)
 				reqinsValues = append(reqinsValues, msg[i].Imageurl)
 				reqinsValues = append(reqinsValues, msg[i].Messagetype)
-				reqinsValues = append(reqinsValues, msg[i].Msg)
-				reqinsValues = append(reqinsValues, msg[i].Msgsms)
+				if s.Contains(msg[i].Crypto, "MSG") {
+					reqinsValues = append(reqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
+				} else {
+					reqinsValues = append(reqinsValues, msg[i].Msg)
+				}
+				if s.Contains(msg[i].Crypto, "Msgsms") && len(msg[i].Msgsms) > 0 {
+					reqinsValues = append(reqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
+				} else {
+					reqinsValues = append(reqinsValues, msg[i].Msgsms)
+				}
 				reqinsValues = append(reqinsValues, msg[i].Onlysms)
-				reqinsValues = append(reqinsValues, msg[i].Phn)
-				reqinsValues = append(reqinsValues, msg[i].Profile)
+				reqinsValues = append(reqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
+				if s.Contains(msg[i].Crypto, "Profile") && len(msg[i].Profile) > 0 {
+					reqinsValues = append(reqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
+				} else {
+					reqinsValues = append(reqinsValues, msg[i].Profile)
+				}
 				reqinsValues = append(reqinsValues, msg[i].Pcom)
 				reqinsValues = append(reqinsValues, msg[i].Pinvoice)
 				reqinsValues = append(reqinsValues, msg[i].Regdt)
@@ -224,8 +235,16 @@ func ReqReceive(c *gin.Context) {
 				reqinsValues = append(reqinsValues, msg[i].Remark5)
 				reqinsValues = append(reqinsValues, msg[i].Reservedt)
 				reqinsValues = append(reqinsValues, msg[i].Smskind)
-				reqinsValues = append(reqinsValues, msg[i].Smslmstit)
-				reqinsValues = append(reqinsValues, msg[i].Smssender)
+				if s.Contains(msg[i].Crypto, "Smslmstit") && len(msg[i].Smslmstit) > 0 {
+					reqinsValues = append(reqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
+				} else {
+					reqinsValues = append(reqinsValues, msg[i].Smslmstit)
+				}
+				if s.Contains(msg[i].Crypto, "Smssender") && len(msg[i].Smssender) > 0 {
+					reqinsValues = append(reqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
+				} else {
+					reqinsValues = append(reqinsValues, msg[i].Smssender)
+				}
 				reqinsValues = append(reqinsValues, msg[i].Scode)
 				reqinsValues = append(reqinsValues, msg[i].Tmplid)
 				reqinsValues = append(reqinsValues, msg[i].Wide)
@@ -237,7 +256,6 @@ func ReqReceive(c *gin.Context) {
 				} else {
 					reqinsValues = append(reqinsValues, nil)
 				}
-
 				reqinsValues = append(reqinsValues, msg[i].Currencytype)
 				reqinsValues = append(reqinsValues, msg[i].Title)
 				reqinsValues = append(reqinsValues, msg[i].Header)
@@ -263,30 +281,23 @@ func ReqReceive(c *gin.Context) {
 				resinsValues = append(resinsValues, nil) // kind
 				resinsValues = append(resinsValues, "")  // 결과 Message
 				resinsValues = append(resinsValues, msg[i].Messagetype)
-
-				if s.EqualFold(msg[i].Crypto, "Y") {
-					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, msg[i].Profile))
+				if s.Contains(msg[i].Crypto, "MSG") {
+					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Msg)
 				}
 
-				if s.EqualFold(msg[i].Crypto, "Y") {
-					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, msg[i].Profile))
+				if s.Contains(msg[i].Crypto, "Msgsms") && len(msg[i].Msgsms) > 0 {
+					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Msgsms)
 				}
 				resinsValues = append(resinsValues, msg[i].Onlysms)
 				resinsValues = append(resinsValues, msg[i].Pcom)
 				resinsValues = append(resinsValues, msg[i].Pinvoice)
-
-				if s.EqualFold(msg[i].Crypto, "Y") {
-					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, msg[i].Profile))
-				} else {
-					resinsValues = append(resinsValues, msg[i].Phn)
-				}
-
-				if s.EqualFold(msg[i].Crypto, "Y") {
-					resinsValues = append(resinsValues, nil)
+				resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
+				if s.Contains(msg[i].Crypto, "Profile") && len(msg[i].Profile) > 0 {
+					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Profile)
 				}
@@ -301,15 +312,14 @@ func ReqReceive(c *gin.Context) {
 				resinsValues = append(resinsValues, "P") // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
 				resinsValues = append(resinsValues, msg[i].Scode)
 				resinsValues = append(resinsValues, msg[i].Smskind)
-
-				if s.EqualFold(msg[i].Crypto, "Y") {
-					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, msg[i].Profile))
+				if s.Contains(msg[i].Crypto, "Smslmstit") && len(msg[i].Smslmstit) > 0 {
+					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Smslmstit)
 				}
 
-				if s.EqualFold(msg[i].Crypto, "Y") {
-					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, msg[i].Profile))
+				if s.Contains(msg[i].Crypto, "Smssender") && len(msg[i].Smssender) > 0 {
+					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Smssender)
 				}
@@ -336,11 +346,24 @@ func ReqReceive(c *gin.Context) {
 				atreqinsValues = append(atreqinsValues, msg[i].Imagelink)
 				atreqinsValues = append(atreqinsValues, msg[i].Imageurl)
 				atreqinsValues = append(atreqinsValues, msg[i].Messagetype)
-				atreqinsValues = append(atreqinsValues, msg[i].Msg)
-				atreqinsValues = append(atreqinsValues, msg[i].Msgsms)
+				if s.Contains(msg[i].Crypto, "MSG") {
+					atreqinsValues = append(atreqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
+				} else {
+					atreqinsValues = append(atreqinsValues, msg[i].Msg)
+				}
+
+				if s.Contains(msg[i].Crypto, "Msgsms") && len(msg[i].Msgsms) > 0 {
+					atreqinsValues = append(atreqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
+				} else {
+					atreqinsValues = append(atreqinsValues, msg[i].Msgsms)
+				}
 				atreqinsValues = append(atreqinsValues, msg[i].Onlysms)
-				atreqinsValues = append(atreqinsValues, msg[i].Phn)
-				atreqinsValues = append(atreqinsValues, msg[i].Profile)
+				atreqinsValues = append(atreqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
+				if s.Contains(msg[i].Crypto, "Profile") && len(msg[i].Profile) > 0 {
+					atreqinsValues = append(atreqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
+				} else {
+					atreqinsValues = append(atreqinsValues, msg[i].Profile)
+				}
 				atreqinsValues = append(atreqinsValues, msg[i].Pcom)
 				atreqinsValues = append(atreqinsValues, msg[i].Pinvoice)
 				atreqinsValues = append(atreqinsValues, msg[i].Regdt)
@@ -351,8 +374,17 @@ func ReqReceive(c *gin.Context) {
 				atreqinsValues = append(atreqinsValues, msg[i].Remark5)
 				atreqinsValues = append(atreqinsValues, msg[i].Reservedt)
 				atreqinsValues = append(atreqinsValues, msg[i].Smskind)
-				atreqinsValues = append(atreqinsValues, msg[i].Smslmstit)
-				atreqinsValues = append(atreqinsValues, msg[i].Smssender)
+				if s.Contains(msg[i].Crypto, "Smslmstit") && len(msg[i].Smslmstit) > 0 {
+					atreqinsValues = append(atreqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
+				} else {
+					atreqinsValues = append(atreqinsValues, msg[i].Smslmstit)
+				}
+
+				if s.Contains(msg[i].Crypto, "Smssender") && len(msg[i].Smssender) > 0 {
+					atreqinsValues = append(atreqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
+				} else {
+					atreqinsValues = append(atreqinsValues, msg[i].Smssender)
+				}
 				atreqinsValues = append(atreqinsValues, msg[i].Scode)
 				atreqinsValues = append(atreqinsValues, msg[i].Tmplid)
 				atreqinsValues = append(atreqinsValues, msg[i].Wide)
@@ -400,7 +432,7 @@ func ReqReceive(c *gin.Context) {
 			resinsStrs, resinsValues = setMsgTemp(resinsquery, resinsStrs, resinsValues, true, resinstempquery)
 		}
 
-		errlog.Println("메세지 발송 정보 수신 끝!! ", startTime)
+		errlog.Println("발송 메세지 수신 끝 ( ", userid, ") : ", len(msg), startTime)
 
 		c.JSON(200, gin.H{
 			"message": "ok",
@@ -421,7 +453,8 @@ func setMsg(query string, insStrs []string, insValues []interface{}) ([]string, 
 	_, err := databasepool.DB.Exec(stmt, insValues...)
 
 	if err != nil {
-		config.Stdlog.Println("Result Table Insert 처리 중 오류 발생 " + err.Error())
+		config.Stdlog.Println("Result Table Insert 처리 중 오류 발생 ", err.Error())
+		config.Stdlog.Println("table : ", query)
 	}
 	return nil, nil
 }
@@ -431,13 +464,14 @@ func setMsgTemp(query string, insStrs []string, insValues []interface{}, tempFla
 	_, err := databasepool.DB.Exec(stmt, insValues...)
 
 	if err != nil {
-		config.Stdlog.Println("Result Table Insert 처리 중 오류 발생 " + err.Error())
+		config.Stdlog.Println("Result Table Insert 처리 중 오류 발생 ", err.Error())
+		config.Stdlog.Println("table : ", query)
 		if tempFlag {
 			config.Stdlog.Println("Result Temp Table Insert 시작")
 			stmtt := fmt.Sprintf(tempQuery, s.Join(insStrs, ","))
 			_, errt := databasepool.DB.Exec(stmtt, insValues...)
 			if errt != nil {
-				config.Stdlog.Println("Result Temp Table Insert 처리 중 오류 발생 " + errt.Error())
+				config.Stdlog.Println("Result Temp Table Insert 처리 중 오류 발생 ", errt.Error())
 			}
 		}
 	}

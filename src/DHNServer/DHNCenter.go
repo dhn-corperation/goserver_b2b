@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	//"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -79,18 +79,19 @@ func main() {
 
 	databasepool.InitDatabase()
 
-	srv, err := daemon.New(name, description, daemon.SystemDaemon, dependencies...)
-	if err != nil {
-		config.Stdlog.Println("Error: ", err)
-		os.Exit(1)
-	}
-	service := &Service{srv}
-	status, err := service.Manage()
-	if err != nil {
-		config.Stdlog.Println(status, "\nError: ", err)
-		os.Exit(1)
-	}
-	fmt.Println(status)
+	// srv, err := daemon.New(name, description, daemon.SystemDaemon, dependencies...)
+	// if err != nil {
+	// 	config.Stdlog.Println("Error: ", err)
+	// 	os.Exit(1)
+	// }
+	// service := &Service{srv}
+	// status, err := service.Manage()
+	// if err != nil {
+	// 	config.Stdlog.Println(status, "\nError: ", err)
+	// 	os.Exit(1)
+	// }
+	// fmt.Println(status)
+	resultProc()
 }
 
 func resultProc() {
