@@ -3,9 +3,9 @@ package kaoreqreceive
 import (
 	//"encoding/json"
 	"fmt"
-	config "kaoconfig"
-	databasepool "kaodatabasepool"
-	"kaoreqtable"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
+	"mycs/src/kaoreqtable"
 	"strconv"
 	s "strings"
 	"time"
@@ -64,9 +64,6 @@ var atColumn = []string{
 }
 
 var ftColumn = atColumn
-//친구톡 추가 칼럼
-ftColumn = append(ftColumn, "att_items")
-ftColumn = append(ftColumn, "att_coupon")
 
 //DHN_RESULT, DHN_RESULT_TEMP 테이블의 컬럼
 var msgColumn = []string{
@@ -115,12 +112,15 @@ var msgColumn = []string{
 	"carousel",
 }
 
-ftColumnStr := s.Join(ftColumn, ",")
-atColumnStr := s.Join(atColumn, ",")
-msgColumnStr := s.Join(msgColumn, ",")
+
 
 
 func ReqReceive(c *gin.Context) {
+	ftColumn = append(ftColumn, "att_items")
+	ftColumn = append(ftColumn, "att_coupon")
+	ftColumnStr := s.Join(ftColumn, ",")
+	atColumnStr := s.Join(atColumn, ",")
+	msgColumnStr := s.Join(msgColumn, ",")
 	ctx := c.Request.Context()
 	errlog := config.Stdlog
 
@@ -129,7 +129,7 @@ func ReqReceive(c *gin.Context) {
 	isValidation := false
 
 	// 허가된 userid 인지 테이블에서 확인
-	sqlstr := "
+	sqlstr := `
 		select 
 			count(1) as cnt 
 		from
@@ -137,7 +137,7 @@ func ReqReceive(c *gin.Context) {
 		where
 			user_id = ?
 			and ip = ?
-			and use_flag = 'Y'"
+			and use_flag = 'Y'`
 	// val, verr := databasepool.DB.Query(sqlstr)
 
 	var cnt int
@@ -147,7 +147,7 @@ func ReqReceive(c *gin.Context) {
 	// val.Next()
 	// val.Scan(&cnt)
 
-	defer val.Close()
+	//defer val.Close()
 
 	if cnt > 0 { isValidation = true }
 
@@ -383,7 +383,7 @@ func ReqReceive(c *gin.Context) {
 			}
 
 			if len(resinsStrs) >= saveCount {
-				resinsStrs, resinsValues = setMsg(resinsquery, resinsStrs, resinsValues, true, resinstempquery)
+				resinsStrs, resinsValues = setMsgTemp(resinsquery, resinsStrs, resinsValues, true, resinstempquery)
 			}
 		}
 		
@@ -397,7 +397,7 @@ func ReqReceive(c *gin.Context) {
 		}
 
 		if len(resinsStrs) > 0 {
-			resinsStrs, resinsValues = setMsg(resinsquery, resinsStrs, resinsValues, true, resinstempquery)
+			resinsStrs, resinsValues = setMsgTemp(resinsquery, resinsStrs, resinsValues, true, resinstempquery)
 		}
 
 		errlog.Println("메세지 발송 정보 수신 끝!! ", startTime)
@@ -416,7 +416,17 @@ func ReqReceive(c *gin.Context) {
 }
 
 //테이블 insert 처리
-func setMsg(query string, insStrs []string{}, insValues []interface{}{}, tempFlag bool, tempQuery string) (interface{}, interface{}){
+func setMsg(query string, insStrs []string, insValues []interface{}) ([]string, []interface{}){
+	stmt := fmt.Sprintf(query, s.Join(insStrs, ","))
+	_, err := databasepool.DB.Exec(stmt, insValues...)
+
+	if err != nil {
+		config.Stdlog.Println("Result Table Insert 처리 중 오류 발생 " + err.Error())
+	}
+	return nil, nil
+}
+
+func setMsgTemp(query string, insStrs []string, insValues []interface{}, tempFlag bool, tempQuery string) ([]string, []interface{}){
 	stmt := fmt.Sprintf(query, s.Join(insStrs, ","))
 	_, err := databasepool.DB.Exec(stmt, insValues...)
 

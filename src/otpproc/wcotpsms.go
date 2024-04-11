@@ -2,8 +2,8 @@ package otpproc
 
 import (
 	"database/sql"
-	config "kaoconfig"
-	databasepool "kaodatabasepool"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 	"fmt"
 
 	"strconv"

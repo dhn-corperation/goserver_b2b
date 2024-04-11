@@ -8,11 +8,11 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	config "kaoconfig"
-	databasepool "kaodatabasepool"
-	"kaoreqreceive"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
+	"mycs/src/kaoreqreceive"
 
-	"kaocenter"
+	"mycs/src/kaocenter"
 	//"kaosendrequest"
 	//"strconv"
 	//"time"

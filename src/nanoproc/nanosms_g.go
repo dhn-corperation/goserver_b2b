@@ -3,8 +3,8 @@ package nanoproc
 import (
 	"database/sql"
 	"fmt"
-	config "kaoconfig"
-	databasepool "kaodatabasepool"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 
 	//"strconv"
 	s "strings"

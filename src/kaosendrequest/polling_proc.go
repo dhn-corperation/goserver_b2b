@@ -2,8 +2,8 @@ package kaosendrequest
 
 import (
 	//"encoding/json"
-	config "kaoconfig"
-	databasepool "kaodatabasepool"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 	s "strings"
 	"sync"
 	"database/sql"

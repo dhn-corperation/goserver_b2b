@@ -5,10 +5,10 @@ import (
 	//"database/sql"
 	"encoding/json"
 	"fmt"
-	kakao "kakaojson"
-	config "kaoconfig"
+	kakao "mycs/src/kakaojson"
+	config "mycs/src/kaoconfig"
 
-	databasepool "kaodatabasepool"
+	databasepool "mycs/src/kaodatabasepool"
 
 	//"io/ioutil"
 	//"net"
@@ -19,7 +19,7 @@ import (
 	"sync"
 	//"time"
 
-	"github.com/go-resty/resty"
+	"github.com/go-resty/resty/v2"
 	"context"
 	"time"
 )

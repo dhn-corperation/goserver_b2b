@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	//"sync"
-	config "kaoconfig"
-	databasepool "kaodatabasepool"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 
 	"encoding/hex"
 	"regexp"
