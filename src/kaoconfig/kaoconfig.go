@@ -103,7 +103,7 @@ func readConfig() Config {
 func InitCenterConfig() {
 	realpath, _ := os.Executable()
 	dir := filepath.Dir(realpath)
-	logDir := filepath.Join(dir, "log")
+	logDir := filepath.Join(dir, "logs")
 	err := createDir(logDir)
 	if err != nil {
 		log.Fatalf("Failed to ensure log directory: %s", err)
