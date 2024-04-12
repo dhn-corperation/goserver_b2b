@@ -40,15 +40,14 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 			    return
 			default:
 		
-				var count int
+				var count sql.NullInt64
 				cnterr := databasepool.DB.QueryRowContext(ctx, "SELECT LENGTH(msgid) AS cnt FROM DHN_REQUEST_AT WHERE send_group IS NULL AND IFNULL(reserve_dt,'00000000000000') <= DATE_FORMAT(NOW(), '%Y%m%d%H%i%S') AND userid=?", user_id).Scan(&count)
 				//cnterr := databasepool.DB.QueryRow("select length(msgid) as cnt from DHN_REQUEST_AT  where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid='" + user_id + "' limit 1").Scan(&count)
 				
 				if cnterr != nil {
-					//config.Stdlog.Println("DHN_REQUEST Table - select 오류 : " + cnterr.Error())
+					config.Stdlog.Println("DHN_REQUEST Table - select 오류 : " + cnterr.Error())
 				} else {
-	
-					if count > 0 {		
+					if count.Valid && count.Int64() > 0 {		
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
 					
