@@ -60,7 +60,7 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 				
 						// rowcnt, _ := updateRows.RowsAffected()
 				
-						if updateRows > 0 {
+						if updateRows.Int64 > 0 {
 							config.Stdlog.Println(user_id, "알림톡 발송 처리 시작 ( ", group_no, " ) : ", updateRows, " 건 ")
 							atprocCnt++
 							go atsendProcess(group_no, user_id)
