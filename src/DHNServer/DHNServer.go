@@ -17,7 +17,7 @@ import (
 	//"kaocenter"
 	"mycs/src/kaosendrequest"
 	"mycs/src/nanoproc"
-	"mycs/src/oshotproc"
+	//"mycs/src/oshotproc"
 	"mycs/src/otpproc"
 
 	//"strconv"
