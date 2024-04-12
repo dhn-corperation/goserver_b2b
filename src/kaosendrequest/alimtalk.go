@@ -58,10 +58,10 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 							config.Stdlog.Println(user_id,"알림톡 send_group Update 오류 : ", err)
 						}
 				
-						// rowcnt, _ := updateRows.RowsAffected()
+						rowcnt, _ := updateRows.RowsAffected()
 				
-						if updateRows.(Int64) > 0 {
-							config.Stdlog.Println(user_id, "알림톡 발송 처리 시작 ( ", group_no, " ) : ", updateRows, " 건 ")
+						if rowcnt > 0 {
+							config.Stdlog.Println(user_id, "알림톡 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ")
 							atprocCnt++
 							go atsendProcess(group_no, user_id)
 				
