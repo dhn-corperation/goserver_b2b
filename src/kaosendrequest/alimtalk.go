@@ -418,7 +418,6 @@ func atsendProcess(group_no string, user_id string) {
 		stmt := fmt.Sprintf(resinsquery, s.Join(resinsStrs, ","))
 
 		_, err := databasepool.DB.Exec(stmt, resinsValues...)
-		stdlog.Println("테스트 로그 : 들어오냐 ?   ", err.Error())
 
 		if err != nil {
 			stdlog.Println(user_id, "Result Table Insert 처리 중 오류 발생 ", err)
