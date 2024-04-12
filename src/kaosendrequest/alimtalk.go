@@ -302,7 +302,6 @@ func atsendProcess(group_no string, user_id string) {
 
 		resChan := <-resultChan
 		result := resChan.Result
-		stdlog.Println("테스트 로그 : ", resChan.Statuscode)
 		if resChan.Statuscode == 200 {
 
 			var kakaoResp kakao.KakaoResponse
@@ -416,6 +415,7 @@ func atsendProcess(group_no string, user_id string) {
 
 	//Center에서도 사용하고 있는 함수이므로 공용 라이브러리 생성이 필요함
 	if len(resinsStrs) > 0 {
+		stdlog.Println("테스트 로그 : 들어오냐 ?   ", len(resinsStrs))
 		stmt := fmt.Sprintf(resinsquery, s.Join(resinsStrs, ","))
 
 		_, err := databasepool.DB.Exec(stmt, resinsValues...)
