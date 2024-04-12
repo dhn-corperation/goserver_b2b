@@ -91,7 +91,7 @@ func mmsProcess_G(wg *sync.WaitGroup, tablename string) {
 		errlog.Println("Nano MMS_G 조회 중 오류 발생", groupQuery, errcode)
 
 		if s.Index(errcode, "1146") > 0 {
-			db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like MMS_G_LOG")
+			db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like MMS_LOG")
 			errlog.Println(MMSTable + " 생성 !!")
 		} else {
 			//errlog.Fatal(groupQuery)
@@ -154,6 +154,17 @@ func pre_mmsProcess_G(wg *sync.WaitGroup, tablename string) {
 
 	groupRows, err := db.Query(groupQuery)
 	if err != nil {
+		errlog.Println("Nano MMS_G 조회 중 오류 발생")
+		errcode := err.Error()
+
+		if s.Index(errcode, "1146") > 0 {
+			db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like MMS_LOG")
+			errlog.Println(MMSTable + " 생성 !!")
+
+		} else {
+			//errlog.Fatal(err)
+		}
+
 		isProc = false
 		return
 	}
