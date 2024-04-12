@@ -354,52 +354,52 @@ Command :
 		c.String(200, serCmd)
 	})
 
-	r.GET("/ostop", func(c *gin.Context) {
-		var uid string
-		uid = c.Query("uid")
-		temp := oshotCtxC[uid]
-		if temp != nil {
-			cancel := oshotCtxC[uid].(context.CancelFunc)
-			cancel()
-			delete(oshotCtxC, uid)
-			delete(oshotUser, uid)
-			delete(allService, "OS"+uid)
-			delete(allCtxC, "OS"+uid)
-			c.String(200, uid+" 종료 신호 전달 완료")
-		} else {
-			c.String(200, uid+"는 실행 중이지 않습니다.")
-		}
+	// r.GET("/ostop", func(c *gin.Context) {
+	// 	var uid string
+	// 	uid = c.Query("uid")
+	// 	temp := oshotCtxC[uid]
+	// 	if temp != nil {
+	// 		cancel := oshotCtxC[uid].(context.CancelFunc)
+	// 		cancel()
+	// 		delete(oshotCtxC, uid)
+	// 		delete(oshotUser, uid)
+	// 		delete(allService, "OS"+uid)
+	// 		delete(allCtxC, "OS"+uid)
+	// 		c.String(200, uid+" 종료 신호 전달 완료")
+	// 	} else {
+	// 		c.String(200, uid+"는 실행 중이지 않습니다.")
+	// 	}
 
-	})
+	// })
 
-	r.GET("/orun", func(c *gin.Context) {
-		var uid string
-		uid = c.Query("uid")
-		temp := oshotCtxC[uid]
-		if temp != nil {
-			c.String(200, uid+"이미 실행 중입니다.")
-		} else {
-			ctx, cancel := context.WithCancel(context.Background())
-			ctx = context.WithValue(ctx, "user_id", uid)
-			go oshotproc.OshotProcess(uid, ctx)
+	// r.GET("/orun", func(c *gin.Context) {
+	// 	var uid string
+	// 	uid = c.Query("uid")
+	// 	temp := oshotCtxC[uid]
+	// 	if temp != nil {
+	// 		c.String(200, uid+"이미 실행 중입니다.")
+	// 	} else {
+	// 		ctx, cancel := context.WithCancel(context.Background())
+	// 		ctx = context.WithValue(ctx, "user_id", uid)
+	// 		go oshotproc.OshotProcess(uid, ctx)
 
-			oshotCtxC[uid] = cancel
-			oshotUser[uid] = uid
+	// 		oshotCtxC[uid] = cancel
+	// 		oshotUser[uid] = uid
 
-			allCtxC["OS"+uid] = cancel
-			allService["OS"+uid] = uid
+	// 		allCtxC["OS"+uid] = cancel
+	// 		allService["OS"+uid] = uid
 
-			c.String(200, uid+" 시작 신호 전달 완료")
-		}
-	})
+	// 		c.String(200, uid+" 시작 신호 전달 완료")
+	// 	}
+	// })
 
-	r.GET("/olist", func(c *gin.Context) {
-		var key string
-		for k := range oshotUser {
-			key = key + k + "\n"
-		}
-		c.String(200, key)
-	})
+	// r.GET("/olist", func(c *gin.Context) {
+	// 	var key string
+	// 	for k := range oshotUser {
+	// 		key = key + k + "\n"
+	// 	}
+	// 	c.String(200, key)
+	// })
 
 	r.GET("/astop", func(c *gin.Context) {
 		var uid string
