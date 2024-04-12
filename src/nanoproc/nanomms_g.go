@@ -141,6 +141,7 @@ func pre_mmsProcess_G(wg *sync.WaitGroup, tablename string) {
 
 	defer wg.Done()
 	var db = databasepool.DB
+	var errlog = config.Stdlog
 
 	var isProc = true
 	var t = time.Now().Add(time.Hour * -96)
