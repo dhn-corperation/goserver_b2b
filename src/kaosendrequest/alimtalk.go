@@ -47,7 +47,7 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 				if cnterr != nil {
 					config.Stdlog.Println("DHN_REQUEST Table - select 오류 : " + cnterr.Error())
 				} else {
-					if count.Valid && count.Int64() > 0 {		
+					if count.Valid && count.Int64 > 0 {		
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
 					
@@ -61,7 +61,7 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 						// rowcnt, _ := updateRows.RowsAffected()
 				
 						if updateRows > 0 {
-							config.Stdlog.Println(user_id, "알림톡 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ")
+							config.Stdlog.Println(user_id, "알림톡 발송 처리 시작 ( ", group_no, " ) : ", updateRows, " 건 ")
 							atprocCnt++
 							go atsendProcess(group_no, user_id)
 				
