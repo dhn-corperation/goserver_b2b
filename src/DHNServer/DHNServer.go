@@ -183,47 +183,47 @@ func resultProc() {
 
 	}
 
-	oshotUser := map[string]string{}
-	oshotCtxC := map[string]interface{}{}
+	// oshotUser := map[string]string{}
+	// oshotCtxC := map[string]interface{}{}
 
-	if s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
-		oshotUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl  where dcl.use_flag   = 'Y' and IFNULL(dcl.dest, 'OSHOT') = 'OSHOT'")
-		isOshot := true
-		if error != nil {
-			config.Stdlog.Println("Oshot 유저 select 오류 ")
-			isOshot = false
-		}
-		defer oshotUserList.Close()
+	// if s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
+	// 	oshotUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl  where dcl.use_flag   = 'Y' and IFNULL(dcl.dest, 'OSHOT') = 'OSHOT'")
+	// 	isOshot := true
+	// 	if error != nil {
+	// 		config.Stdlog.Println("Oshot 유저 select 오류 ")
+	// 		isOshot = false
+	// 	}
+	// 	defer oshotUserList.Close()
 
-		if isOshot {
-			var user_id sql.NullString
+	// 	if isOshot {
+	// 		var user_id sql.NullString
 
-			for oshotUserList.Next() {
-				oshotUserList.Scan(&user_id)
-				ctx, cancel := context.WithCancel(context.Background())
-				ctx = context.WithValue(ctx, "user_id", user_id.String)
-				go oshotproc.OshotProcess(user_id.String, ctx)
+	// 		for oshotUserList.Next() {
+	// 			oshotUserList.Scan(&user_id)
+	// 			ctx, cancel := context.WithCancel(context.Background())
+	// 			ctx = context.WithValue(ctx, "user_id", user_id.String)
+	// 			go oshotproc.OshotProcess(user_id.String, ctx)
 
-				oshotUser[user_id.String] = user_id.String
-				oshotCtxC[user_id.String] = cancel
+	// 			oshotUser[user_id.String] = user_id.String
+	// 			oshotCtxC[user_id.String] = cancel
 
-				allCtxC["OS"+user_id.String] = cancel
-				allService["OS"+user_id.String] = user_id.String
+	// 			allCtxC["OS"+user_id.String] = cancel
+	// 			allService["OS"+user_id.String] = user_id.String
 
-			}
+	// 		}
 
-			olctx, olcancel := context.WithCancel(context.Background())
-			go oshotproc.LMSProcess(olctx)
-			allCtxC["oshotlms"] = olcancel
-			allService["oshotlms"] = "Oshot LMS"
+	// 		olctx, olcancel := context.WithCancel(context.Background())
+	// 		go oshotproc.LMSProcess(olctx)
+	// 		allCtxC["oshotlms"] = olcancel
+	// 		allService["oshotlms"] = "Oshot LMS"
 
-			osctx, oscancel := context.WithCancel(context.Background())
-			go oshotproc.SMSProcess(osctx)
-			allCtxC["oshotsms"] = oscancel
-			allService["oshotsms"] = "Oshot SMS"
+	// 		osctx, oscancel := context.WithCancel(context.Background())
+	// 		go oshotproc.SMSProcess(osctx)
+	// 		allCtxC["oshotsms"] = oscancel
+	// 		allService["oshotsms"] = "Oshot SMS"
 
-		}
-	}
+	// 	}
+	// }
 
 	nanoUser := map[string]string{}
 	nanoCtxC := map[string]interface{}{}
