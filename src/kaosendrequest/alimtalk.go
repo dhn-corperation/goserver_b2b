@@ -50,7 +50,8 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 					if count.Valid && count.Int64 > 0 {		
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
-					
+						
+						var updateRows int64
 						updateRows, err := databasepool.DB.ExecContext(ctx, "update DHN_REQUEST_AT set send_group = ? where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid = ?  limit ?", group_no, user_id, strconv.Itoa(config.Conf.SENDLIMIT))
 						// updateRows, err := databasepool.DB.Exec("update DHN_REQUEST_AT set send_group = '" + group_no + "' where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid='" + user_id + "' limit " + strconv.Itoa(config.Conf.SENDLIMIT))
 				
@@ -60,7 +61,7 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 				
 						// rowcnt, _ := updateRows.RowsAffected()
 				
-						if updateRows.Int64 > 0 {
+						if updateRows > 0 {
 							config.Stdlog.Println(user_id, "알림톡 발송 처리 시작 ( ", group_no, " ) : ", updateRows, " 건 ")
 							atprocCnt++
 							go atsendProcess(group_no, user_id)
