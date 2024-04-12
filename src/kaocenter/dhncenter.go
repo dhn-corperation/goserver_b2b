@@ -16,7 +16,7 @@ func Get_crypto(c *gin.Context){
 	if crypto.Valid {
 		c.String(200, crypto.String)
 	} else {
-		c.String(404, "조건에 맞는 결과값이 없습니다.")
+		c.String(404, "")
 	}
 	
 }
