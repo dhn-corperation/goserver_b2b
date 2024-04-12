@@ -302,7 +302,7 @@ func atsendProcess(group_no string, user_id string) {
 
 		resChan := <-resultChan
 		result := resChan.Result
-
+		stdlog.Println("테스트 로그 : ", resChan.Statuscode)
 		if resChan.Statuscode == 200 {
 
 			var kakaoResp kakao.KakaoResponse
