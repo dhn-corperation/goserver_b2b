@@ -458,7 +458,9 @@ func resultProc() {
 	r.GET("/dm/freestyle/response/request", test)
 
 	// 발송 결과 요청 - 2
-	r.GET("dm/freestyle/response/message", test)
+	r.GET("/dm/freestyle/response/message", test)
+
+	r.GET("/get_crypto", kaocenter.Get_crypto)
 
 	r.Run(":" + config.Conf.PORT)
 }

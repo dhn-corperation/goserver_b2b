@@ -30,10 +30,13 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 			select {
 				case <- ctx.Done():
 			
-			    uid := ctx.Value("user_id")
-			    config.Stdlog.Println(uid, " - Alimtalk process가 20초 후에 종료 됨.")
+			    // uid := ctx.Value("user_id")
+			    // config.Stdlog.Println(uid, " - Alimtalk process가 20초 후에 종료 됨.")
+			    // time.Sleep(20 * time.Second)
+			    // config.Stdlog.Println(uid, " - Alimtalk process 종료 완료")
+			    config.Stdlog.Println(user_id, " - Alimtalk process가 20초 후에 종료 됨.")
 			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println(uid, " - Alimtalk process 종료 완료")
+			    config.Stdlog.Println(user_id, " - Alimtalk process 종료 완료")
 			    return
 			default:
 		
@@ -48,16 +51,17 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 					if count > 0 {		
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
-				
-						updateRows, err := databasepool.DB.Exec("update DHN_REQUEST_AT set send_group = '" + group_no + "' where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid='" + user_id + "' limit " + strconv.Itoa(config.Conf.SENDLIMIT))
+					
+						updateRows, err := databasepool.DB.ExecContext(ctx, "update DHN_REQUEST_AT set send_group = ? where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid = ?  limit ?", group_no, user_id, strconv.Itoa(config.Conf.SENDLIMIT))
+						// updateRows, err := databasepool.DB.Exec("update DHN_REQUEST_AT set send_group = '" + group_no + "' where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid='" + user_id + "' limit " + strconv.Itoa(config.Conf.SENDLIMIT))
 				
 						if err != nil {
 							config.Stdlog.Println(user_id,"알림톡 send_group Update 오류 : ", err)
 						}
 				
-						rowcnt, _ := updateRows.RowsAffected()
+						// rowcnt, _ := updateRows.RowsAffected()
 				
-						if rowcnt > 0 {
+						if updateRows > 0 {
 							config.Stdlog.Println(user_id, "알림톡 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ")
 							atprocCnt++
 							go atsendProcess(group_no, user_id)
@@ -97,49 +101,50 @@ func atsendProcess(group_no string, user_id string) {
 
 	resinsStrs := []string{}
 	resinsValues := []interface{}{}
-	resinsquery := `insert IGNORE into DHN_RESULT(
-msgid ,
-userid ,
-ad_flag ,
-button1 ,
-button2 ,
-button3 ,
-button4 ,
-button5 ,
-code ,
-image_link ,
-image_url ,
-kind ,
-message ,
-message_type ,
-msg ,
-msg_sms ,
-only_sms ,
-p_com ,
-p_invoice ,
-phn ,
-profile ,
-reg_dt ,
-remark1 ,
-remark2 ,
-remark3 ,
-remark4 ,
-remark5 ,
-res_dt ,
-reserve_dt ,
-result ,
-s_code ,
-sms_kind ,
-sms_lms_tit ,
-sms_sender ,
-sync ,
-tmpl_id ,
-wide ,
-send_group ,
-supplement ,
-price ,
-currency_type,
-title) values %s`
+	resinsquery := `
+	insert IGNORE into DHN_RESULT(
+		msgid ,
+		userid ,
+		ad_flag ,
+		button1 ,
+		button2 ,
+		button3 ,
+		button4 ,
+		button5 ,
+		code ,
+		image_link ,
+		image_url ,
+		kind ,
+		message ,
+		message_type ,
+		msg ,
+		msg_sms ,
+		only_sms ,
+		p_com ,
+		p_invoice ,
+		phn ,
+		profile ,
+		reg_dt ,
+		remark1 ,
+		remark2 ,
+		remark3 ,
+		remark4 ,
+		remark5 ,
+		res_dt ,
+		reserve_dt ,
+		result ,
+		s_code ,
+		sms_kind ,
+		sms_lms_tit ,
+		sms_sender ,
+		sync ,
+		tmpl_id ,
+		wide ,
+		send_group ,
+		supplement ,
+		price ,
+		currency_type,
+		title) values %s`
 
 	resultChan := make(chan resultStr, config.Conf.SENDLIMIT) // resultStr 은 friendtalk에 정의 됨
 	var reswg sync.WaitGroup

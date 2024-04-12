@@ -147,7 +147,7 @@ func resultProc() {
 			alim_user_list.Scan(&user_id)
 
 			ctx, cancel := context.WithCancel(context.Background())
-			ctx = context.WithValue(ctx, "user_id", user_id.String)
+			// ctx = context.WithValue(ctx, "user_id", user_id.String)
 
 			go kaosendrequest.AlimtalkProc(user_id.String, ctx)
 
