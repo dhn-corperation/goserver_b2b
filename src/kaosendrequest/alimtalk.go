@@ -42,7 +42,6 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 			default:
 				var count sql.NullInt64
 				cnterr := databasepool.DB.QueryRowContext(ctx, "SELECT LENGTH(msgid) AS cnt FROM DHN_REQUEST_AT WHERE send_group IS NULL AND IFNULL(reserve_dt,'00000000000000') <= DATE_FORMAT(NOW(), '%Y%m%d%H%i%S') AND userid=?", user_id).Scan(&count)
-				//cnterr := databasepool.DB.QueryRow("select length(msgid) as cnt from DHN_REQUEST_AT  where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid='" + user_id + "' limit 1").Scan(&count)
 				
 				if cnterr != nil && cnterr != sql.ErrNoRows {
 					config.Stdlog.Println("DHN_REQUEST Table - select 오류 : " + cnterr.Error())
@@ -52,7 +51,6 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 						var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
 						
 						updateRows, err := databasepool.DB.ExecContext(ctx, "update DHN_REQUEST_AT set send_group = ? where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid = ?  limit ?", group_no, user_id, strconv.Itoa(config.Conf.SENDLIMIT))
-						// updateRows, err := databasepool.DB.Exec("update DHN_REQUEST_AT set send_group = '" + group_no + "' where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid='" + user_id + "' limit " + strconv.Itoa(config.Conf.SENDLIMIT))
 				
 						if err != nil {
 							config.Stdlog.Println(user_id,"알림톡 send_group Update 오류 : ", err)
@@ -109,24 +107,25 @@ func atsendProcess(group_no string, user_id string) {
 	var reswg sync.WaitGroup
 
 	for reqrows.Next() {
-		scanArgs := make([]interface{}, count)
+		scanArgs := cm.InitDatabaseColumn(columnTypes, count)
+		// scanArgs := make([]interface{}, count)
 
-		for i, v := range columnTypes {
+		// for i, v := range columnTypes {
 
-			switch v.DatabaseTypeName() {
-			case "VARCHAR", "TEXT", "UUID", "TIMESTAMP":
-				scanArgs[i] = new(sql.NullString)
-				break
-			case "BOOL":
-				scanArgs[i] = new(sql.NullBool)
-				break
-			case "INT4":
-				scanArgs[i] = new(sql.NullInt64)
-				break
-			default:
-				scanArgs[i] = new(sql.NullString)
-			}
-		}
+		// 	switch v.DatabaseTypeName() {
+		// 	case "VARCHAR", "TEXT", "UUID", "TIMESTAMP":
+		// 		scanArgs[i] = new(sql.NullString)
+		// 		break
+		// 	case "BOOL":
+		// 		scanArgs[i] = new(sql.NullBool)
+		// 		break
+		// 	case "INT4":
+		// 		scanArgs[i] = new(sql.NullInt64)
+		// 		break
+		// 	default:
+		// 		scanArgs[i] = new(sql.NullString)
+		// 	}
+		// }
 
 		err := reqrows.Scan(scanArgs...)
 		if err != nil {
