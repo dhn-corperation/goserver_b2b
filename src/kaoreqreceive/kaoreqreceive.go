@@ -19,9 +19,9 @@ import (
 var SecretKey = "9b4dabe9d4fed126a58f8639846143c7"
 
 func ReqReceive(c *gin.Context) {
-	ftColumn := cm.GetFtColumn()
-	atColumn := cm.GetAtColumn()
-	msgColumn := cm.GetMsgColumn()
+	ftColumn := cm.GetReqFtColumn()
+	atColumn := cm.GetReqAtColumn()
+	msgColumn := cm.GetReqMsgColumn()
 	ftColumnStr := s.Join(ftColumn, ",")
 	atColumnStr := s.Join(atColumn, ",")
 	msgColumnStr := s.Join(msgColumn, ",")
@@ -306,8 +306,8 @@ func ReqReceive(c *gin.Context) {
 
 				atreqinsValues = append(atreqinsValues, msg[i].Currencytype)
 				atreqinsValues = append(atreqinsValues, msg[i].Title)
-				atreqinsValues = append(atreqinsValues, msg[i].Header)
-				atreqinsValues = append(atreqinsValues, msg[i].Carousel)
+				// atreqinsValues = append(atreqinsValues, msg[i].Header)
+				// atreqinsValues = append(atreqinsValues, msg[i].Carousel)
 			}
 
 			// 500건 단위로 처리한다(클라이언트에서 1000건씩 전송하더라도 지정한 단위의 건수로 insert한다.)

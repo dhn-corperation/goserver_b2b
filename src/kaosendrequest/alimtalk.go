@@ -8,6 +8,7 @@ import (
 	kakao "mycs/src/kakaojson"
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
+	cm "mycs/src/kaocommon"
 
 	//"io/ioutil"
 	//	"net"
@@ -74,6 +75,9 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 }
 
 func atsendProcess(group_no string, user_id string) {
+	atColumn := cm.GetResAtColumn()
+	atColumnStr := s.Join(atColumn, ",")
+
 	var db = databasepool.DB
 	var conf = config.Conf
 	var stdlog = config.Stdlog
@@ -99,50 +103,7 @@ func atsendProcess(group_no string, user_id string) {
 
 	resinsStrs := []string{}
 	resinsValues := []interface{}{}
-	resinsquery := `
-	insert IGNORE into DHN_RESULT(
-		msgid ,
-		userid ,
-		ad_flag ,
-		button1 ,
-		button2 ,
-		button3 ,
-		button4 ,
-		button5 ,
-		code ,
-		image_link ,
-		image_url ,
-		kind ,
-		message ,
-		message_type ,
-		msg ,
-		msg_sms ,
-		only_sms ,
-		p_com ,
-		p_invoice ,
-		phn ,
-		profile ,
-		reg_dt ,
-		remark1 ,
-		remark2 ,
-		remark3 ,
-		remark4 ,
-		remark5 ,
-		res_dt ,
-		reserve_dt ,
-		result ,
-		s_code ,
-		sms_kind ,
-		sms_lms_tit ,
-		sms_sender ,
-		sync ,
-		tmpl_id ,
-		wide ,
-		send_group ,
-		supplement ,
-		price ,
-		currency_type,
-		title) values %s`
+	resinsquery := `insert IGNORE into DHN_RESULT(`+atColumnStr+`) values %s`
 
 	resultChan := make(chan resultStr, config.Conf.SENDLIMIT) // resultStr 은 friendtalk에 정의 됨
 	var reswg sync.WaitGroup
@@ -298,6 +259,8 @@ func atsendProcess(group_no string, user_id string) {
 	reswg.Wait()
 	chanCnt := len(resultChan)
 
+	atQmarkStr := cm.GetQuestionMark(atColumn)
+
 	for i := 0; i < chanCnt; i++ {
 
 		resChan := <-resultChan
@@ -318,7 +281,7 @@ func atsendProcess(group_no string, user_id string) {
 				resMessage = ""
 			} 
 			
-			resinsStrs = append(resinsStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+			resinsStrs = append(resinsStrs, "("+atQmarkStr+")")
 			resinsValues = append(resinsValues, result["msgid"])
 			resinsValues = append(resinsValues, result["userid"])
 			resinsValues = append(resinsValues, result["ad_flag"])
@@ -394,16 +357,17 @@ func atsendProcess(group_no string, user_id string) {
 
 			//Center에서도 사용하고 있는 함수이므로 공용 라이브러리 생성이 필요함
 			if len(resinsStrs) >= 500 {
-				stmt := fmt.Sprintf(resinsquery, s.Join(resinsStrs, ","))
-				//fmt.Println(stmt)
-				_, err := databasepool.DB.Exec(stmt, resinsValues...)
+				resinsStrs, resinsValues = cm.InsMsg(resinsquery, resinsStrs, resinsValues)
+				// stmt := fmt.Sprintf(resinsquery, s.Join(resinsStrs, ","))
+				// //fmt.Println(stmt)
+				// _, err := databasepool.DB.Exec(stmt, resinsValues...)
 
-				if err != nil {
-					stdlog.Println("Result Table Insert 처리 중 오류 발생 ", err)
-				}
+				// if err != nil {
+				// 	stdlog.Println("Result Table Insert 처리 중 오류 발생 ", err)
+				// }
 
-				resinsStrs = nil
-				resinsValues = nil
+				// resinsStrs = nil
+				// resinsValues = nil
 			}
 		} else {
 			stdlog.Println(user_id, "알림톡 서버 처리 오류 !! ( ", string(resChan.BodyData), " )", result["msgid"])
@@ -415,16 +379,17 @@ func atsendProcess(group_no string, user_id string) {
 
 	//Center에서도 사용하고 있는 함수이므로 공용 라이브러리 생성이 필요함
 	if len(resinsStrs) > 0 {
-		stmt := fmt.Sprintf(resinsquery, s.Join(resinsStrs, ","))
+		resinsStrs, resinsValues = cm.InsMsg(resinsquery, resinsStrs, resinsValues)
+		// stmt := fmt.Sprintf(resinsquery, s.Join(resinsStrs, ","))
 
-		_, err := databasepool.DB.Exec(stmt, resinsValues...)
+		// _, err := databasepool.DB.Exec(stmt, resinsValues...)
 
-		if err != nil {
-			stdlog.Println(user_id, "Result Table Insert 처리 중 오류 발생 ", err)
-		}
+		// if err != nil {
+		// 	stdlog.Println(user_id, "Result Table Insert 처리 중 오류 발생 ", err)
+		// }
 
-		resinsStrs = nil
-		resinsValues = nil
+		// resinsStrs = nil
+		// resinsValues = nil
 	}
 
 	//알림톡 발송 후 DHN_REQUEST_AT 테이블의 데이터는 제거한다.
@@ -448,7 +413,6 @@ func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- resultStr, alimtalk kakao
 
 	if err != nil {
 		config.Stdlog.Println("알림톡 메시지 서버 호출 오류 : ", err)
-		//	return nil
 	} else {
 		temp.Statuscode = resp.StatusCode()
 		temp.BodyData = resp.Body()

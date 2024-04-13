@@ -16,9 +16,9 @@ func init(){
 	
 }
 
-//친구톡, 알림톡 공통 컬럼(알림톡 칼럼)
-func GetAtColumn() []string {
-	atColumn := []string{
+//발송 전 친구톡, 알림톡 공통 컬럼(알림톡 칼럼, 알림톡의 삽입 테이블 DHN_REQUEST_AT)
+func GetReqAtColumn() []string {
+	atReqColumn := []string{
 		"msgid",
 		"userid",
 		"ad_flag",
@@ -55,21 +55,24 @@ func GetAtColumn() []string {
 		"price",
 		"currency_type",
 		"title",
-		"header",
-		"carousel",
+		// "header",
+		// "carousel",
 	}
-	return atColumn
+	return atReqColumn
 }
 
-func GetFtColumn() []string {
-	ftColumn := GetAtColumn()
-	ftColumn = append(ftColumn, "att_items")
-	ftColumn = append(ftColumn, "att_coupon")
-	return ftColumn
+//발송 전 친구톡 추가 칼럼(사입 테이블 : DHN_REQUEST)
+func GetReqFtColumn() []string {
+	ftReqColumn := GetAtColumn()
+	ftReqColumn = append(ftReqColumn, "header")
+	ftReqColumn = append(ftReqColumn, "carousel")
+	ftReqColumn = append(ftReqColumn, "att_items")
+	ftReqColumn = append(ftReqColumn, "att_coupon")
+	return ftReqColumn
 }
 
-//DHN_RESULT, DHN_RESULT_TEMP 테이블의 컬럼
-func GetMsgColumn() []string {
+//발송 전 메시지 삽입 데이터 컬럼(삽입 테이블 DHN_RESULT)
+func GetReqMsgColumn() []string {
 	msgColumn := []string{
 		"msgid",
 		"userid",
@@ -116,6 +119,54 @@ func GetMsgColumn() []string {
 		"carousel",
 	}
 	return msgColumn
+}
+
+func GetResAtColumn() []string {
+	atResColumn := []string{
+		"msgid",
+		"userid",
+		"ad_flag",
+		"button1",
+		"button2",
+		"button3",
+		"button4",
+		"button5",
+		"code",
+		"image_link",
+		"image_url",
+		"kind",
+		"message",
+		"message_type",
+		"msg",
+		"msg_sms",
+		"only_sms",
+		"p_com",
+		"p_invoice",
+		"phn",
+		"profile",
+		"reg_dt",
+		"remark1",
+		"remark2",
+		"remark3",
+		"remark4",
+		"remark5",
+		"res_dt",
+		"reserve_dt",
+		"result",
+		"s_code",
+		"sms_kind",
+		"sms_lms_tit",
+		"sms_sender",
+		"sync",
+		"tmpl_id",
+		"wide",
+		"send_group",
+		"supplement",
+		"price",
+		"currency_type",
+		"title",
+	}
+	return atResColumn
 }
 
 //물음표 컬럼 개수만큼 조인
