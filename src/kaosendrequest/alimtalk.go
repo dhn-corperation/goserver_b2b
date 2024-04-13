@@ -93,6 +93,7 @@ func atsendProcess(group_no string, user_id string) {
 		errlog.Fatal(err)
 	}
 	count := len(columnTypes)
+	initScanArgs := cm.InitDatabaseColumn(columnTypes, count)
 
 	var procCount int
 	procCount = 0
@@ -107,27 +108,9 @@ func atsendProcess(group_no string, user_id string) {
 	var reswg sync.WaitGroup
 
 	for reqrows.Next() {
-		scanArgs := cm.InitDatabaseColumn(columnTypes, count)
-		// scanArgs := make([]interface{}, count)
+		scanArgs := initScanArgs
 
-		// for i, v := range columnTypes {
-
-		// 	switch v.DatabaseTypeName() {
-		// 	case "VARCHAR", "TEXT", "UUID", "TIMESTAMP":
-		// 		scanArgs[i] = new(sql.NullString)
-		// 		break
-		// 	case "BOOL":
-		// 		scanArgs[i] = new(sql.NullBool)
-		// 		break
-		// 	case "INT4":
-		// 		scanArgs[i] = new(sql.NullInt64)
-		// 		break
-		// 	default:
-		// 		scanArgs[i] = new(sql.NullString)
-		// 	}
-		// }
-
-		err := reqrows.Scan(scanArgs...)
+		err := reqrows.Scan(scanArgsInFor...)
 		if err != nil {
 			errlog.Fatal(err)
 		}
