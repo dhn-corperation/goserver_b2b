@@ -63,7 +63,7 @@ func GetReqAtColumn() []string {
 
 //발송 전 친구톡 추가 칼럼(사입 테이블 : DHN_REQUEST)
 func GetReqFtColumn() []string {
-	ftReqColumn := GetAtColumn()
+	ftReqColumn := GetReqAtColumn()
 	ftReqColumn = append(ftReqColumn, "header")
 	ftReqColumn = append(ftReqColumn, "carousel")
 	ftReqColumn = append(ftReqColumn, "att_items")
