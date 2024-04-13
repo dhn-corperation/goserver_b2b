@@ -1,6 +1,7 @@
 package kaocommon
 
 import(
+	"fmt"
 	"crypto/aes"
 	"crypto/cipher"
 	config "mycs/src/kaoconfig"
@@ -60,7 +61,7 @@ func GetAtColumn() []string {
 }
 
 func GetFtColumn() []string {
-	ftColumn = SetAtColumn()
+	ftColumn := GetAtColumn()
 	ftColumn = append(ftColumn, "att_items")
 	ftColumn = append(ftColumn, "att_coupon")
 	return ftColumn
@@ -68,7 +69,7 @@ func GetFtColumn() []string {
 
 //DHN_RESULT, DHN_RESULT_TEMP 테이블의 컬럼
 func GetMsgColumn() []string {
-	msgColumn = []string{
+	msgColumn := []string{
 		"msgid",
 		"userid",
 		"ad_flag",
