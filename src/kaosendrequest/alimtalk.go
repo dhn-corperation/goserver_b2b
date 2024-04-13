@@ -110,7 +110,7 @@ func atsendProcess(group_no string, user_id string) {
 	for reqrows.Next() {
 		scanArgs := initScanArgs
 
-		err := reqrows.Scan(scanArgsInFor...)
+		err := reqrows.Scan(scanArgs...)
 		if err != nil {
 			errlog.Fatal(err)
 		}
