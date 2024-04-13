@@ -19,9 +19,9 @@ import (
 var SecretKey = "9b4dabe9d4fed126a58f8639846143c7"
 
 func ReqReceive(c *gin.Context) {
-	ftColumn = cm.GetFtColumn()
-	atColumn = cm.GetAtColumn()
-	msgColumn = cm.GetMsgColumn()
+	ftColumn := cm.GetFtColumn()
+	atColumn := cm.GetAtColumn()
+	msgColumn := cm.GetMsgColumn()
 	ftColumnStr := s.Join(ftColumn, ",")
 	atColumnStr := s.Join(atColumn, ",")
 	msgColumnStr := s.Join(msgColumn, ",")
