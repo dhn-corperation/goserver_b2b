@@ -6,118 +6,22 @@ import (
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
 	"mycs/src/kaoreqtable"
+	cm "mycs/src/kaocommon"
 	"strconv"
 	s "strings"
 	"time"
-
-	"crypto/aes"
-	"crypto/cipher"
-
-	//"crypto/rand"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 )
 
+//언젠가는 다른곳으로 위치를 옮겨야 함
 var SecretKey = "9b4dabe9d4fed126a58f8639846143c7"
 
-//친구톡, 알림톡 공통 컬럼
-var atColumn = []string{
-	"msgid",
-	"userid",
-	"ad_flag",
-	"button1",
-	"button2",
-	"button3",
-	"button4",
-	"button5",
-	"image_link",
-	"image_url",
-	"message_type",
-	"msg",
-	"msg_sms",
-	"only_sms",
-	"phn",
-	"profile",
-	"p_com",
-	"p_invoice",
-	"reg_dt",
-	"remark1",
-	"remark2",
-	"remark3",
-	"remark4",
-	"remark5",
-	"reserve_dt",
-	"sms_kind",
-	"sms_lms_tit",
-	"sms_sender",
-	"s_code",
-	"tmpl_id",
-	"wide",
-	"send_group",
-	"supplement",
-	"price",
-	"currency_type",
-	"title",
-	"header",
-	"carousel",
-}
-
-var ftColumn = atColumn
-
-//DHN_RESULT, DHN_RESULT_TEMP 테이블의 컬럼
-var msgColumn = []string{
-	"msgid",
-	"userid",
-	"ad_flag",
-	"button1",
-	"button2",
-	"button3",
-	"button4",
-	"button5",
-	"code",
-	"image_link",
-	"image_url",
-	"kind",
-	"message",
-	"message_type",
-	"msg",
-	"msg_sms",
-	"only_sms",
-	"p_com",
-	"p_invoice",
-	"phn",
-	"profile",
-	"reg_dt",
-	"remark1",
-	"remark2",
-	"remark3",
-	"remark4",
-	"remark5",
-	"res_dt",
-	"reserve_dt",
-	"result",
-	"s_code",
-	"sms_kind",
-	"sms_lms_tit",
-	"sms_sender",
-	"sync",
-	"tmpl_id",
-	"wide",
-	"send_group",
-	"supplement",
-	"price",
-	"currency_type",
-	"header",
-	"carousel",
-}
-
-
-
-
 func ReqReceive(c *gin.Context) {
-	ftColumn = append(ftColumn, "att_items")
-	ftColumn = append(ftColumn, "att_coupon")
+	ftColumn = cm.GetFtColumn()
+	atColumn = cm.GetAtColumn()
+	msgColumn = cm.GetMsgColumn()
 	ftColumnStr := s.Join(ftColumn, ",")
 	atColumnStr := s.Join(atColumn, ",")
 	msgColumnStr := s.Join(msgColumn, ",")
@@ -188,9 +92,9 @@ func ReqReceive(c *gin.Context) {
 		//temp 테이블 컬럼 셋팅(DHN_RESULT_TEMP : 에러 시 데이터 유실을 막기 위한 테이블)
 		resinstempquery := `insert IGNORE into DHN_RESULT_TEMP(`+msgColumnStr+`) values %s`
 
-		ftQmarkStr := setQuestionMark(ftColumn)
-		atQmarkStr := setQuestionMark(atColumn)
-		msgQmarkStr := setQuestionMark(msgColumn)
+		ftQmarkStr := cm.GetQuestionMark(ftColumn)
+		atQmarkStr := cm.GetQuestionMark(atColumn)
+		msgQmarkStr := cm.GetQuestionMark(msgColumn)
 
 		//맵핑한 데이터 row 처리
 		for i, _ := range msg {
@@ -209,19 +113,19 @@ func ReqReceive(c *gin.Context) {
 				reqinsValues = append(reqinsValues, msg[i].Imageurl)
 				reqinsValues = append(reqinsValues, msg[i].Messagetype)
 				if s.Contains(msg[i].Crypto, "MSG") {
-					reqinsValues = append(reqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
+					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
 				} else {
 					reqinsValues = append(reqinsValues, msg[i].Msg)
 				}
 				if s.Contains(msg[i].Crypto, "Msgsms") && len(msg[i].Msgsms) > 0 {
-					reqinsValues = append(reqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
+					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
 				} else {
 					reqinsValues = append(reqinsValues, msg[i].Msgsms)
 				}
 				reqinsValues = append(reqinsValues, msg[i].Onlysms)
-				reqinsValues = append(reqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
+				reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
 				if s.Contains(msg[i].Crypto, "Profile") && len(msg[i].Profile) > 0 {
-					reqinsValues = append(reqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
+					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
 				} else {
 					reqinsValues = append(reqinsValues, msg[i].Profile)
 				}
@@ -236,12 +140,12 @@ func ReqReceive(c *gin.Context) {
 				reqinsValues = append(reqinsValues, msg[i].Reservedt)
 				reqinsValues = append(reqinsValues, msg[i].Smskind)
 				if s.Contains(msg[i].Crypto, "Smslmstit") && len(msg[i].Smslmstit) > 0 {
-					reqinsValues = append(reqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
+					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
 				} else {
 					reqinsValues = append(reqinsValues, msg[i].Smslmstit)
 				}
 				if s.Contains(msg[i].Crypto, "Smssender") && len(msg[i].Smssender) > 0 {
-					reqinsValues = append(reqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
+					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
 				} else {
 					reqinsValues = append(reqinsValues, msg[i].Smssender)
 				}
@@ -282,22 +186,22 @@ func ReqReceive(c *gin.Context) {
 				resinsValues = append(resinsValues, "")  // 결과 Message
 				resinsValues = append(resinsValues, msg[i].Messagetype)
 				if s.Contains(msg[i].Crypto, "MSG") {
-					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
+					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Msg)
 				}
 
 				if s.Contains(msg[i].Crypto, "Msgsms") && len(msg[i].Msgsms) > 0 {
-					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
+					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Msgsms)
 				}
 				resinsValues = append(resinsValues, msg[i].Onlysms)
 				resinsValues = append(resinsValues, msg[i].Pcom)
 				resinsValues = append(resinsValues, msg[i].Pinvoice)
-				resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
+				resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
 				if s.Contains(msg[i].Crypto, "Profile") && len(msg[i].Profile) > 0 {
-					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
+					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Profile)
 				}
@@ -313,13 +217,13 @@ func ReqReceive(c *gin.Context) {
 				resinsValues = append(resinsValues, msg[i].Scode)
 				resinsValues = append(resinsValues, msg[i].Smskind)
 				if s.Contains(msg[i].Crypto, "Smslmstit") && len(msg[i].Smslmstit) > 0 {
-					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
+					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Smslmstit)
 				}
 
 				if s.Contains(msg[i].Crypto, "Smssender") && len(msg[i].Smssender) > 0 {
-					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
+					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Smssender)
 				}
@@ -347,13 +251,13 @@ func ReqReceive(c *gin.Context) {
 				atreqinsValues = append(atreqinsValues, msg[i].Imageurl)
 				atreqinsValues = append(atreqinsValues, msg[i].Messagetype)
 				if s.Contains(msg[i].Crypto, "MSG") {
-					atreqinsValues = append(atreqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
+					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
 				} else {
 					atreqinsValues = append(atreqinsValues, msg[i].Msg)
 				}
 
 				if s.Contains(msg[i].Crypto, "Msgsms") && len(msg[i].Msgsms) > 0 {
-					atreqinsValues = append(atreqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
+					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
 				} else {
 					atreqinsValues = append(atreqinsValues, msg[i].Msgsms)
 				}
@@ -362,7 +266,7 @@ func ReqReceive(c *gin.Context) {
 				// atreqinsValues = append(atreqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
 				atreqinsValues = append(atreqinsValues, msg[i].Phn)
 				if s.Contains(msg[i].Crypto, "Profile") && len(msg[i].Profile) > 0 {
-					atreqinsValues = append(atreqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
+					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
 				} else {
 					atreqinsValues = append(atreqinsValues, msg[i].Profile)
 				}
@@ -377,13 +281,13 @@ func ReqReceive(c *gin.Context) {
 				atreqinsValues = append(atreqinsValues, msg[i].Reservedt)
 				atreqinsValues = append(atreqinsValues, msg[i].Smskind)
 				if s.Contains(msg[i].Crypto, "Smslmstit") && len(msg[i].Smslmstit) > 0 {
-					atreqinsValues = append(atreqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
+					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
 				} else {
 					atreqinsValues = append(atreqinsValues, msg[i].Smslmstit)
 				}
 
 				if s.Contains(msg[i].Crypto, "Smssender") && len(msg[i].Smssender) > 0 {
-					atreqinsValues = append(atreqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
+					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
 				} else {
 					atreqinsValues = append(atreqinsValues, msg[i].Smssender)
 				}
@@ -409,29 +313,29 @@ func ReqReceive(c *gin.Context) {
 			// 500건 단위로 처리한다(클라이언트에서 1000건씩 전송하더라도 지정한 단위의 건수로 insert한다.)
 			saveCount := 500
 			if len(reqinsStrs) >= saveCount {
-				reqinsStrs, reqinsValues = setMsg(reqinsQuery, reqinsStrs, reqinsValues)
+				reqinsStrs, reqinsValues = cm.InsMsg(reqinsQuery, reqinsStrs, reqinsValues)
 			}
 
 			if len(atreqinsStrs) >= saveCount {
-				atreqinsStrs, atreqinsValues = setMsg(atreqinsQuery, atreqinsStrs, atreqinsValues)
+				atreqinsStrs, atreqinsValues = cm.InsMsg(atreqinsQuery, atreqinsStrs, atreqinsValues)
 			}
 
 			if len(resinsStrs) >= saveCount {
-				resinsStrs, resinsValues = setMsgTemp(resinsquery, resinsStrs, resinsValues, true, resinstempquery)
+				resinsStrs, resinsValues = cm.InsMsgTemp(resinsquery, resinsStrs, resinsValues, true, resinstempquery)
 			}
 		}
 		
 		// 나머지 건수를 저장하기 위해 다시한번 정의
 		if len(reqinsStrs) > 0 {
-			reqinsStrs, reqinsValues = setMsg(reqinsQuery, reqinsStrs, reqinsValues)
+			reqinsStrs, reqinsValues = cm.InsMsg(reqinsQuery, reqinsStrs, reqinsValues)
 		}
 
 		if len(atreqinsStrs) > 0 {
-			atreqinsStrs, atreqinsValues = setMsg(atreqinsQuery, atreqinsStrs, atreqinsValues)
+			atreqinsStrs, atreqinsValues = cm.InsMsg(atreqinsQuery, atreqinsStrs, atreqinsValues)
 		}
 
 		if len(resinsStrs) > 0 {
-			resinsStrs, resinsValues = setMsgTemp(resinsquery, resinsStrs, resinsValues, true, resinstempquery)
+			resinsStrs, resinsValues = cm.InsMsgTemp(resinsquery, resinsStrs, resinsValues, true, resinstempquery)
 		}
 
 		errlog.Println("발송 메세지 수신 끝 ( ", userid, ") : ", len(msg), startTime)
@@ -449,89 +353,8 @@ func ReqReceive(c *gin.Context) {
 	}
 }
 
-//테이블 insert 처리
-func setMsg(query string, insStrs []string, insValues []interface{}) ([]string, []interface{}){
-	stmt := fmt.Sprintf(query, s.Join(insStrs, ","))
-	_, err := databasepool.DB.Exec(stmt, insValues...)
 
-	if err != nil {
-		config.Stdlog.Println("Result Table Insert 처리 중 오류 발생 ", err.Error())
-		config.Stdlog.Println("table : ", query)
-	}
-	return nil, nil
-}
 
-func setMsgTemp(query string, insStrs []string, insValues []interface{}, tempFlag bool, tempQuery string) ([]string, []interface{}){
-	stmt := fmt.Sprintf(query, s.Join(insStrs, ","))
-	_, err := databasepool.DB.Exec(stmt, insValues...)
 
-	if err != nil {
-		config.Stdlog.Println("Result Table Insert 처리 중 오류 발생 ", err.Error())
-		config.Stdlog.Println("table : ", query)
-		if tempFlag {
-			config.Stdlog.Println("Result Temp Table Insert 시작")
-			stmtt := fmt.Sprintf(tempQuery, s.Join(insStrs, ","))
-			_, errt := databasepool.DB.Exec(stmtt, insValues...)
-			if errt != nil {
-				config.Stdlog.Println("Result Temp Table Insert 처리 중 오류 발생 ", errt.Error())
-			}
-		}
-	}
-	return nil, nil
-}
 
-//물음표 컬럼 개수만큼 조인
-func setQuestionMark(column []string) string {
-	var placeholders []string
-	numPlaceholders := len(column) // 원하는 물음표 수
-	for i := 0; i < numPlaceholders; i++ {
-	    placeholders = append(placeholders, "?")
-	}
-	return s.Join(placeholders, ",")
-}
 
-//AES 복호화
-func AES256GSMDecrypt(secretKey []byte, ciphertext_ string, nonce_ string) string {
-
-	ciphertext, _ := ConvertByte(ciphertext_)
-	nonce, _ := ConvertByte(nonce_)
-
-	if len(secretKey) != 32 {
-		return ""
-	}
-
-	// prepare AES-256-GSM cipher
-	block, err := aes.NewCipher(secretKey)
-	if err != nil {
-		return ""
-	}
-
-	aesgcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return ""
-	}
-
-	// decrypt ciphertext
-	plaintext, err := aesgcm.Open(nil, nonce, ciphertext, nil)
-	if err != nil {
-		return ""
-	}
-
-	return string(plaintext)
-}
-
-//바이트 생성
-func ConvertByte(src string) ([]byte, error) {
-	ba := make([]byte, len(src)/2)
-	idx := 0
-	for i := 0; i < len(src); i = i + 2 {
-		b, err := strconv.ParseInt(src[i:i+2], 16, 10)
-		if err != nil {
-			return nil, err
-		}
-		ba[idx] = byte(b)
-		idx++
-	}
-
-	return ba, nil
-}
