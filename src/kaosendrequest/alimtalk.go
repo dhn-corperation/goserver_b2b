@@ -85,11 +85,15 @@ func atsendProcess(group_no string, user_id string) {
 
 	reqrows, err := db.Query(reqsql)
 	if err != nil {
+		errlog.Prinfln("atsendProcess 쿼리 에러 query : ", reqsql)
+		errlog.Prinfln("atsendProcess 쿼리 에러 : ", err)
 		errlog.Fatal(err)
 	}
 
 	columnTypes, err := reqrows.ColumnTypes()
 	if err != nil {
+		errlog.Prinfln("atsendProcess 컬럼 초기화 에러 group_no : ", group_no, " / userid  : ", user_id)
+		errlog.Prinfln("atsendProcess 컬럼 초기화 에러 : " err)
 		errlog.Fatal(err)
 	}
 	count := len(columnTypes)
@@ -112,6 +116,8 @@ func atsendProcess(group_no string, user_id string) {
 
 		err := reqrows.Scan(scanArgs...)
 		if err != nil {
+			errlog.Prinfln("atsendProcess 컬럼 스캔 에러 group_no : ", group_no, " / userid  : ", user_id)
+			errlog.Prinfln("atsendProcess 컬럼 스캔 에러 : " err)
 			errlog.Fatal(err)
 		}
 
@@ -340,16 +346,6 @@ func atsendProcess(group_no string, user_id string) {
 			//Center에서도 사용하고 있는 함수이므로 공용 라이브러리 생성이 필요함
 			if len(resinsStrs) >= 500 {
 				resinsStrs, resinsValues = cm.InsMsg(resinsquery, resinsStrs, resinsValues)
-				// stmt := fmt.Sprintf(resinsquery, s.Join(resinsStrs, ","))
-				// //fmt.Println(stmt)
-				// _, err := databasepool.DB.Exec(stmt, resinsValues...)
-
-				// if err != nil {
-				// 	stdlog.Println("Result Table Insert 처리 중 오류 발생 ", err)
-				// }
-
-				// resinsStrs = nil
-				// resinsValues = nil
 			}
 		} else {
 			stdlog.Println(user_id, "알림톡 서버 처리 오류 !! ( ", string(resChan.BodyData), " )", result["msgid"])
@@ -362,16 +358,6 @@ func atsendProcess(group_no string, user_id string) {
 	//Center에서도 사용하고 있는 함수이므로 공용 라이브러리 생성이 필요함
 	if len(resinsStrs) > 0 {
 		resinsStrs, resinsValues = cm.InsMsg(resinsquery, resinsStrs, resinsValues)
-		// stmt := fmt.Sprintf(resinsquery, s.Join(resinsStrs, ","))
-
-		// _, err := databasepool.DB.Exec(stmt, resinsValues...)
-
-		// if err != nil {
-		// 	stdlog.Println(user_id, "Result Table Insert 처리 중 오류 발생 ", err)
-		// }
-
-		// resinsStrs = nil
-		// resinsValues = nil
 	}
 
 	//알림톡 발송 후 DHN_REQUEST_AT 테이블의 데이터는 제거한다.
@@ -390,8 +376,6 @@ func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- resultStr, alimtalk kakao
 		SetHeaders(map[string]string{"Content-Type": "application/json"}).
 		SetBody(alimtalk).
 		Post(config.Conf.API_SERVER + "/v3/" + config.Conf.PROFILE_KEY + "/alimtalk/send")
-
-	//fmt.Println("SEND :", resp, err)
 
 	if err != nil {
 		config.Stdlog.Println("알림톡 메시지 서버 호출 오류 : ", err)
