@@ -41,40 +41,29 @@ func OshotProcess(user_id string, ctx context.Context) {
 				return
 			default:
 
-				var count int
-				tickSql := `select
-	length(msgid) as cnt
-from
-	DHN_RESULT dr
-where
-	dr.result = 'P'
-	and dr.send_group is null
-	and ifnull(dr.reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
-	and userid = '` + user_id + `'
-limit 1
+				var count sql.NullInt64
+				tickSql := `
+				select
+					length(msgid) as cnt
+				from
+					DHN_RESULT dr
+				where
+					dr.result = 'P'
+					and dr.send_group is null
+					and ifnull(dr.reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
+					and userid = ?
+				limit 1
 					`
-				cnterr := databasepool.DB.QueryRow(tickSql).Scan(&count)
+				cnterr := databasepool.DB.QueryRowContext(ctx, tickSql, user_id).Scan(&count)
 
-				if cnterr != nil {
-					//config.Stdlog.Println("DHN_RESULT Table - select 오류 : " + cnterr.Error())
+				if cnterr != nil && cnterr != sql.ErrNoRows {
+					config.Stdlog.Println("DHN_RESULT Table - select 오류 : " + cnterr.Error())
 				} else {
-
 					if count > 0 {
-
-						//wg.Add(1)
-
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%02d%06d", startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), (startNow.Nanosecond() / 1000))
 
-						//config.Stdlog.Println(group_no, " Update 시작")
-						//updateRows, err := databasepool.DB.Exec("update DHN_RESULT set send_group = '" + group_no + "' where  result = 'P' and ( length(send_group) <=0 or send_group is null ) and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') LIMIT 1000")
-						//if err != nil {
-						//	config.Stdlog.Println("DHN_RESULT Table - Group No Update 오류" + err.Error())
-						//}
-						//rowcnt, _ := updateRows.RowsAffected()
-
-						//config.Stdlog.Println(group_no, " Update 끝 ", rowcnt)
-						upError := updateReqeust(group_no, user_id)
+						upError := updateReqeust(ctx, group_no, user_id)
 						if upError != nil {
 							config.Stdlog.Println(user_id , "Group No Update 오류", group_no)
 						} else {
@@ -88,7 +77,7 @@ limit 1
 	}
 }
 
-func updateReqeust(group_no string, user_id string) error {
+func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 
 	tx, err := databasepool.DB.Begin()
 	if err != nil {
@@ -96,51 +85,30 @@ func updateReqeust(group_no string, user_id string) error {
 	}
 
 	defer func() error {
-		//config.Stdlog.Println("Group No Update End", group_no)
 		if err != nil {
 			tx.Rollback()
-			return err
-		}
-		err = tx.Commit()
-		return err
-	}()
-
-	//tx := databasepool.DB
-	//cnt := 0
-
-	config.Stdlog.Println(user_id, "- 스마트미 Group No Update 시작", group_no)
-	/*
-		reqrows, err := tx.Query("select msgid from DHN_RESULT where  result = 'P' and send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') LIMIT 500")
-		if err != nil {
-			config.Stdlog.Println(" Group NO Update - Select 오류 : ( " + group_no + " ) : " + err.Error())
 			return
 		}
+		err = tx.Commit()
+		return
+	}()
 
-		for reqrows.Next() {
-			var msgid sql.NullString
-			reqrows.Scan(&msgid)
 
-			if _, err = tx.Exec("update DHN_RESULT set send_group = '" + group_no + "' where  msgid = '" + msgid.String +"'"); err != nil {
-				config.Stdlog.Println("update DHN_RESULT set send_group = '" + group_no + "' where  msgid = '" + msgid.String +"'", err)
-				return
-			}
-			cnt++
-		}
-	*/
+	config.Stdlog.Println(user_id, "- 스마트미 Group No Update 시작", group_no)
 
-	gudQuery := `update	DHN_RESULT dr
-set	send_group = '` + group_no + `'
-where result = 'P'
-  and send_group is null
-  and ifnull(reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
-  and userid = '` + user_id + `'
-LIMIT 500
+	gudQuery := `
+	update DHN_RESULT dr
+	set	send_group = ?
+	where result = 'P'
+	  and send_group is null
+	  and ifnull(reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
+	  and userid = ?
+	LIMIT 500
 	`
-
-	_, err = tx.Query(gudQuery)
+	_, err := tx.ExecContext(ctx, gudQuery, group_no, user_id)
 
 	if err != nil {
-		config.Stdlog.Println(user_id, "- Group NO Update - Select error : ( " + group_no + " ) : " + err.Error())
+		config.Stdlog.Println(user_id, "- Group NO Update - Select error : ( group_no : " + group_no + " / user_id : "+user_id+" ) : " + err)
 		config.Stdlog.Println(gudQuery)
 		return err
 	}
@@ -414,7 +382,7 @@ func resProcess(group_no string, user_id string) {
 	}
 
 	if scnt > 0 || smscnt > 0 || lmscnt > 0 || fcnt > 0 {
-		stdlog.Println(user_id, "-", group_no, "문자 발송 처리 완료 ( ", tcnt, " ) : 성공 -", scnt, " , SMS -", smscnt, " , LMS -", lmscnt, "실패 - ", fcnt, "  >> Process cnt : ", procCnt)
+		stdlog.Println(user_id, "-", group_no, "문자 발송 처리 완료 ( ", tcnt, " ) : 성공 -", scnt, " , SMS -", smscnt, " , LMS -", lmscnt, ", 실패 - ", fcnt, "  >> Process cnt : ", procCnt)
 	}
 	procCnt--
 }
