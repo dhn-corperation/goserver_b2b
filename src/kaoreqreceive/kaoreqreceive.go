@@ -48,7 +48,7 @@ func ReqReceive(c *gin.Context) {
 	err := databasepool.DB.QueryRowContext(ctx, sqlstr, userid, userip).Scan(&cnt)
 	if err != nil { errlog.Println(err) }
 
-	nonce := s.Split("difn893nfe,Phn", ",")[0]
+	
 
 	if cnt > 0 { 
 		isValidation = true 
@@ -64,6 +64,7 @@ func ReqReceive(c *gin.Context) {
 		var msg []kaoreqtable.Reqtable
 		//전달온 데이터 kaoreqtable.Reqtable에 맵핑
 		err1 := c.ShouldBindJSON(&msg)
+
 		if err1 != nil { errlog.Println(err1) }
 
 		errlog.Println("발송 메세지 수신 시작 ( ", userid, ") : ", len(msg), startTime)
@@ -98,6 +99,7 @@ func ReqReceive(c *gin.Context) {
 
 		//맵핑한 데이터 row 처리
 		for i, _ := range msg {
+			nonce := s.Split(msg["Crypto"], ",")[0]
 			//친구톡 insert values 만들기
 			if s.HasPrefix(s.ToUpper(msg[i].Messagetype), "F") {
 				reqinsStrs = append(reqinsStrs, "("+ftQmarkStr+")")
