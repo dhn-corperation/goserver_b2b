@@ -105,7 +105,7 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 	  and userid = ?
 	LIMIT 500
 	`
-	_, err := tx.ExecContext(ctx, gudQuery, group_no, user_id)
+	_, err = tx.ExecContext(ctx, gudQuery, group_no, user_id)
 
 	if err != nil {
 		config.Stdlog.Println(user_id, "- Group NO Update - Select error : ( group_no : " + group_no + " / user_id : "+user_id+" ) : " + err)
