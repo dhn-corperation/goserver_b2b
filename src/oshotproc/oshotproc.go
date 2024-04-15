@@ -57,9 +57,9 @@ func OshotProcess(user_id string, ctx context.Context) {
 				cnterr := databasepool.DB.QueryRowContext(ctx, tickSql, user_id).Scan(&count)
 
 				if cnterr != nil && cnterr != sql.ErrNoRows {
-					config.Stdlog.Println("DHN_RESULT Table - select 오류 : " + cnterr.Error())
+					config.Stdlog.Println("DHN_RESULT Table - select 오류 : " + cnterr)
 				} else {
-					if count > 0 {
+					if count.Int64 > 0 {
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%02d%06d", startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), (startNow.Nanosecond() / 1000))
 
@@ -87,10 +87,10 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 	defer func() error {
 		if err != nil {
 			tx.Rollback()
-			return
+			return err
 		}
 		err = tx.Commit()
-		return
+		return err
 	}()
 
 
@@ -105,7 +105,7 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 	  and userid = ?
 	LIMIT 500
 	`
-	_, err := tx.ExecContext(ctx, gudQuery, group_no, user_id)
+	updateRows, err := tx.ExecContext(ctx, gudQuery, group_no, user_id)
 
 	if err != nil {
 		config.Stdlog.Println(user_id, "- Group NO Update - Select error : ( group_no : " + group_no + " / user_id : "+user_id+" ) : " + err)
