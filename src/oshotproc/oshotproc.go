@@ -67,7 +67,7 @@ func OshotProcess(user_id string, ctx context.Context) {
 						if upError != nil {
 							config.Stdlog.Println(user_id , "Group No Update 오류", group_no)
 						} else {
-							go resProcess(group_no, user_id)
+							go resProcess(ctx, group_no, user_id)
 						}
 					}
 				}
@@ -116,7 +116,7 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 	return nil
 }
 
-func resProcess(group_no string, user_id string) {
+func resProcess(ctx context.Context, group_no string, user_id string) {
 	//defer wg.Done()
 
 	procCnt++
@@ -140,39 +140,41 @@ func resProcess(group_no string, user_id string) {
 	osmmsStrs := []string{}
 	osmmsValues := []interface{}{}
 
-	var resquery = `SELECT msgid, 
-	code, 
-	message, 
-	message_type, 
-	(case when sms_kind = 'S' then 
-		substr(convert(REMOVE_WS(msg_sms) using euckr),1,100)
-	 else 
-	   convert(REMOVE_WS(msg_sms) using euckr)
-     end) as msg_sms, 
-	phn, 
-	remark1, 
-	remark2,
-	result, 
-	convert(REMOVE_WS(sms_lms_tit) using euckr) as sms_lms_tit, 
-	sms_kind, 
-	sms_sender, 
-	res_dt, 
-	reserve_dt, 
-	(select file1_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file1, 
-	(select file2_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file2, 
-	(select file3_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file3
-	,(case when sms_kind = 'S' then length(convert(REMOVE_WS(msg_sms) using euckr)) else 100 end) as msg_len
-	,userid
-	,(select max(sms_len_check) from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as sms_len_check
-	,(select ifnull(max(oshot), 'OShot') from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as oshot  
+	var resquery = `
+	SELECT
+		msgid, 
+		code, 
+		message, 
+		message_type, 
+		(case when sms_kind = 'S' then 
+			substr(convert(REMOVE_WS(msg_sms) using euckr),1,100)
+		 else 
+		   convert(REMOVE_WS(msg_sms) using euckr)
+	     end) as msg_sms, 
+		phn, 
+		remark1, 
+		remark2,
+		result, 
+		convert(REMOVE_WS(sms_lms_tit) using euckr) as sms_lms_tit, 
+		sms_kind, 
+		sms_sender, 
+		res_dt, 
+		reserve_dt, 
+		(select file1_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file1, 
+		(select file2_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file2, 
+		(select file3_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file3
+		,(case when sms_kind = 'S' then length(convert(REMOVE_WS(msg_sms) using euckr)) else 100 end) as msg_len
+		,userid
+		,(select max(sms_len_check) from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as sms_len_check
+		,(select ifnull(max(oshot), 'OShot') from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as oshot  
 	FROM DHN_RESULT drr 
-	WHERE send_group = '` + group_no + `' 
+	WHERE send_group = ?
 	  and result = 'P'
-      and userid = '` + user_id + `'
+      and userid = ?
 	order by userid
 	`
 
-	resrows, err := db.Query(resquery)
+	resrows, err := db.QueryContext(resquery, group_no, user_id)
 
 	if err != nil {
 		stdlog.Println("Result Table 조회 중 오류 발생")
@@ -180,6 +182,7 @@ func resProcess(group_no string, user_id string) {
 		stdlog.Println(resquery)
 	}
 	defer resrows.Close()
+
 	scnt := 0
 	fcnt := 0
 	smscnt := 0
@@ -202,21 +205,21 @@ func resProcess(group_no string, user_id string) {
 
 		if len(ossmsStrs) > 500 || (preOshot != oshot.String && len(ossmsStrs) > 0) {
 			stmt := fmt.Sprintf("insert into "+preOshot+"SMS(Sender,Receiver,Msg,URL,ReserveDT,TimeoutDT,SendResult,mst_id,cb_msg_id,userid ) values %s", s.Join(ossmsStrs, ","))
-			_, err := db.Exec(stmt, ossmsValues...)
+			_, err := db.ExecContext(ctx, stmt, ossmsValues...)
 
 			if err != nil {
 				//stdlog.Println("스마트미 SMS Table Insert 처리 중 오류 발생 " + err.Error())
 				for i := 0; i < len(ossmsValues); i = i + 9 {
 					eQuery := fmt.Sprintf("insert into "+preOshot+"SMS(Sender,Receiver,Msg,URL,ReserveDT,TimeoutDT,SendResult,mst_id,cb_msg_id,userid ) "+
 						"values('%v','%v','%v','%v',null,null,'%v',null,'%v','%v')", ossmsValues[i], ossmsValues[i+1], ossmsValues[i+2], ossmsValues[i+3], ossmsValues[i+5], ossmsValues[i+7], ossmsValues[i+8])
-					_, err := db.Exec(eQuery)
+					_, err := db.ExecContext(ctx, eQuery)
 					if err != nil {
 						msgKey := fmt.Sprintf("%v", ossmsValues[i+7])
 						useridt := fmt.Sprintf("%v", ossmsValues[i+8])
 						stdlog.Println(user_id, "- 스마트미 SMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
 						errcodemsg := err.Error()
 						if s.Index(errcodemsg, "1366") > 0 {
-							db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and  msgid = '" + msgKey + "'")
+							db.ExecContext(ctx, "update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = ? and  msgid = ?", useridt, msgKey)
 						}
 					}
 				}
