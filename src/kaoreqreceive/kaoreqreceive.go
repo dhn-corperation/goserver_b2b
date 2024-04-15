@@ -99,7 +99,10 @@ func ReqReceive(c *gin.Context) {
 
 		//맵핑한 데이터 row 처리
 		for i, _ := range msg {
-			nonce := s.Split(msg[i].Crypto, ",")[0]
+			var nonce string
+			if msg[i].Crypto != nil && len(msg[i].Crypto) > 0 {
+				nonce = s.Split(msg[i].Crypto, ",")[0]
+			}
 			//친구톡 insert values 만들기
 			if s.HasPrefix(s.ToUpper(msg[i].Messagetype), "F") {
 				reqinsStrs = append(reqinsStrs, "("+ftQmarkStr+")")
