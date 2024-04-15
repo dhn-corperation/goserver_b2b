@@ -263,8 +263,8 @@ func ReqReceive(c *gin.Context) {
 				}
 				atreqinsValues = append(atreqinsValues, msg[i].Onlysms)
 
-				// atreqinsValues = append(atreqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
-				atreqinsValues = append(atreqinsValues, msg[i].Phn)
+				atreqinsValues = append(atreqinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
+				// atreqinsValues = append(atreqinsValues, msg[i].Phn)
 				if s.Contains(msg[i].Crypto, "Profile") && len(msg[i].Profile) > 0 {
 					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
 				} else {
