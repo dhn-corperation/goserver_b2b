@@ -174,7 +174,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	order by userid
 	`
 
-	resrows, err = db.QueryContext(resquery, group_no, user_id)
+	resrows, err := db.QueryContext(ctx, resquery, group_no, user_id)
 
 	if err != nil {
 		stdlog.Println("Result Table 조회 중 오류 발생")
