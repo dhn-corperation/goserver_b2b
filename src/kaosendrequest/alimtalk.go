@@ -85,15 +85,15 @@ func atsendProcess(group_no string, user_id string) {
 
 	reqrows, err := db.Query(reqsql)
 	if err != nil {
-		errlog.Prinfln("atsendProcess 쿼리 에러 query : ", reqsql)
-		errlog.Prinfln("atsendProcess 쿼리 에러 : ", err)
+		errlog.Println("atsendProcess 쿼리 에러 query : ", reqsql)
+		errlog.Println("atsendProcess 쿼리 에러 : ", err)
 		errlog.Fatal(err)
 	}
 
 	columnTypes, err := reqrows.ColumnTypes()
 	if err != nil {
-		errlog.Prinfln("atsendProcess 컬럼 초기화 에러 group_no : ", group_no, " / userid  : ", user_id)
-		errlog.Prinfln("atsendProcess 컬럼 초기화 에러 : ", err)
+		errlog.Println("atsendProcess 컬럼 초기화 에러 group_no : ", group_no, " / userid  : ", user_id)
+		errlog.Println("atsendProcess 컬럼 초기화 에러 : ", err)
 		errlog.Fatal(err)
 	}
 	count := len(columnTypes)
@@ -116,8 +116,8 @@ func atsendProcess(group_no string, user_id string) {
 
 		err := reqrows.Scan(scanArgs...)
 		if err != nil {
-			errlog.Prinfln("atsendProcess 컬럼 스캔 에러 group_no : ", group_no, " / userid  : ", user_id)
-			errlog.Prinfln("atsendProcess 컬럼 스캔 에러 : ", err)
+			errlog.Println("atsendProcess 컬럼 스캔 에러 group_no : ", group_no, " / userid  : ", user_id)
+			errlog.Println("atsendProcess 컬럼 스캔 에러 : ", err)
 			errlog.Fatal(err)
 		}
 
