@@ -50,7 +50,7 @@ func OshotProcess(user_id string, ctx context.Context) {
 				where
 					dr.result = 'P'
 					and dr.send_group is null
-					and ifnull(dr.reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
+					and coalesce(dr.reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
 					and userid = ?
 				limit 1
 					`
@@ -101,7 +101,7 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 	set	send_group = ?
 	where result = 'P'
 	  and send_group is null
-	  and ifnull(reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
+	  and coalesce(reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
 	  and userid = ?
 	LIMIT 500
 	`
@@ -166,7 +166,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 		,(case when sms_kind = 'S' then length(convert(REMOVE_WS(msg_sms) using euckr)) else 100 end) as msg_len
 		,userid
 		,(select max(sms_len_check) from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as sms_len_check
-		,(select ifnull(max(oshot), 'OShot') from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as oshot  
+		,(select coalesce(max(oshot), 'OShot') from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as oshot  
 	FROM DHN_RESULT drr 
 	WHERE send_group = ?
 	  and result = 'P'

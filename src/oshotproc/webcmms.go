@@ -24,7 +24,7 @@ func LMSProcess(ctx context.Context) {
 	var oshotTable [][]string
 	var otable sql.NullString
 
-	var OshotQuery = "select distinct a.oshot from DHN_CLIENT_LIST a where a.use_flag = 'Y' and ifnull(a.dest,'OSHOT') = 'OSHOT' and LENGTH(a.oshot) > 1 and a.oshot  is not null"
+	var OshotQuery = "select distinct a.oshot from DHN_CLIENT_LIST a where a.use_flag = 'Y' and coalesce(a.dest,'OSHOT') = 'OSHOT' and LENGTH(a.oshot) > 1 and a.oshot  is not null"
 
 	OshotTable, err := db.Query(OshotQuery)
 
