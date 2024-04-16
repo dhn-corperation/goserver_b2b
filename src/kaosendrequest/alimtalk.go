@@ -367,7 +367,7 @@ func atsendProcess(group_no string, user_id string) {
 	db.Exec("delete from DHN_REQUEST_AT where send_group = '" + group_no + "'")
 
 	stdlog.Println(user_id, "알림톡 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건 ( Proc Cnt :", atprocCnt, ")")
-	stdlog.Println(resdtstr)
+	stdlog.Println(fmt.Sprintf("%4d-%02d-%02d %02d:%02d:%02d", resdt.Year(), resdt.Month(), resdt.Day(), resdt.Hour(), resdt.Minute(), resdt.Second()))
 	
 	atprocCnt--
 }
@@ -387,7 +387,7 @@ func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- resultStr, alimtalk kakao
 	// 	temp.Statuscode = resp.StatusCode()
 	// 	temp.BodyData = resp.Body()
 	// }
-
+	temp.Statuscode = 200
 	c <- temp
 
 }
