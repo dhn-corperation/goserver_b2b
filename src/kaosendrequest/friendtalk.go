@@ -91,6 +91,7 @@ func ftsendProcess(group_no string) {
 
 	reqrows, err := db.Query(reqsql)
 	if err != nil {
+		errlog.Println("여긴가")
 		errlog.Fatal(err)
 	}
 
