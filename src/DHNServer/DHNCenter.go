@@ -79,6 +79,8 @@ func main() {
 
 	databasepool.InitDatabase()
 
+	databasepool.db.Exec("insert into dhn_client_list (user_id) values (1234)")
+
 	// srv, err := daemon.New(name, description, daemon.SystemDaemon, dependencies...)
 	// if err != nil {
 	// 	config.Stdlog.Println("Error: ", err)
