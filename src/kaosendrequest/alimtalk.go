@@ -255,14 +255,17 @@ func atsendProcess(group_no string, user_id string) {
 		result := resChan.Result
 		if resChan.Statuscode == 200 {
 
-			var kakaoResp kakao.KakaoResponse
-			json.Unmarshal(resChan.BodyData, &kakaoResp)
+			// var kakaoResp kakao.KakaoResponse
+			// json.Unmarshal(resChan.BodyData, &kakaoResp)
 
 			var resdt = time.Now()
 			var resdtstr = fmt.Sprintf("%4d-%02d-%02d %02d:%02d:%02d", resdt.Year(), resdt.Month(), resdt.Day(), resdt.Hour(), resdt.Minute(), resdt.Second())
 			
-			var resCode = kakaoResp.Code
-			var resMessage = kakaoResp.Message
+			// var resCode = kakaoResp.Code
+			// var resMessage = kakaoResp.Message
+
+			var resCode = "0000"
+			var resMessage = ""
 			
 			if s.EqualFold(resCode, "3005") {
 				resCode = "0000"
@@ -348,7 +351,7 @@ func atsendProcess(group_no string, user_id string) {
 				resinsStrs, resinsValues = cm.InsMsg(resinsquery, resinsStrs, resinsValues)
 			}
 		} else {
-			stdlog.Println(user_id, "알림톡 서버 처리 오류 !! ( ", string(resChan.BodyData), " )", result["msgid"])
+			// stdlog.Println(user_id, "알림톡 서버 처리 오류 !! ( ", string(resChan.BodyData), " )", result["msgid"])
 			db.Exec("update DHN_REQUEST_AT set send_group = null where msgid = '" + result["msgid"] + "'")
 		}
 
@@ -364,6 +367,7 @@ func atsendProcess(group_no string, user_id string) {
 	db.Exec("delete from DHN_REQUEST_AT where send_group = '" + group_no + "'")
 
 	stdlog.Println(user_id, "알림톡 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건 ( Proc Cnt :", atprocCnt, ")")
+	stdlog.Println(resdtstr)
 	
 	atprocCnt--
 }
@@ -372,17 +376,18 @@ func atsendProcess(group_no string, user_id string) {
 func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- resultStr, alimtalk kakao.Alimtalk, temp resultStr) {
 	defer reswg.Done()
 
-	resp, err := config.Client.R().
-		SetHeaders(map[string]string{"Content-Type": "application/json"}).
-		SetBody(alimtalk).
-		Post(config.Conf.API_SERVER + "/v3/" + config.Conf.PROFILE_KEY + "/alimtalk/send")
+	// resp, err := config.Client.R().
+	// 	SetHeaders(map[string]string{"Content-Type": "application/json"}).
+	// 	SetBody(alimtalk).
+	// 	Post(config.Conf.API_SERVER + "/v3/" + config.Conf.PROFILE_KEY + "/alimtalk/send")
 
-	if err != nil {
-		config.Stdlog.Println("알림톡 메시지 서버 호출 오류 : ", err)
-	} else {
-		temp.Statuscode = resp.StatusCode()
-		temp.BodyData = resp.Body()
-	}
+	// if err != nil {
+	// 	config.Stdlog.Println("알림톡 메시지 서버 호출 오류 : ", err)
+	// } else {
+	// 	temp.Statuscode = resp.StatusCode()
+	// 	temp.BodyData = resp.Body()
+	// }
+
 	c <- temp
 
 }
