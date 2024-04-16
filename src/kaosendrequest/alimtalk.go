@@ -41,7 +41,7 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 			    return
 			default:
 				var count sql.NullInt64
-				cnterr := databasepool.DB.QueryRowContext(ctx, "SELECT LENGTH(msgid) AS cnt FROM DHN_REQUEST_AT WHERE send_group IS NULL AND coalesce(reserve_dt,'00000000000000') <= TO_CHAR(NOW(), '%Y%m%d%H%i%S') AND userid=?", user_id).Scan(&count)
+				cnterr := databasepool.DB.QueryRowContext(ctx, "SELECT LENGTH(msgid) AS cnt FROM DHN_REQUEST_AT WHERE send_group IS NULL AND coalesce(reserve_dt,'00000000000000')::timestamp <= NOW() AND userid=?", user_id).Scan(&count)
 				
 				if cnterr != nil && cnterr != sql.ErrNoRows {
 					config.Stdlog.Println("DHN_REQUEST Table - select 오류 : " + cnterr.Error())
