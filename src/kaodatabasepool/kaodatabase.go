@@ -3,7 +3,7 @@ package databasepool
 import (
 	"fmt"
 	"database/sql"
-	config "mycs/src/kaoconfig"
+	// config "mycs/src/kaoconfig"
 	"log"
 
 	// _ "github.com/go-sql-driver/mysql"
