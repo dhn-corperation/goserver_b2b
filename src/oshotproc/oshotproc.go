@@ -42,7 +42,7 @@ func OshotProcess(user_id string, ctx context.Context) {
 			default:
 
 				var count sql.NullInt64
-				tickSql := `
+				tickSql := "
 				select
 					length(msgid) as cnt
 				from
@@ -51,10 +51,10 @@ func OshotProcess(user_id string, ctx context.Context) {
 					dr.result = 'P'
 					and dr.send_group is null
 					and (dr.reserve_dt IS NULL OR to_timestamp(coalesce(dr.reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW())
-					and userid = ?
+					and userid = '"+user_id+"'
 				limit 1
-					`
-				cnterr := databasepool.DB.QueryRowContext(ctx, tickSql, user_id).Scan(&count)
+					"
+				cnterr := databasepool.DB.QueryRowContext(ctx, tickSql).Scan(&count)
 
 				if cnterr != nil && cnterr != sql.ErrNoRows {
 					config.Stdlog.Println("DHN_RESULT Table - select 오류 : " + cnterr.Error())
