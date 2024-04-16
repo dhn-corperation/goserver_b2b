@@ -50,7 +50,7 @@ func OshotProcess(user_id string, ctx context.Context) {
 				where
 					dr.result = 'P'
 					and dr.send_group is null
-					and coalesce(dr.reserve_dt, '00000000000000') <= TO_CHAR(now(), '%Y%m%d%H%i%S')
+					and (dr.reserve_dt IS NULL OR to_timestamp(coalesce(dr.reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW())
 					and userid = ?
 				limit 1
 					`
