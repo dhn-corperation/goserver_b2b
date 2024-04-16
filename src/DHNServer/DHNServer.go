@@ -187,7 +187,7 @@ func resultProc() {
 	oshotCtxC := map[string]interface{}{}
 
 	if s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
-		oshotUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl  where dcl.use_flag   = 'Y' and IFNULL(dcl.dest, 'OSHOT') = 'OSHOT'")
+		oshotUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl  where dcl.use_flag = 'Y' and coalesce(dcl.dest, 'OSHOT') = 'OSHOT'")
 		isOshot := true
 		if error != nil {
 			config.Stdlog.Println("Oshot 유저 select 오류 ")
@@ -230,7 +230,7 @@ func resultProc() {
 
 	if s.EqualFold(config.Conf.NANO_MSG_FLAG, "YES") {
 
-		nanoUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl  where dcl.use_flag   = 'Y' and IFNULL(dcl.dest, 'OSHOT') = 'NANO'")
+		nanoUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl  where dcl.use_flag   = 'Y' and coalesce(dcl.dest, 'OSHOT') = 'NANO'")
 		isNano := true
 		if error != nil {
 			config.Stdlog.Println("Nano 유저 select 오류 ")

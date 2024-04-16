@@ -109,7 +109,7 @@ func getPollingProcess(wg *sync.WaitGroup) {
 	        finsStrs := []string{}
 	        finsValues := []interface{}{}
 	        
-	        insquery := `insert IGNORE into DHN_POLLING_RESULT(
+	        insquery := `insert into DHN_POLLING_RESULT(
 msg_id ,
 type ,
 result_dt) values %s`

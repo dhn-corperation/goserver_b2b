@@ -49,7 +49,7 @@ func FriendtalkProc(ctx context.Context) {
 						
 				var count int
 	
-				cnterr := databasepool.DB.QueryRow("select length(msgid) as cnt from DHN_REQUEST  where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit 1").Scan(&count)
+				cnterr := databasepool.DB.QueryRow("select length(msgid) as cnt from DHN_REQUEST  where send_group is null and coalesce(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit 1").Scan(&count)
 	
 				if cnterr != nil {
 					//config.Stdlog.Println("DHN_REQUEST Table - select 오류 : " + cnterr.Error())
@@ -59,7 +59,7 @@ func FriendtalkProc(ctx context.Context) {
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
 				
-						updateRows, err := databasepool.DB.Exec("update DHN_REQUEST set send_group = '" + group_no + "' where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit " + strconv.Itoa(config.Conf.SENDLIMIT))
+						updateRows, err := databasepool.DB.Exec("update DHN_REQUEST set send_group = '" + group_no + "' where send_group is null and coalesce(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit " + strconv.Itoa(config.Conf.SENDLIMIT))
 				
 						if err != nil {
 							config.Stdlog.Println("Request Table - send_group Update 오류")
@@ -107,7 +107,7 @@ func ftsendProcess(group_no string) {
 
 	resinsStrs := []string{}
 	resinsValues := []interface{}{}
-	resinsquery := `insert IGNORE into DHN_RESULT(
+	resinsquery := `insert into DHN_RESULT(
 msgid ,
 userid ,
 ad_flag ,
@@ -151,7 +151,8 @@ price ,
 currency_type,
 header,
 carousel      
-) values %s`
+) values %s
+`
 
 	// friendClient := &http.Client{
 	// 	Timeout: time.Second * 20,
