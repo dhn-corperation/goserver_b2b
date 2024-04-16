@@ -41,7 +41,7 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 			    return
 			default:
 				var count sql.NullInt64
-				cnterr := databasepool.DB.QueryRowContext(ctx, "SELECT LENGTH(msgid) AS cnt FROM DHN_REQUEST_AT WHERE send_group IS NULL AND CAST(coalesce(reserve_dt,'00000000000000') AS bigint) <= CAST(TO_CHAR(now(), 'YYYYMMDDHH24HISS') AS bigint) AND userid=?", user_id).Scan(&count)
+				cnterr := databasepool.DB.QueryRowContext(ctx, "SELECT LENGTH(msgid) AS cnt FROM DHN_REQUEST_AT WHERE send_group IS NULL AND (reserve_dt IS NULL OR to_timestamp(coalesce(reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW()) AND userid=?", user_id).Scan(&count)
 				
 				if cnterr != nil && cnterr != sql.ErrNoRows {
 					config.Stdlog.Println("DHN_REQUEST Table - select 오류 : " + cnterr.Error())
@@ -50,7 +50,7 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
 						
-						updateRows, err := databasepool.DB.ExecContext(ctx, "update DHN_REQUEST_AT set send_group = ? where send_group is null and CAST(coalesce(reserve_dt,'00000000000000') AS bigint) <= CAST(TO_CHAR(now(), 'YYYYMMDDHH24HISS') AS bigint) and userid = ?  limit ?", group_no, user_id, strconv.Itoa(config.Conf.SENDLIMIT))
+						updateRows, err := databasepool.DB.ExecContext(ctx, "update DHN_REQUEST_AT set send_group = ? where send_group is null and (reserve_dt IS NULL OR to_timestamp(coalesce(reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW()) and userid = ?  limit ?", group_no, user_id, strconv.Itoa(config.Conf.SENDLIMIT))
 				
 						if err != nil {
 							config.Stdlog.Println(user_id,"알림톡 send_group Update 오류 : ", err)
