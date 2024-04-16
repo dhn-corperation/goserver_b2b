@@ -1,17 +1,21 @@
 package databasepool
 
 import (
+	"fmt"
 	"database/sql"
 	config "mycs/src/kaoconfig"
 	"log"
 
-	_ "github.com/go-sql-driver/mysql"
+	// _ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 )
 
 var DB *sql.DB
 
 func InitDatabase() {
-	db, err := sql.Open(config.Conf.DB, config.Conf.DBURL)
+	psqlInfo := fmt.Sprintf("host=%s post=%s user=%s password=%s dbname=%s sslmode=disable", "210.114.225.58", "5432", "postgres", "dhn7985!", "kakao")
+	db, err := sql.Open("postgres", psqlInfo)
+	// db, err := sql.Open(config.Conf.DB, config.Conf.DBURL)
 	if err != nil {
 		log.Fatal(err)
 	}
