@@ -23,7 +23,7 @@ func SMSProcess(ctx context.Context) {
 	var oshotTable [][]string
 	var otable sql.NullString
 
-	var OshotQuery = "select distinct a.oshot from DHN_CLIENT_LIST a where a.use_flag = 'Y' and coalesce(a.dest,'OSHOT') = 'OSHOT' and LENGTH(a.oshot) > 1 and a.oshot  is not null"
+	var OshotQuery = "select distinct a.oshot from DHN_CLIENT_LIST a where a.use_flag = 'Y' and coalesce(a.dest,'OSHOT') = 'OSHOT' and LENGTH(a.oshot) > 1 and a.oshot is not null"
 
 	OshotTable, err := db.Query(OshotQuery)
 
@@ -147,8 +147,8 @@ func smsProcess(wg *sync.WaitGroup, ostable string) {
 		errlog.Println("스마트미 SMS 조회 중 오류 발생")
 		errcode := err.Error()
 
-		if s.Index(errcode, "1146") > 0 {
-			db.Exec("Create Table IF NOT EXISTS " + SMSTable + " like " + ostable + "SMS")
+		if s.Index(errcode, "42P01") > 0 {
+			db.Exec("Create Table IF NOT EXISTS " + SMSTable + " as select * from " + ostable + "SMS where false")
 			errlog.Println(SMSTable + " 생성 !!")
 
 		} else {
