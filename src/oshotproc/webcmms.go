@@ -29,6 +29,7 @@ func LMSProcess(ctx context.Context) {
 	OshotTable, err := db.Query(OshotQuery)
 
 	if err != nil {
+		errlog.Println(err.Error())
 		errlog.Fatal("DHN CLIENT LIST 조회 오류 ")
 	}
 	defer OshotTable.Close()
