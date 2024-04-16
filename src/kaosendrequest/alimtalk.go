@@ -367,7 +367,8 @@ func atsendProcess(group_no string, user_id string) {
 	db.Exec("delete from DHN_REQUEST_AT where send_group = '" + group_no + "'")
 
 	stdlog.Println(user_id, "알림톡 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건 ( Proc Cnt :", atprocCnt, ")")
-	stdlog.Println(fmt.Sprintf("%4d-%02d-%02d %02d:%02d:%02d", resdt.Year(), resdt.Month(), resdt.Day(), resdt.Hour(), resdt.Minute(), resdt.Second()))
+	var resdt2 = time.Now()
+	stdlog.Println(fmt.Sprintf("%4d-%02d-%02d %02d:%02d:%02d", resdt2.Year(), resdt2.Month(), resdt2.Day(), resdt2.Hour(), resdt2.Minute(), resdt2.Second()))
 	
 	atprocCnt--
 }
