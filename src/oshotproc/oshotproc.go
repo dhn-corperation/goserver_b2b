@@ -50,7 +50,7 @@ func OshotProcess(user_id string, ctx context.Context) {
 				where
 					dr.result = 'P'
 					and dr.send_group is null
-					and coalesce(dr.reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
+					and coalesce(dr.reserve_dt, '00000000000000') <= TO_CHAR(now(), '%Y%m%d%H%i%S')
 					and userid = ?
 				limit 1
 					`
@@ -101,7 +101,7 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 	set	send_group = ?
 	where result = 'P'
 	  and send_group is null
-	  and coalesce(reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
+	  and coalesce(reserve_dt, '00000000000000') <= TO_CHAR(now(), '%Y%m%d%H%i%S')
 	  and userid = ?
 	LIMIT 500
 	`
@@ -140,38 +140,72 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	osmmsStrs := []string{}
 	osmmsValues := []interface{}{}
 
+	// var resquery = `
+	// SELECT
+	// 	msgid, 
+	// 	code, 
+	// 	message, 
+	// 	message_type, 
+	// 	(case when sms_kind = 'S' then 
+	// 		substr(convert(REMOVE_WS(msg_sms) using euckr),1,100)
+	// 	 else 
+	// 	   convert(REMOVE_WS(msg_sms) using euckr)
+	//      end) as msg_sms, 
+	// 	phn, 
+	// 	remark1, 
+	// 	remark2,
+	// 	result, 
+	// 	convert(REMOVE_WS(sms_lms_tit) using euckr) as sms_lms_tit, 
+	// 	sms_kind, 
+	// 	sms_sender, 
+	// 	res_dt, 
+	// 	reserve_dt, 
+	// 	(select file1_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file1, 
+	// 	(select file2_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file2, 
+	// 	(select file3_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file3
+	// 	,(case when sms_kind = 'S' then length(convert(REMOVE_WS(msg_sms) using euckr)) else 100 end) as msg_len
+	// 	,userid
+	// 	,(select max(sms_len_check) from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as sms_len_check
+	// 	,(select coalesce(max(oshot), 'OShot') from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as oshot  
+	// FROM DHN_RESULT drr 
+	// WHERE send_group = ?
+	//   and result = 'P'
+    //   and userid = ?
+	// order by userid
+	// `
+
 	var resquery = `
 	SELECT
-		msgid, 
-		code, 
-		message, 
-		message_type, 
-		(case when sms_kind = 'S' then 
-			substr(convert(REMOVE_WS(msg_sms) using euckr),1,100)
-		 else 
-		   convert(REMOVE_WS(msg_sms) using euckr)
-	     end) as msg_sms, 
-		phn, 
-		remark1, 
-		remark2,
-		result, 
-		convert(REMOVE_WS(sms_lms_tit) using euckr) as sms_lms_tit, 
-		sms_kind, 
-		sms_sender, 
-		res_dt, 
-		reserve_dt, 
-		(select file1_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file1, 
-		(select file2_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file2, 
-		(select file3_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file3
-		,(case when sms_kind = 'S' then length(convert(REMOVE_WS(msg_sms) using euckr)) else 100 end) as msg_len
-		,userid
-		,(select max(sms_len_check) from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as sms_len_check
-		,(select coalesce(max(oshot), 'OShot') from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as oshot  
+	    msgid, 
+	    code, 
+	    message, 
+	    message_type, 
+	    CASE WHEN sms_kind = 'S' THEN 
+	        SUBSTRING(REMOVE_WS(msg_sms), 1, 100)
+	    ELSE 
+	        REMOVE_WS(msg_sms)
+	    END AS msg_sms, 
+	    phn, 
+	    remark1, 
+	    remark2,
+	    result, 
+	    REMOVE_WS(sms_lms_tit) AS sms_lms_tit, 
+	    sms_kind, 
+	    sms_sender, 
+	    res_dt, 
+	    reserve_dt, 
+	    (SELECT file1_path FROM api_mms_images aa WHERE aa.user_id = drr.userid AND aa.mms_id = drr.p_invoice) AS mms_file1, 
+	    (SELECT file2_path FROM api_mms_images aa WHERE aa.user_id = drr.userid AND aa.mms_id = drr.p_invoice) AS mms_file2, 
+	    (SELECT file3_path FROM api_mms_images aa WHERE aa.user_id = drr.userid AND aa.mms_id = drr.p_invoice) AS mms_file3,
+	    CASE WHEN sms_kind = 'S' THEN LENGTH(REMOVE_WS(msg_sms)) ELSE 100 END AS msg_len,
+	    userid,
+	    (SELECT MAX(sms_len_check) FROM DHN_CLIENT_LIST dcl WHERE dcl.user_id = drr.userid) AS sms_len_check,
+	    COALESCE((SELECT MAX(oshot) FROM DHN_CLIENT_LIST dcl WHERE dcl.user_id = drr.userid), 'OShot') AS oshot  
 	FROM DHN_RESULT drr 
 	WHERE send_group = ?
-	  and result = 'P'
-      and userid = ?
-	order by userid
+	  AND result = 'P'
+	  AND userid = ?
+	ORDER BY userid
 	`
 
 	resrows, err := db.QueryContext(ctx, resquery, group_no, user_id)
@@ -219,11 +253,11 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 						stdlog.Println(user_id, "- 스마트미 SMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
 						errcodemsg := err.Error()
 						if s.Index(errcodemsg, "1366") > 0 {
-							db.ExecContext(ctx, "update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = ? and  msgid = ?", useridt, msgKey)
+							db.ExecContext(ctx, "update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = TO_CHAR(now(), '%Y-%m-%d %H:%i:%S') where userid = ? and  msgid = ?", useridt, msgKey)
 						}
 					}
 				}
-				//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = date_format(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
+				//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = TO_CHAR(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
 			} else {
 				stdlog.Println(user_id, "- 스마트미 SMS Table Insert 처리 : ", len(ossmsStrs), " - ", preOshot)
 			}
@@ -247,11 +281,11 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 						stdlog.Println(user_id, "- 스마트미 LMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
 						errcodemsg := err.Error()
 						if s.Index(errcodemsg, "1366") > 0 {
-							db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and msgid = '" + msgKey + "'")
+							db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = TO_CHAR(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and msgid = '" + msgKey + "'")
 						}
 					}
 				}
-				//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = date_format(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
+				//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = TO_CHAR(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
 			} else {
 				stdlog.Println(user_id, "- 스마트미 MMS Table Insert 처리 : ", len(osmmsStrs), " - ", preOshot)
 			}
