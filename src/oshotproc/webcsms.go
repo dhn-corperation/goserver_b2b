@@ -144,11 +144,10 @@ func smsProcess(wg *sync.WaitGroup, ostable string) {
 
 	groupRows, err := db.Query(groupQuery)
 	if err != nil {
-		errlog.Println(err.Error())
 		errlog.Println("스마트미 SMS 조회 중 오류 발생")
 		errcode := err.Error()
 
-		if s.Index(errcode, "42P01") > 0 {
+		if s.Index(errcode, "이름의 릴레이션(relation)이 없습니다") > 0 {
 			db.Exec("Create Table IF NOT EXISTS " + SMSTable + " as select * from " + ostable + "SMS where false")
 			errlog.Println(SMSTable + " 생성 !!")
 

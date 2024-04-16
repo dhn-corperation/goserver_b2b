@@ -149,7 +149,7 @@ func mmsProcess(wg *sync.WaitGroup, ostable string) {
 		errcode := err.Error()
 		errlog.Println("스마트미 MMS 조회 중 오류 발생", groupQuery, errcode)
 
-		if s.Index(errcode, "42P01") > 0 {
+		if s.Index(errcode, "이름의 릴레이션(relation)이 없습니다") > 0 {
 			db.Exec("Create Table IF NOT EXISTS " + MMSTable + " as select * from " + ostable + "MMS where false")
 			errlog.Println(MMSTable + " 생성 !!")
 		} else {
