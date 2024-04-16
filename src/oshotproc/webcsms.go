@@ -144,6 +144,7 @@ func smsProcess(wg *sync.WaitGroup, ostable string) {
 
 	groupRows, err := db.Query(groupQuery)
 	if err != nil {
+		errlog.Println(err.Error())
 		errlog.Println("스마트미 SMS 조회 중 오류 발생")
 		errcode := err.Error()
 
