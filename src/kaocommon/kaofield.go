@@ -25,7 +25,6 @@ type AtReqColumn struct {
 	Remark3   		string	`db:"remark3"`
 	Remark4    		string	`db:"remark4"`
 	Remark5    		string	`db:"remark5"`
-	Res_dt    		string	`db:"res_dt"`
 	Reserve_dt    	string	`db:"reserve_dt"`
 	Result    		string	`db:"result"`
 	S_code    		string	`db:"s_code"`
@@ -65,7 +64,6 @@ type FtReqColumn struct {
 	Remark3   		string	`db:"remark3"`
 	Remark4    		string	`db:"remark4"`
 	Remark5    		string	`db:"remark5"`
-	Res_dt    		string	`db:"res_dt"`
 	Reserve_dt    	string	`db:"reserve_dt"`
 	Result    		string	`db:"result"`
 	S_code    		string	`db:"s_code"`
