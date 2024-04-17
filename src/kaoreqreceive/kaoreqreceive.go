@@ -254,6 +254,7 @@ func ReqReceive(c *gin.Context) {
 
 			//알림톡 insert values 만들기
 			} else {
+				errlog.Println("여기오냐1")
 				atValue := kaocommon.AtReqColumn{}
 
 				atValue.Msgid = msg[i].Msgid
@@ -310,7 +311,6 @@ func ReqReceive(c *gin.Context) {
 				atValue.Send_group = "\\n"
 				atValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
-					// price, _ := strconv.Atoi(msg[i].Price)
 					atValue.Price = msg[i].Price
 				} else {
 					atValue.Price = "\\n"
@@ -387,6 +387,7 @@ func ReqReceive(c *gin.Context) {
 		}
 
 		if len(atValues) > 0 {
+			errlog.Println("여기오냐2")
 			for _, data := range atValues {
 				_, err := atStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type)
 				if err != nil {
