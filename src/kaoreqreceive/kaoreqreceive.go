@@ -14,7 +14,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	// _ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
+	pq "github.com/lib/pq"
 )
 
 //언젠가는 다른곳으로 위치를 옮겨야 함
