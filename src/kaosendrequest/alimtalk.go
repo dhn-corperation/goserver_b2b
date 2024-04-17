@@ -265,7 +265,7 @@ func atsendProcess(group_no string, user_id string) {
 				resMessage = ""
 			} 
 
-			atValue := kaocommon.AtReqColumn{}
+			atValue := kaocommon.AtResColumn{}
 
 			atValue.Msgid = result["msgid"]
 			atValue.Userid = result["userid"]
@@ -356,7 +356,7 @@ func atsendProcess(group_no string, user_id string) {
 						errlog.Println(err)
 					}
 				}
-				atValues = []kaocommon.AtReqColumn{}
+				atValues = []kaocommon.AtResColumn{}
 				_, err = atStmt.Exec()
 				if err != nil {
 					atStmt.Close()
@@ -394,7 +394,7 @@ func atsendProcess(group_no string, user_id string) {
 				errlog.Println(err)
 			}
 		}
-		atValues = []kaocommon.AtReqColumn{}
+		atValues = []kaocommon.AtResColumn{}
 		_, err = atStmt.Exec()
 		if err != nil {
 			atStmt.Close()
