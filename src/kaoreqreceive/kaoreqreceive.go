@@ -363,7 +363,7 @@ func ReqReceive(c *gin.Context) {
 func ReqPqTest(c *gin.Context){
 	errlog := config.Stdlog
 
-	ftStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn)...))
+	ftStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
 	defer ftStmt.Close()
 	// atStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
 	// msgStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
