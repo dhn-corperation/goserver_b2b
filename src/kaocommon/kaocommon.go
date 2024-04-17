@@ -286,7 +286,7 @@ func InitDatabaseColumn(columnTypes []*sql.ColumnType, length int) []interface{}
 	return scanArgs
 }
 
-func GetReqColumnPq(mtype struct) []string {
+func GetReqColumnPq(mtype interface{}) []string {
 	t := reflect.TypeOf(mtype)
 	columns := make([]string, t.NumField())
 	for i:=0;i<t.Numfield();i++{
