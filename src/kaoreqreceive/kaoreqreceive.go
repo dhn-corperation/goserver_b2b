@@ -336,6 +336,7 @@ func ReqReceive(c *gin.Context) {
 		}
 
 		if len(atreqinsStrs) > 0 {
+			errlog.Println("sql : ", fmt.Sprintf(atreqinsQuery, s.Join(atreqinsStrs, ",")))
 			atreqinsStrs, atreqinsValues = cm.InsMsg(atreqinsQuery, atreqinsStrs, atreqinsValues)
 		}
 
