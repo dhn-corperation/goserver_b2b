@@ -7,7 +7,7 @@ import (
 	databasepool "mycs/src/kaodatabasepool"
 	"mycs/src/kaoreqtable"
 	"mycs/src/kaocommon"
-	// "strconv"
+	"strconv"
 	s "strings"
 	"time"
 	"database/sql"
@@ -138,7 +138,7 @@ func ReqReceive(c *gin.Context) {
 				ftValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
 					price, _ := strconv.Atoi(msg[i].Price)
-					atValue.Price = price
+					ftValue.Price = price
 				} else {
 					ftValue.Price = nil
 				}
