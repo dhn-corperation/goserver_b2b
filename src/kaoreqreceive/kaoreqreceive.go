@@ -366,12 +366,12 @@ func ReqPqTest(){
 	// msgStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result", cm.GetReqColumnPq(cm.MsgReqColumn{})...))
 	// msgTempStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result_temp", cm.GetReqColumnPq(cm.MsgReqColumn{})...))
 
-	ftValues := []cm.FtReqColumn{}
-	atValues := []cm.AtReqColumn{}
-	msgValues := []cm.MsgReqColumn{}
-	msgTempValues := []cm.MsgReqColumn{}
+	ftValues := []cm.FtReqColumn
+	// atValues := []cm.AtReqColumn
+	// msgValues := []cm.MsgReqColumn
+	// msgTempValues := []cm.MsgReqColumn
 
-	var ftValue = cm.FtReqColumn{}
+	var ftValue = cm.FtReqColumn
 	ftValue.Msgid = "test"
 	append(ftValues, ftValue)
 
