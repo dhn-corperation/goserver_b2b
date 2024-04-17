@@ -18,6 +18,7 @@ import (
 	"sync"
 	"time"
 	"context"
+	"github.com/lib/pq"
 )
 
 var atprocCnt int
@@ -96,10 +97,6 @@ func atsendProcess(group_no string, user_id string) {
 	procCount = 0
 	var startNow = time.Now()
 	var serial_number = fmt.Sprintf("%04d%02d%02d-", startNow.Year(), startNow.Month(), startNow.Day())
-
-	resinsStrs := []string{}
-	resinsValues := []interface{}{}
-	resinsquery := `insert into DHN_RESULT(`+atColumnStr+`) values %s`
 
 	resultChan := make(chan resultStr, config.Conf.SENDLIMIT) // resultStr 은 friendtalk에 정의 됨
 	var reswg sync.WaitGroup
