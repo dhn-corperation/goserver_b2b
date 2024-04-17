@@ -357,7 +357,6 @@ func atsendProcess(group_no string, user_id string) {
 					}
 				}
 				atValues = []kaocommon.AtReqColumn{}
-				execFlag = true
 				_, err = atStmt.Exec()
 				if err != nil {
 					atStmt.Close()
@@ -396,7 +395,6 @@ func atsendProcess(group_no string, user_id string) {
 			}
 		}
 		atValues = []kaocommon.AtReqColumn{}
-		execFlag = true
 		_, err = atStmt.Exec()
 		if err != nil {
 			atStmt.Close()
