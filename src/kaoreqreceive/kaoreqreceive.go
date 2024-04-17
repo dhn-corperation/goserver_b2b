@@ -157,13 +157,13 @@ func ReqReceive(c *gin.Context) {
 				ftValue.S_code = msg[i].Scode
 				ftValue.Tmpl_id = msg[i].Tmplid
 				ftValue.Wide = msg[i].Wide
-				ftValue.Send_group = nil
+				ftValue.Send_group = ""
 				ftValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
 					price, _ := strconv.Atoi(msg[i].Price)
-					ftValue.Price = &price
+					ftValue.Price = price
 				} else {
-					ftValue.Price = nil
+					ftValue.Price = sql.NullInt64{}
 				}
 
 				ftValue.Currency_type = msg[i].Currencytype
@@ -194,7 +194,7 @@ func ReqReceive(c *gin.Context) {
 				msgValue.Code = "9999"
 				msgValue.Image_link = msg[i].Imagelink
 				msgValue.Image_url = msg[i].Imageurl
-				msgValue.Kind = nil
+				msgValue.Kind = ""
 				msgValue.Message = ""
 				msgValue.Message_type = msg[i].Messagetype
 				if s.Contains(msg[i].Crypto, "MSG") {
@@ -240,10 +240,10 @@ func ReqReceive(c *gin.Context) {
 				msgValue.Sync = "N"
 				msgValue.Tmpl_id = msg[i].Tmplid
 				msgValue.Wide = msg[i].Wide
-				msgValue.Send_group = nil
+				msgValue.Send_group = ""
 				msgValue.Supplement = msg[i].Supplement
 				msgValue.Price = nil
-				msgValue.Currency_type = nil
+				msgValue.Currency_type = ""
 				msgValue.Header = msg[i].Header
 				msgValue.Carousel = msg[i].Carousel
 
@@ -304,13 +304,13 @@ func ReqReceive(c *gin.Context) {
 				atValue.S_code = msg[i].Scode
 				atValue.Tmpl_id = msg[i].Tmplid
 				atValue.Wide = msg[i].Wide
-				atValue.Send_group = nil
+				atValue.Send_group = ""
 				atValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
 					price, _ := strconv.Atoi(msg[i].Price)
-					atValue.Price = &price
+					atValue.Price = price
 				} else {
-					atValue.Price = nil
+					atValue.Price = sql.NullInt64{}
 				}
 
 				atValue.Currency_type = msg[i].Currencytype
