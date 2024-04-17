@@ -14,7 +14,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	// _ "github.com/go-sql-driver/mysql"
-	// pq "github.com/lib/pq"
+	pq "github.com/lib/pq"
 )
 
 //언젠가는 다른곳으로 위치를 옮겨야 함
@@ -363,7 +363,7 @@ func ReqReceive(c *gin.Context) {
 func ReqPqTest(c *gin.Context){
 	errlog := config.Stdlog
 
-	ftStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
+	ftStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn)...))
 	defer ftStmt.Close()
 	// atStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
 	// msgStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
