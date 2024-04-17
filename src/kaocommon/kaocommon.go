@@ -70,6 +70,7 @@ func GetReqFtColumn() []string {
 	ftReqColumn = append(ftReqColumn, "carousel")
 	ftReqColumn = append(ftReqColumn, "att_items")
 	ftReqColumn = append(ftReqColumn, "att_coupon")
+	ftReqColumn = append(ftReqColumn, "attachments")
 	return ftReqColumn
 }
 

@@ -21,13 +21,7 @@ import (
 var SecretKey = "9b4dabe9d4fed126a58f8639846143c7"
 
 func ReqReceive(c *gin.Context) {
-	ftColumn := kaocommon.GetReqFtColumn()
-	atColumn := kaocommon.GetReqAtColumn()
-	msgColumn := kaocommon.GetReqMsgColumn()
-	ftColumnStr := s.Join(ftColumn, ",")
-	atColumnStr := s.Join(atColumn, ",")
-	msgColumnStr := s.Join(msgColumn, ",")
-
+	execFlag := false
 	ctx := c.Request.Context()
 	errlog := config.Stdlog
 
@@ -42,14 +36,12 @@ func ReqReceive(c *gin.Context) {
 		from
 			DHN_CLIENT_LIST
 		where
-			user_id = '`+userid+`'
-			and ip = '`+userip+`'
+			user_id = $1
+			and ip = $2
 			and use_flag = 'Y'`
 	var cnt sql.NullInt64
-	err := databasepool.DB.QueryRowContext(ctx, sqlstr).Scan(&cnt)
+	err := databasepool.DB.QueryRowContext(ctx, sqlstr, userid, userip).Scan(&cnt)
 	if err != nil { errlog.Println("DHN_CLIENT_LIST 쿼리 에러 ", err) }
-
-	
 
 	if cnt.Valid && cnt.Int64 > 0 { 
 		isValidation = true 
@@ -70,33 +62,39 @@ func ReqReceive(c *gin.Context) {
 
 		errlog.Println("발송 메세지 수신 시작 ( ", userid, ") : ", len(msg), startTime)
 
-		reqinsStrs := []string{}
-		//친구톡 value interface 배열 생성
-		reqinsValues := []interface{}{}
+		tx, err := databasepool.DB.Begin()
+		if err != nil {
+			errlog.Println(err)
+		}
+		defer tx.Rollback()
 
-		atreqinsStrs := []string{}
-		//알림톡 value interface 배열 생성
-		atreqinsValues := []interface{}{}
+		ftStmt, err := tx.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
+		if err != nil {
+			errlog.Println(err)
+		}
+		defer ftStmt.Close()
 
-		resinsStrs := []string{}
-		//문자 value interface 배열 생성
-		resinsValues := []interface{}{}
+		atStmt, err := tx.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
+		if err != nil {
+			errlog.Println(err)
+		}
+		defer atStmt.Close()
 
-		//친구톡 insert 컬럼 셋팅
-		reqinsQuery := `insert into DHN_REQUEST(`+ftColumnStr+`) values %s`
+		msgStmt, err := tx.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
+		if err != nil {
+			errlog.Println(err)
+		}
+		defer atStmt.Close()
 
-		//알림톡 insert 컬럼 셋팅
-		atreqinsQuery := `insert into DHN_REQUEST_AT(`+atColumnStr+`) values %s`
+		msgTempStmt, _ := tx.Prepare(pq.CopyIn("dhn_result_temp", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
+		if err != nil {
+			errlog.Println(err)
+		}
+		defer msgTempStmt.Close()
 
-		//문자 insert 컬럼 셋팅
-		resinsquery := `insert into DHN_RESULT(`+msgColumnStr+`) values %s`
-
-		//temp 테이블 컬럼 셋팅(DHN_RESULT_TEMP : 에러 시 데이터 유실을 막기 위한 테이블)
-		resinstempquery := `insert into DHN_RESULT_TEMP(`+msgColumnStr+`) values %s`
-
-		ftQmarkStr := kaocommon.GetQuestionMark(ftColumn)
-		atQmarkStr := kaocommon.GetQuestionMark(atColumn)
-		msgQmarkStr := kaocommon.GetQuestionMark(msgColumn)
+		ftValues := []kaocommon.FtReqColumn{}
+		atValues := []kaocommon.AtReqColumn{}
+		msgValues := []kaocommon.MsgReqColumn{}
 
 		//맵핑한 데이터 row 처리
 		for i, _ := range msg {
@@ -106,243 +104,320 @@ func ReqReceive(c *gin.Context) {
 			}
 			//친구톡 insert values 만들기
 			if s.HasPrefix(s.ToUpper(msg[i].Messagetype), "F") {
-				reqinsStrs = append(reqinsStrs, "("+ftQmarkStr+")")
-				reqinsValues = append(reqinsValues, msg[i].Msgid)
-				reqinsValues = append(reqinsValues, userid)
-				reqinsValues = append(reqinsValues, msg[i].Adflag)
-				reqinsValues = append(reqinsValues, msg[i].Button1)
-				reqinsValues = append(reqinsValues, msg[i].Button2)
-				reqinsValues = append(reqinsValues, msg[i].Button3)
-				reqinsValues = append(reqinsValues, msg[i].Button4)
-				reqinsValues = append(reqinsValues, msg[i].Button5)
-				reqinsValues = append(reqinsValues, msg[i].Imagelink)
-				reqinsValues = append(reqinsValues, msg[i].Imageurl)
-				reqinsValues = append(reqinsValues, msg[i].Messagetype)
+				ftValue := kaocommon.FtReqColumn{}
+
+				ftValue.Msgid = msg[i].Msgid
+				ftValue.Userid = userid
+				ftValue.Ad_flag = msg[i].Adflag
+				ftValue.Button1 = msg[i].Button1
+				ftValue.Button2 = msg[i].Button2
+				ftValue.Button3 = msg[i].Button3
+				ftValue.Button4 = msg[i].Button4
+				ftValue.Button5 = msg[i].Button5
+				ftValue.Image_link = msg[i].Imagelink
+				ftValue.Image_url = msg[i].Imageurl
+				ftValue.Message_type = msg[i].Messagetype
 				if s.Contains(msg[i].Crypto, "MSG") {
-					reqinsValues = append(reqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
+					ftValue.Msg = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce)
 				} else {
-					reqinsValues = append(reqinsValues, msg[i].Msg)
+					ftValue.Msg = msg[i].Msg
 				}
 				if s.Contains(msg[i].Crypto, "Msgsms") && len(msg[i].Msgsms) > 0 {
-					reqinsValues = append(reqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
+					ftValue.Msg_sms = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce)
 				} else {
-					reqinsValues = append(reqinsValues, msg[i].Msgsms)
+					ftValue.Msg_sms = msg[i].Msgsms
 				}
-				reqinsValues = append(reqinsValues, msg[i].Onlysms)
-				reqinsValues = append(reqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
+				ftValue.Only_sms = msg[i].Onlysms
+				ftValue.Phn = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce)
 				if s.Contains(msg[i].Crypto, "Profile") && len(msg[i].Profile) > 0 {
-					reqinsValues = append(reqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
+					ftValue.Profile = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce)
 				} else {
-					reqinsValues = append(reqinsValues, msg[i].Profile)
+					ftValue.Profile = msg[i].Profile
 				}
-				reqinsValues = append(reqinsValues, msg[i].Pcom)
-				reqinsValues = append(reqinsValues, msg[i].Pinvoice)
-				reqinsValues = append(reqinsValues, msg[i].Regdt)
-				reqinsValues = append(reqinsValues, msg[i].Remark1)
-				reqinsValues = append(reqinsValues, msg[i].Remark2)
-				reqinsValues = append(reqinsValues, msg[i].Remark3)
-				reqinsValues = append(reqinsValues, msg[i].Remark4)
-				reqinsValues = append(reqinsValues, msg[i].Remark5)
-				reqinsValues = append(reqinsValues, msg[i].Reservedt)
-				reqinsValues = append(reqinsValues, msg[i].Smskind)
+				ftValue.P_com = msg[i].Pcom
+				ftValue.P_invoice = msg[i].Pinvoice
+				ftValue.Reg_dt = msg[i].Regdt
+				ftValue.Remark1 = msg[i].Remark1
+				ftValue.Remark2 = msg[i].Remark2
+				ftValue.Remark3 = msg[i].Remark3
+				ftValue.Remark4 = msg[i].Remark4
+				ftValue.Remark5 = msg[i].Remark5
+				ftValue.Reserve_dt = msg[i].Reservedt
+				ftValue.Sms_kind = msg[i].Smskind
 				if s.Contains(msg[i].Crypto, "Smslmstit") && len(msg[i].Smslmstit) > 0 {
-					reqinsValues = append(reqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
+					ftValue.Sms_lms_tit = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce)
 				} else {
-					reqinsValues = append(reqinsValues, msg[i].Smslmstit)
+					ftValue.Sms_lms_tit = msg[i].Smslmstit
 				}
 				if s.Contains(msg[i].Crypto, "Smssender") && len(msg[i].Smssender) > 0 {
-					reqinsValues = append(reqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
+					ftValue.Sms_sender = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce)
 				} else {
-					reqinsValues = append(reqinsValues, msg[i].Smssender)
+					ftValue.Sms_sender = msg[i].Smssender
 				}
-				reqinsValues = append(reqinsValues, msg[i].Scode)
-				reqinsValues = append(reqinsValues, msg[i].Tmplid)
-				reqinsValues = append(reqinsValues, msg[i].Wide)
-				reqinsValues = append(reqinsValues, nil)
-				reqinsValues = append(reqinsValues, msg[i].Supplement)
+				ftValue.S_code = msg[i].Scode
+				ftValue.Tmpl_id = msg[i].Tmplid
+				ftValue.Wide = msg[i].Wide
+				ftValue.Send_group = nil
+				ftValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
 					price, _ := strconv.Atoi(msg[i].Price)
-					reqinsValues = append(reqinsValues, price)
+					ftValue.Price = price
 				} else {
-					reqinsValues = append(reqinsValues, nil)
+					ftValue.Price = nil
 				}
-				reqinsValues = append(reqinsValues, msg[i].Currencytype)
-				reqinsValues = append(reqinsValues, msg[i].Title)
-				reqinsValues = append(reqinsValues, msg[i].Header)
-				reqinsValues = append(reqinsValues, msg[i].Carousel)
-				reqinsValues = append(reqinsValues, msg[i].Att_items)
-				reqinsValues = append(reqinsValues, msg[i].Att_coupon)
+
+				ftValue.Currency_type = msg[i].Currencytype
+				ftValue.Title = msg[i].Title
+				ftValue.Header = msg[i].Header
+				ftValue.Carousel = msg[i].Carousel
+				ftValue.Att_items = msg[i].Att_items
+				ftValue.Att_coupon = msg[i].Att_coupon
+				ftValue.Attachments = msg[i].Attachments
+
+				ftValues = append(ftValues, ftValue)
+
 			//문자 insert values 만들기
 			} else if s.EqualFold(msg[i].Messagetype, "PH") {
 				var resdt = time.Now()
 				var resdtstr = fmt.Sprintf("%4d-%02d-%02d %02d:%02d:%02d", resdt.Year(), resdt.Month(), resdt.Day(), resdt.Hour(), resdt.Minute(), resdt.Second())
-				resinsStrs = append(resinsStrs, "("+msgQmarkStr+")")
-				resinsValues = append(resinsValues, msg[i].Msgid)
-				resinsValues = append(resinsValues, userid)
-				resinsValues = append(resinsValues, msg[i].Adflag)
-				resinsValues = append(resinsValues, msg[i].Button1)
-				resinsValues = append(resinsValues, msg[i].Button2)
-				resinsValues = append(resinsValues, msg[i].Button3)
-				resinsValues = append(resinsValues, msg[i].Button4)
-				resinsValues = append(resinsValues, msg[i].Button5)
-				resinsValues = append(resinsValues, "9999") // 결과 code
-				resinsValues = append(resinsValues, msg[i].Imagelink)
-				resinsValues = append(resinsValues, msg[i].Imageurl)
-				resinsValues = append(resinsValues, nil) // kind
-				resinsValues = append(resinsValues, "")  // 결과 Message
-				resinsValues = append(resinsValues, msg[i].Messagetype)
+
+				msgValue := kaocommon.MsgReqColumn{}
+
+				msgValue.Msgid = msg[i].Msgid
+				msgValue.Userid = userid
+				msgValue.Ad_flag = msg[i].Adflag
+				msgValue.Button1 = msg[i].Button1
+				msgValue.Button2 = msg[i].Button2
+				msgValue.Button3 = msg[i].Button3
+				msgValue.Button4 = msg[i].Button4
+				msgValue.Button5 = msg[i].Button5
+				msgValue.Code = "9999"
+				msgValue.Image_link = msg[i].Imagelink
+				msgValue.Image_url = msg[i].Imageurl
+				msgValue.Kind = nil
+				msgValue.Message = ""
+				msgValue.Message_type = msg[i].Messagetype
 				if s.Contains(msg[i].Crypto, "MSG") {
-					resinsValues = append(resinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
+					msgValue.Msg = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce)
 				} else {
-					resinsValues = append(resinsValues, msg[i].Msg)
+					msgValue.Msg = msg[i].Msg
 				}
-
 				if s.Contains(msg[i].Crypto, "Msgsms") && len(msg[i].Msgsms) > 0 {
-					resinsValues = append(resinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
+					msgValue.Msg_sms = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce)
 				} else {
-					resinsValues = append(resinsValues, msg[i].Msgsms)
+					msgValue.Msg_sms = msg[i].Msgsms
 				}
-				resinsValues = append(resinsValues, msg[i].Onlysms)
-				resinsValues = append(resinsValues, msg[i].Pcom)
-				resinsValues = append(resinsValues, msg[i].Pinvoice)
-				resinsValues = append(resinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
+				msgValue.Only_sms = msg[i].Onlysms
+				msgValue.Phn = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce)
 				if s.Contains(msg[i].Crypto, "Profile") && len(msg[i].Profile) > 0 {
-					resinsValues = append(resinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
+					msgValue.Profile = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce)
 				} else {
-					resinsValues = append(resinsValues, msg[i].Profile)
+					msgValue.Profile = msg[i].Profile
 				}
-				resinsValues = append(resinsValues, msg[i].Regdt)
-				resinsValues = append(resinsValues, msg[i].Remark1)
-				resinsValues = append(resinsValues, msg[i].Remark2)
-				resinsValues = append(resinsValues, msg[i].Remark3)
-				resinsValues = append(resinsValues, msg[i].Remark4)
-				resinsValues = append(resinsValues, msg[i].Remark5)
-				resinsValues = append(resinsValues, resdtstr) // res_dt
-				resinsValues = append(resinsValues, msg[i].Reservedt)
-				resinsValues = append(resinsValues, "P") // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
-				resinsValues = append(resinsValues, msg[i].Scode)
-				resinsValues = append(resinsValues, msg[i].Smskind)
+				msgValue.P_com = msg[i].Pcom
+				msgValue.P_invoice = msg[i].Pinvoice
+				msgValue.Reg_dt = msg[i].Regdt
+				msgValue.Remark1 = msg[i].Remark1
+				msgValue.Remark2 = msg[i].Remark2
+				msgValue.Remark3 = msg[i].Remark3
+				msgValue.Remark4 = msg[i].Remark4
+				msgValue.Remark5 = msg[i].Remark5
+				msgValue.Res_dt = resdtstr
+				msgValue.Reserve_dt = msg[i].Reservedt
+				msgValue.Result = "P"  // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
+				msgValue.S_code = msg[i].Scode
+				msgValue.Sms_kind = msg[i].Smskind
 				if s.Contains(msg[i].Crypto, "Smslmstit") && len(msg[i].Smslmstit) > 0 {
-					resinsValues = append(resinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
+					msgValue.Sms_lms_tit = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce)
 				} else {
-					resinsValues = append(resinsValues, msg[i].Smslmstit)
+					msgValue.Sms_lms_tit = msg[i].Smslmstit
 				}
-
 				if s.Contains(msg[i].Crypto, "Smssender") && len(msg[i].Smssender) > 0 {
-					resinsValues = append(resinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
+					msgValue.Sms_sender = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce)
 				} else {
-					resinsValues = append(resinsValues, msg[i].Smssender)
+					msgValue.Sms_sender = msg[i].Smssender
 				}
-				resinsValues = append(resinsValues, "N")
-				resinsValues = append(resinsValues, msg[i].Tmplid)
-				resinsValues = append(resinsValues, msg[i].Wide)
-				resinsValues = append(resinsValues, nil) // send_group
-				resinsValues = append(resinsValues, msg[i].Supplement)
-				resinsValues = append(resinsValues, nil) //price
-				resinsValues = append(resinsValues, nil) //currency_type
-				resinsValues = append(resinsValues, msg[i].Header)
-				resinsValues = append(resinsValues, msg[i].Carousel)
+				msgValue.Sync = "N"
+				msgValue.Tmpl_id = msg[i].Tmplid
+				msgValue.Wide = msg[i].Wide
+				msgValue.Send_group = nil
+				msgValue.Supplement = msg[i].Supplement
+				msgValue.Price = nil
+				msgValue.Currency_type = nil
+				msgValue.Header = msg[i].Header
+				msgValue.Carousel = msg[i].Carousel
+
+				msgValues = append(msgValues, msgValue)
+
 			//알림톡 insert values 만들기
 			} else {
-				atreqinsStrs = append(atreqinsStrs, "("+atQmarkStr+")")
-				atreqinsValues = append(atreqinsValues, msg[i].Msgid)
-				atreqinsValues = append(atreqinsValues, userid)
-				atreqinsValues = append(atreqinsValues, msg[i].Adflag)
-				atreqinsValues = append(atreqinsValues, msg[i].Button1)
-				atreqinsValues = append(atreqinsValues, msg[i].Button2)
-				atreqinsValues = append(atreqinsValues, msg[i].Button3)
-				atreqinsValues = append(atreqinsValues, msg[i].Button4)
-				atreqinsValues = append(atreqinsValues, msg[i].Button5)
-				atreqinsValues = append(atreqinsValues, msg[i].Imagelink)
-				atreqinsValues = append(atreqinsValues, msg[i].Imageurl)
-				atreqinsValues = append(atreqinsValues, msg[i].Messagetype)
+				atValue := kaocommon.AtReqColumn{}
+
+				atValue.Msgid = msg[i].Msgid
+				atValue.Userid = userid
+				atValue.Ad_flag = msg[i].Adflag
+				atValue.Button1 = msg[i].Button1
+				atValue.Button2 = msg[i].Button2
+				atValue.Button3 = msg[i].Button3
+				atValue.Button4 = msg[i].Button4
+				atValue.Button5 = msg[i].Button5
+				atValue.Image_link = msg[i].Imagelink
+				atValue.Image_url = msg[i].Imageurl
+				atValue.Message_type = msg[i].Messagetype
 				if s.Contains(msg[i].Crypto, "MSG") {
-					atreqinsValues = append(atreqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
+					atValue.Msg = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce)
 				} else {
-					atreqinsValues = append(atreqinsValues, msg[i].Msg)
+					atValue.Msg = msg[i].Msg
 				}
-
 				if s.Contains(msg[i].Crypto, "Msgsms") && len(msg[i].Msgsms) > 0 {
-					atreqinsValues = append(atreqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
+					atValue.Msg_sms = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce)
 				} else {
-					atreqinsValues = append(atreqinsValues, msg[i].Msgsms)
+					atValue.Msg_sms = msg[i].Msgsms
 				}
-				atreqinsValues = append(atreqinsValues, msg[i].Onlysms)
-
-				atreqinsValues = append(atreqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
-				// atreqinsValues = append(atreqinsValues, msg[i].Phn)
+				atValue.Only_sms = msg[i].Onlysms
+				atValue.Phn = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce)
 				if s.Contains(msg[i].Crypto, "Profile") && len(msg[i].Profile) > 0 {
-					atreqinsValues = append(atreqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
+					atValue.Profile = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce)
 				} else {
-					atreqinsValues = append(atreqinsValues, msg[i].Profile)
+					atValue.Profile = msg[i].Profile
 				}
-				atreqinsValues = append(atreqinsValues, msg[i].Pcom)
-				atreqinsValues = append(atreqinsValues, msg[i].Pinvoice)
-				atreqinsValues = append(atreqinsValues, msg[i].Regdt)
-				atreqinsValues = append(atreqinsValues, msg[i].Remark1)
-				atreqinsValues = append(atreqinsValues, msg[i].Remark2)
-				atreqinsValues = append(atreqinsValues, msg[i].Remark3)
-				atreqinsValues = append(atreqinsValues, msg[i].Remark4)
-				atreqinsValues = append(atreqinsValues, msg[i].Remark5)
-				atreqinsValues = append(atreqinsValues, msg[i].Reservedt)
-				atreqinsValues = append(atreqinsValues, msg[i].Smskind)
+				atValue.P_com = msg[i].Pcom
+				atValue.P_invoice = msg[i].Pinvoice
+				atValue.Reg_dt = msg[i].Regdt
+				atValue.Remark1 = msg[i].Remark1
+				atValue.Remark2 = msg[i].Remark2
+				atValue.Remark3 = msg[i].Remark3
+				atValue.Remark4 = msg[i].Remark4
+				atValue.Remark5 = msg[i].Remark5
+				atValue.Reserve_dt = msg[i].Reservedt
+				atValue.Sms_kind = msg[i].Smskind
 				if s.Contains(msg[i].Crypto, "Smslmstit") && len(msg[i].Smslmstit) > 0 {
-					atreqinsValues = append(atreqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
+					atValue.Sms_lms_tit = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce)
 				} else {
-					atreqinsValues = append(atreqinsValues, msg[i].Smslmstit)
+					atValue.Sms_lms_tit = msg[i].Smslmstit
 				}
-
 				if s.Contains(msg[i].Crypto, "Smssender") && len(msg[i].Smssender) > 0 {
-					atreqinsValues = append(atreqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
+					atValue.Sms_sender = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce)
 				} else {
-					atreqinsValues = append(atreqinsValues, msg[i].Smssender)
+					atValue.Sms_sender = msg[i].Smssender
 				}
-				atreqinsValues = append(atreqinsValues, msg[i].Scode)
-				atreqinsValues = append(atreqinsValues, msg[i].Tmplid)
-				atreqinsValues = append(atreqinsValues, msg[i].Wide)
-				atreqinsValues = append(atreqinsValues, nil) //send_group
-				atreqinsValues = append(atreqinsValues, msg[i].Supplement)
-
+				atValue.S_code = msg[i].Scode
+				atValue.Tmpl_id = msg[i].Tmplid
+				atValue.Wide = msg[i].Wide
+				atValue.Send_group = nil
+				atValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
 					price, _ := strconv.Atoi(msg[i].Price)
-					atreqinsValues = append(atreqinsValues, price)
+					atValue.Price = price
 				} else {
-					atreqinsValues = append(atreqinsValues, nil)
+					atValue.Price = nil
 				}
 
-				atreqinsValues = append(atreqinsValues, msg[i].Currencytype)
-				atreqinsValues = append(atreqinsValues, msg[i].Title)
-				// atreqinsValues = append(atreqinsValues, msg[i].Header)
-				// atreqinsValues = append(atreqinsValues, msg[i].Carousel)
+				atValue.Currency_type = msg[i].Currencytype
+				atValue.Title = msg[i].Title
+
+				atValues = append(atValues, atValue)
 			}
 
 			// 500건 단위로 처리한다(클라이언트에서 1000건씩 전송하더라도 지정한 단위의 건수로 insert한다.)
 			saveCount := 500
-			if len(reqinsStrs) >= saveCount {
-				reqinsStrs, reqinsValues = kaocommon.InsMsg(reqinsQuery, reqinsStrs, reqinsValues)
+
+			if len(ftValues) >= saveCount {
+				for _, data := range ftValues {
+					_, err := ftStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Header,data.Carousel,data.Att_coupon,data.Attachments)
+					if err != nil {
+						errlog.Println(err)
+					}
+				}
+				ftValues = []kaocommon.FtReqColumn{}
+				_, err = ftStmt.Exec()
+				if err != nil {
+					errlog.Println(err)
+				}
 			}
 
-			if len(atreqinsStrs) >= saveCount {
-				atreqinsStrs, atreqinsValues = kaocommon.InsMsg(atreqinsQuery, atreqinsStrs, atreqinsValues)
+			if len(atValues) >= saveCount {
+				for _, data := range atValues {
+					_, err := atStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type)
+					if err != nil {
+						errlog.Println(err)
+					}
+				}
+				atValues = []kaocommon.AtReqColumn{}
+				execFlag = true
+				_, err = atStmt.Exec()
+				if err != nil {
+					errlog.Println(err)
+				}
 			}
 
-			if len(resinsStrs) >= saveCount {
-				resinsStrs, resinsValues = kaocommon.InsMsgTemp(resinsquery, resinsStrs, resinsValues, true, resinstempquery)
+			if len(msgValues) >= saveCount {
+				for _, data := range msgValues {
+					_, err := msgStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Code,data.Image_link,data.Image_url,data.Kind,data.Message,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.Phn,data.Profile,data.P_com,data.P_invoice,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Res_dt,data.Reserve_dt,data.Result,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Sync,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Header,data.Carousel)
+					if err != nil {
+						errlog.Println(err)
+					}
+				}
+				msgValues = []kaocommon.MsgReqColumn{}
+				execFlag = true
+				_, err = msgStmt.Exec()
+				if err != nil {
+					errlog.Println(err)
+				}
 			}
 		}
 		
 		// 나머지 건수를 저장하기 위해 다시한번 정의
-		if len(reqinsStrs) > 0 {
-			reqinsStrs, reqinsValues = kaocommon.InsMsg(reqinsQuery, reqinsStrs, reqinsValues)
+		if len(ftValues) > 0 {
+			for _, data := range ftValues {
+				_, err := ftStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Header,data.Carousel,data.Att_coupon,data.Attachments)
+				if err != nil {
+					errlog.Println(err)
+				}
+			}
+			ftValues = []kaocommon.FtReqColumn{}
+			execFlag = true
+			_, err = ftStmt.Exec()
+			if err != nil {
+				errlog.Println(err)
+			}
 		}
 
-		if len(atreqinsStrs) > 0 {
-			errlog.Println("sql : ", fmt.Sprintf(atreqinsQuery, s.Join(atreqinsStrs, ",")))
-			atreqinsStrs, atreqinsValues = kaocommon.InsMsg(atreqinsQuery, atreqinsStrs, atreqinsValues)
+		if len(atValues) > 0 {
+			for _, data := range atValues {
+				_, err := atStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type)
+				if err != nil {
+					errlog.Println(err)
+				}
+			}
+			atValues = []kaocommon.AtReqColumn{}
+			execFlag = true
+			_, err = atStmt.Exec()
+			if err != nil {
+				errlog.Println(err)
+			}
 		}
 
-		if len(resinsStrs) > 0 {
-			resinsStrs, resinsValues = kaocommon.InsMsgTemp(resinsquery, resinsStrs, resinsValues, true, resinstempquery)
+		if len(msgValues) > 0 {
+			for _, data := range msgValues {
+				_, err := msgStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Code,data.Image_link,data.Image_url,data.Kind,data.Message,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.Phn,data.Profile,data.P_com,data.P_invoice,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Res_dt,data.Reserve_dt,data.Result,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Sync,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Header,data.Carousel)
+				if err != nil {
+					errlog.Println(err)
+				}
+			}
+			msgValues = []kaocommon.MsgReqColumn{}
+			execFlag = true
+			_, err = msgStmt.Exec()
+			if err != nil {
+				errlog.Println(err)
+			}
+		}
+
+		if execFlag {
+			err = tx.Commit()
+			if err != nil {
+				errlog.Println(err)
+			}
 		}
 
 		errlog.Println("발송 메세지 수신 끝 ( ", userid, ") : ", len(msg), startTime)
@@ -361,85 +436,75 @@ func ReqReceive(c *gin.Context) {
 }
 
 func ReqPqTest(c *gin.Context){
-	errlog := config.Stdlog
+	// errlog := config.Stdlog
+	// execFlag := false
 
-	tx, err := databasepool.DB.Begin()
-	if err != nil {
-		errlog.Println(err)
-	}
-	defer tx.Rollback()
+	// tx, err := databasepool.DB.Begin()
+	// if err != nil {
+	// 	errlog.Println(err)
+	// }
+	// defer tx.Rollback()
 
-	ftStmt, err := tx.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
-	if err != nil {
-		errlog.Println(err)
-	}
-	defer ftStmt.Close()
+	// ftStmt, err := tx.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
+	// if err != nil {
+	// 	errlog.Println(err)
+	// }
+	// defer ftStmt.Close()
 
-	// atStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
-	// msgStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
-	// msgTempStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result_temp", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
+	// atStmt, err := tx.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
+	// if err != nil {
+	// 	errlog.Println(err)
+	// }
+	// defer atStmt.Close()
 
-	ftValues := []kaocommon.FtReqColumn{
-		{Msgid: "test1", Userid: "test1", Ad_flag: "N", Msg: "testesttest1", Phn: "01093440043", Reg_dt: "0000000000", Reserve_dt: "12341234"},
-		{Msgid: "test2", Userid: "test2", Ad_flag: "N", Msg: "testesttest2", Phn: "01093440043", Reg_dt: "0000000000", Reserve_dt: "12341234"},
-	}
+	// msgStmt, err := tx.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
+	// if err != nil {
+	// 	errlog.Println(err)
+	// }
+	// defer atStmt.Close()
 
-	for _, data := range ftValues {
-		_, err := ftStmt.Exec(
-			data.Msgid,
-			data.Userid,
-			data.Ad_flag,
-			data.Button1,
-			data.Button2,
-			data.Button3,
-			data.Button4,
-			data.Button5,
-			data.Image_link,
-			data.Image_url,
-			data.Message_type,
-			data.Msg,
-			data.Msg_sms,
-			data.Only_sms,
-			data.P_com,
-			data.P_invoice,
-			data.Phn,
-			data.Profile,
-			data.Reg_dt,
-			data.Remark1,
-			data.Remark2,
-			data.Remark3,
-			data.Remark4,
-			data.Remark5,
-			data.Reserve_dt,
-			data.S_code,
-			data.Sms_kind,
-			data.Sms_lms_tit,
-			data.Sms_sender,
-			data.Tmpl_id,
-			data.Wide,
-			data.Send_group,
-			data.Supplement,
-			data.Price,
-			data.Currency_type,
-			data.Header,
-			data.Carousel,
-			data.Att_coupon,
-			data.Attachments,
-		)
-		if err != nil {
-			errlog.Println(err)
-		}
-	}
+	// msgTempStmt, _ := tx.Prepare(pq.CopyIn("dhn_result_temp", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
+	// if err != nil {
+	// 	errlog.Println(err)
+	// }
+	// defer msgTempStmt.Close()
 
-	_, err = ftStmt.Exec()
-	if err != nil {
-		errlog.Println(err)
-	}
+	// ftValues := []kaocommon.FtReqColumn{}
+	// atValues := []kaocommon.AtReqColumn{}
+	// msgValues := []kaocommon.MsgReqColumn{}
 
-	err = tx.Commit()
-	if err != nil {
-		errlog.Println(err)
-	}
+	// if len(ftValues) > 0 {
+	// 	for _, data := range ftValues {
+	// 		_, err := ftStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Header,data.Carousel,data.Att_coupon,data.Attachments)
+	// 		if err != nil {
+	// 			errlog.Println(err)
+	// 		}
+	// 	}
+	// 	execFlag = true
+	// }
+
+	// if len(atValues) > 0 {
+	// 	for _, data := range atValues {
+	// 		_, err := atStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type)
+	// 		if err != nil {
+	// 			errlog.Println(err)
+	// 		}
+	// 	}
+	// 	execFlag = true
+	// }
+	
+
+	// if (execFlag){
+	// 	_, err = ftStmt.Exec()
+	// 	if err != nil {
+	// 		errlog.Println(err)
+	// 	}
+
+	// 	err = tx.Commit()
+	// 	if err != nil {
+	// 		errlog.Println(err)
+	// 	}
+	// }
 }
 
 

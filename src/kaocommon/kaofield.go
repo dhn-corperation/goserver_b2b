@@ -15,10 +15,10 @@ type AtReqColumn struct {
 	Msg    			string	`db:"msg"`
 	Msg_sms    		string	`db:"msg_sms"`
 	Only_sms    	string	`db:"only_sms"`
-	P_com    		string	`db:"p_com"`
-	P_invoice    	string	`db:"p_invoice"`
 	Phn    			string	`db:"phn"`
 	Profile    		string	`db:"profile"`
+	P_com    		string	`db:"p_com"`
+	P_invoice    	string	`db:"p_invoice"`
 	Reg_dt   		string	`db:"reg_dt"`
 	Remark1   		string	`db:"remark1"`
 	Remark2    		string	`db:"remark2"`
@@ -26,16 +26,17 @@ type AtReqColumn struct {
 	Remark4    		string	`db:"remark4"`
 	Remark5    		string	`db:"remark5"`
 	Reserve_dt    	string	`db:"reserve_dt"`
-	S_code    		string	`db:"s_code"`
 	Sms_kind    	string	`db:"sms_kind"`
 	Sms_lms_tit     string	`db:"sms_lms_tit"`
 	Sms_sender      string	`db:"sms_sender"`
+	S_code    		string	`db:"s_code"`
 	Tmpl_id    		string	`db:"tmpl_id"`
 	Wide    		string	`db:"wide"`
 	Send_group    	string	`db:"send_group"`
 	Supplement    	string	`db:"supplement"`
 	Price           int64	`db:"price"`
 	Currency_type   string	`db:"currency_type"`
+	Title           string  `db:"title"`
 }
 
 type FtReqColumn struct {
@@ -53,10 +54,10 @@ type FtReqColumn struct {
 	Msg    			string	`db:"msg"`
 	Msg_sms    		string	`db:"msg_sms"`
 	Only_sms    	string	`db:"only_sms"`
-	P_com    		string	`db:"p_com"`
-	P_invoice    	string	`db:"p_invoice"`
 	Phn    			string	`db:"phn"`
 	Profile    		string	`db:"profile"`
+	P_com    		string	`db:"p_com"`
+	P_invoice    	string	`db:"p_invoice"`
 	Reg_dt   		string	`db:"reg_dt"`
 	Remark1   		string	`db:"remark1"`
 	Remark2    		string	`db:"remark2"`
@@ -64,18 +65,20 @@ type FtReqColumn struct {
 	Remark4    		string	`db:"remark4"`
 	Remark5    		string	`db:"remark5"`
 	Reserve_dt    	string	`db:"reserve_dt"`
-	S_code    		string	`db:"s_code"`
 	Sms_kind    	string	`db:"sms_kind"`
 	Sms_lms_tit     string	`db:"sms_lms_tit"`
 	Sms_sender      string	`db:"sms_sender"`
+	S_code    		string	`db:"s_code"`
 	Tmpl_id    		string	`db:"tmpl_id"`
 	Wide    		string	`db:"wide"`
 	Send_group    	string	`db:"send_group"`
 	Supplement    	string	`db:"supplement"`
 	Price           int64	`db:"price"`
 	Currency_type   string	`db:"currency_type"`
+	Title           string  `db:"title"`
 	Header    		string	`db:"header"`
 	Carousel    	string	`db:"carousel"`
+	Att_items       string  `db:"att_items"`
 	Att_coupon      string  `db:"att_coupon"`
 	Attachments     string  `db:"attachments"`
 }
@@ -98,10 +101,10 @@ type MsgReqColumn struct {
 	Msg    			string	`db:"msg"`
 	Msg_sms    		string	`db:"msg_sms"`
 	Only_sms    	string	`db:"only_sms"`
-	P_com    		string	`db:"p_com"`
-	P_invoice    	string	`db:"p_invoice"`
 	Phn    			string	`db:"phn"`
 	Profile    		string	`db:"profile"`
+	P_com    		string	`db:"p_com"`
+	P_invoice    	string	`db:"p_invoice"`
 	Reg_dt   		string	`db:"reg_dt"`
 	Remark1   		string	`db:"remark1"`
 	Remark2    		string	`db:"remark2"`
