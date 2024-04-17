@@ -21,7 +21,6 @@ import (
 var SecretKey = "9b4dabe9d4fed126a58f8639846143c7"
 
 func ReqReceive(c *gin.Context) {
-	execFlag := false
 	ctx := c.Request.Context()
 	errlog := config.Stdlog
 
@@ -347,7 +346,6 @@ func ReqReceive(c *gin.Context) {
 					}
 				}
 				atValues = []kaocommon.AtReqColumn{}
-				execFlag = true
 				_, err = atStmt.Exec()
 				if err != nil {
 					atStmt.Close()
@@ -378,7 +376,6 @@ func ReqReceive(c *gin.Context) {
 					}
 				}
 				msgValues = []kaocommon.MsgReqColumn{}
-				execFlag = true
 				_, err = msgStmt.Exec()
 				if err != nil {
 					msgStmt.Close()
@@ -412,7 +409,6 @@ func ReqReceive(c *gin.Context) {
 				}
 			}
 			ftValues = []kaocommon.FtReqColumn{}
-			execFlag = true
 			_, err = ftStmt.Exec()
 			if err != nil {
 				ftStmt.Close()
@@ -443,7 +439,6 @@ func ReqReceive(c *gin.Context) {
 				}
 			}
 			atValues = []kaocommon.AtReqColumn{}
-			execFlag = true
 			_, err = atStmt.Exec()
 			if err != nil {
 				atStmt.Close()
@@ -479,7 +474,6 @@ func ReqReceive(c *gin.Context) {
 				errlog.Println(err)
 				msgStmt.Close()
 			}
-			execFlag = true
 			msgStmt.Close()
 			err = tx.Commit()
 			if err != nil {
