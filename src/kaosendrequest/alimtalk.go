@@ -63,7 +63,6 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 			}
 		}
 	}
-
 }
 
 func atsendProcess(group_no string, user_id string) {

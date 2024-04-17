@@ -40,12 +40,12 @@ func ReqReceive(c *gin.Context) {
 		from
 			DHN_CLIENT_LIST
 		where
-			user_id = ?
-			and ip = ?
+			user_id = '`+userid+`'
+			and ip = '`+userip+`'
 			and use_flag = 'Y'`
 
 	var cnt int
-	err := databasepool.DB.QueryRowContext(ctx, sqlstr, userid, userip).Scan(&cnt)
+	err := databasepool.DB.QueryRowContext(ctx, sqlstr).Scan(&cnt)
 	if err != nil { errlog.Println(err) }
 
 	
@@ -82,16 +82,16 @@ func ReqReceive(c *gin.Context) {
 		resinsValues := []interface{}{}
 
 		//친구톡 insert 컬럼 셋팅
-		reqinsQuery := `insert IGNORE into DHN_REQUEST(`+ftColumnStr+`) values %s`
+		reqinsQuery := `insert into DHN_REQUEST(`+ftColumnStr+`) values %s`
 
 		//알림톡 insert 컬럼 셋팅
-		atreqinsQuery := `insert IGNORE into DHN_REQUEST_AT(`+atColumnStr+`) values %s`
+		atreqinsQuery := `insert into DHN_REQUEST_AT(`+atColumnStr+`) values %s`
 
 		//문자 insert 컬럼 셋팅
-		resinsquery := `insert IGNORE into DHN_RESULT(`+msgColumnStr+`) values %s`
+		resinsquery := `insert into DHN_RESULT(`+msgColumnStr+`) values %s`
 
 		//temp 테이블 컬럼 셋팅(DHN_RESULT_TEMP : 에러 시 데이터 유실을 막기 위한 테이블)
-		resinstempquery := `insert IGNORE into DHN_RESULT_TEMP(`+msgColumnStr+`) values %s`
+		resinstempquery := `insert into DHN_RESULT_TEMP(`+msgColumnStr+`) values %s`
 
 		ftQmarkStr := cm.GetQuestionMark(ftColumn)
 		atQmarkStr := cm.GetQuestionMark(atColumn)
