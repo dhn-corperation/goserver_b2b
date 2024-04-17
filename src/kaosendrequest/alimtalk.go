@@ -8,7 +8,7 @@ import (
 	kakao "mycs/src/kakaojson"
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
-	cm "mycs/src/kaocommon"
+	"mycs/src/kaocommon"
 
 	//"io/ioutil"
 	//	"net"
@@ -66,7 +66,7 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 }
 
 func atsendProcess(group_no string, user_id string) {
-	atColumn := cm.GetResAtColumn()
+	atColumn := kaocommon.GetResAtColumn()
 	atColumnStr := s.Join(atColumn, ",")
 
 	var db = databasepool.DB
@@ -90,7 +90,7 @@ func atsendProcess(group_no string, user_id string) {
 		errlog.Fatal(err)
 	}
 	count := len(columnTypes)
-	initScanArgs := cm.InitDatabaseColumn(columnTypes, count)
+	initScanArgs := kaocommon.InitDatabaseColumn(columnTypes, count)
 
 	var procCount int
 	procCount = 0
@@ -240,7 +240,7 @@ func atsendProcess(group_no string, user_id string) {
 	reswg.Wait()
 	chanCnt := len(resultChan)
 
-	atQmarkStr := cm.GetQuestionMark(atColumn)
+	atValues := []kaocommon.AtResColumn{}
 
 	for i := 0; i < chanCnt; i++ {
 
@@ -264,84 +264,110 @@ func atsendProcess(group_no string, user_id string) {
 				resCode = "0000"
 				resMessage = ""
 			} 
-			
-			resinsStrs = append(resinsStrs, "("+atQmarkStr+")")
-			resinsValues = append(resinsValues, result["msgid"])
-			resinsValues = append(resinsValues, result["userid"])
-			resinsValues = append(resinsValues, result["ad_flag"])
-			resinsValues = append(resinsValues, result["button1"])
-			resinsValues = append(resinsValues, result["button2"])
-			resinsValues = append(resinsValues, result["button3"])
-			resinsValues = append(resinsValues, result["button4"])
-			resinsValues = append(resinsValues, result["button5"])
-			resinsValues = append(resinsValues, resCode) // 결과 code
-			resinsValues = append(resinsValues, result["image_link"])
-			resinsValues = append(resinsValues, result["image_url"])
-			resinsValues = append(resinsValues, nil)//kind
-			resinsValues = append(resinsValues, resMessage) // 결과 Message
-			resinsValues = append(resinsValues, result["message_type"])
-			resinsValues = append(resinsValues, result["msg"])
-			resinsValues = append(resinsValues, result["msg_sms"])
-			resinsValues = append(resinsValues, result["only_sms"])
-			resinsValues = append(resinsValues, result["p_com"])
-			resinsValues = append(resinsValues, result["p_invoice"])
-			resinsValues = append(resinsValues, result["phn"])
-			resinsValues = append(resinsValues, result["profile"])
-			resinsValues = append(resinsValues, result["reg_dt"])
-			resinsValues = append(resinsValues, result["remark1"])
-			resinsValues = append(resinsValues, result["remark2"])
-			resinsValues = append(resinsValues, result["remark3"])
-			resinsValues = append(resinsValues, result["remark4"])
-			resinsValues = append(resinsValues, result["remark5"])
-			resinsValues = append(resinsValues, resdtstr) // res_dt
-			resinsValues = append(resinsValues, result["reserve_dt"])
 
+			atValue := kaocommon.AtReqColumn{}
+
+			atValue.Msgid = result["msgid"]
+			atValue.Userid = result["userid"]
+			atValue.Ad_flag = result["ad_flag"]
+			atValue.Button1 = result["button1"]
+			atValue.Button2 = result["button2"]
+			atValue.Button3 = result["button3"]
+			atValue.Button4 = result["button4"]
+			atValue.Button5 = result["button5"]
+			atValue.Code = resCode
+			atValue.Image_link = result["image_link"]
+			atValue.Image_url = result["image_url"]
+			atValue.Kind = nil
+			atValue.Message = resMessage
+			atValue.Message_type = result["message_type"]
+			atValue.Msg = result["msg"]
+			atValue.Msg_sms = result["msg_sms"]
+			atValue.Only_sms = result["only_sms"]
+			atValue.P_com = result["p_com"]
+			atValue.P_invoice = result["p_invoice"]
+			atValue.Profile = result["profile"]
+			atValue.Reg_dt = result["reg_dt"]
+			atValue.Remark1 = result["remark1"]
+			atValue.Remark2 = result["remark2"]
+			atValue.Remark3 = result["remark3"]
+			atValue.Remark4 = result["remark4"]
+			atValue.Remark5 = result["remark5"]
+			atValue.Res_dt = resdtstr
+			atValue.Reserve_dt = result["reserve_dt"]
 			//result 컬럼 처리
 			if s.EqualFold(result["message_type"], "at") || !s.EqualFold(resCode, "0000") || (s.EqualFold(result["message_type"], "ai") && s.EqualFold(conf.RESPONSE_METHOD, "push")) {
 
 				if s.EqualFold(resCode,"0000") {
-					resinsValues = append(resinsValues, "Y") // 
+					atValue.Result = "Y" // 
 				// 1차 카카오 발송 실패 후 2차 발송을 바로 하기 위해서는 이 조건을 맞춰야함
 				} else if len(result["sms_kind"])>=1 && s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
-					resinsValues = append(resinsValues, "P") // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
+					atValue.Result = "P" // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
 				} else {
-					resinsValues = append(resinsValues, "Y") // 
+					atValue.Result = "Y" // 
 				} 
 				
 			} else if s.EqualFold(result["message_type"], "ai") {
-				resinsValues = append(resinsValues, "N") // result
+				atValue.Result = "N" // result
 			}
-			resinsValues = append(resinsValues, resCode)
-			resinsValues = append(resinsValues, result["sms_kind"])
-			resinsValues = append(resinsValues, result["sms_lms_tit"])
-			resinsValues = append(resinsValues, result["sms_sender"])
-			resinsValues = append(resinsValues, "N") //sync
-			resinsValues = append(resinsValues, result["tmpl_id"])
-			resinsValues = append(resinsValues, result["wide"])
-
+			atValue.S_code = resCode
+			atValue.Sms_kind = result["sms_kind"]
+			atValue.Sms_lms_tit = result["sms_lms_tit"]
+			atValue.Sms_sender = result["sms_sender"]
+			atValue.Sync = "N"
+			atValue.Tmpl_id = result["tmpl_id"]
+			atValue.Wide = result["wide"]
 			//send_group 컬럼 처리
 			if s.EqualFold(result["message_type"], "at") || !s.EqualFold(resCode, "0000") || (s.EqualFold(result["message_type"], "ai") && s.EqualFold(conf.RESPONSE_METHOD, "push")) {
 
 				if s.EqualFold(resCode,"0000") {
-					resinsValues = append(resinsValues, nil) //send_group
+					atValue.Send_group = nil //send_group
 				} else if len(result["sms_kind"])>=1 && s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
-					resinsValues = append(resinsValues, nil) //send_group
+					atValue.Send_group = nil //send_group
 				} else {
-					resinsValues = append(resinsValues, nil) //send_group
+					atValue.Send_group = nil //send_group
 				} 
 				
 			} else if s.EqualFold(result["message_type"], "ai") {
-				resinsValues = append(resinsValues, nil) //send_group
+				atValue.Send_group = nil //send_group
 			}
-			
-			resinsValues = append(resinsValues, result["supplement"])
-			resinsValues = append(resinsValues, result["price"])
-			resinsValues = append(resinsValues, result["currency_type"])
-			resinsValues = append(resinsValues, result["title"])
+			atValue.Supplement = result["supplement"]
+			atValue.Price = result["price"]
+			atValue.Currency_type = result["currency_type"]
+			atValue.Title = result["title"]
+
+			atValues = append(atValues, atValue)
 
 			//Center에서도 사용하고 있는 함수이므로 공용 라이브러리 생성이 필요함
-			if len(resinsStrs) >= 500 {
-				resinsStrs, resinsValues = cm.InsMsg(resinsquery, resinsStrs, resinsValues)
+			if len(atValues) >= 500 {
+				tx, err := databasepool.DB.Begin()
+				if err != nil {
+					errlog.Println(err)
+				}
+				defer tx.Rollback()
+				atStmt, err := tx.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.AtResColumn{})...))
+				if err != nil {
+					errlog.Println("atStmt 초기화 실패 ", err)
+					return
+				}
+				for _, data := range atValues {
+					_, err := atStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Code,data.Image_link,data.Image_url,data.Kind,data.Message,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Res_dt,data.Reserve_dt,data.Result,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Sync,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Title)
+					if err != nil {
+						errlog.Println(err)
+					}
+				}
+				atValues = []kaocommon.AtReqColumn{}
+				execFlag = true
+				_, err = atStmt.Exec()
+				if err != nil {
+					atStmt.Close()
+					errlog.Println(err)
+				}
+				atStmt.Close()
+				err = tx.Commit()
+				if err != nil {
+					errlog.Println(err)
+				}
 			}
 		} else {
 			// stdlog.Println(user_id, "알림톡 서버 처리 오류 !! ( ", string(resChan.BodyData), " )", result["msgid"])
@@ -353,7 +379,34 @@ func atsendProcess(group_no string, user_id string) {
 
 	//Center에서도 사용하고 있는 함수이므로 공용 라이브러리 생성이 필요함
 	if len(resinsStrs) > 0 {
-		resinsStrs, resinsValues = cm.InsMsg(resinsquery, resinsStrs, resinsValues)
+		tx, err := databasepool.DB.Begin()
+		if err != nil {
+			errlog.Println(err)
+		}
+		defer tx.Rollback()
+		atStmt, err := tx.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.AtResColumn{})...))
+		if err != nil {
+			errlog.Println("atStmt 초기화 실패 ", err)
+			return
+		}
+		for _, data := range atValues {
+			_, err := atStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Code,data.Image_link,data.Image_url,data.Kind,data.Message,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Res_dt,data.Reserve_dt,data.Result,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Sync,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Title)
+			if err != nil {
+				errlog.Println(err)
+			}
+		}
+		atValues = []kaocommon.AtReqColumn{}
+		execFlag = true
+		_, err = atStmt.Exec()
+		if err != nil {
+			atStmt.Close()
+			errlog.Println(err)
+		}
+		atStmt.Close()
+		err = tx.Commit()
+		if err != nil {
+			errlog.Println(err)
+		}
 	}
 
 	//알림톡 발송 후 DHN_REQUEST_AT 테이블의 데이터는 제거한다.

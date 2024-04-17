@@ -300,6 +300,11 @@ func ReqReceive(c *gin.Context) {
 			saveCount := 500
 
 			if len(ftValues) >= saveCount {
+				tx, err := databasepool.DB.Begin()
+				if err != nil {
+					errlog.Println(err)
+				}
+				defer tx.Rollback()
 				ftStmt, err := tx.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
 				if err != nil {
 					errlog.Println("ftStmt 초기화 실패 ", err)
@@ -318,9 +323,18 @@ func ReqReceive(c *gin.Context) {
 					errlog.Println(err)
 				}
 				ftStmt.Close()
+				err = tx.Commit()
+				if err != nil {
+					errlog.Println(err)
+				}
 			}
 
 			if len(atValues) >= saveCount {
+				tx, err := databasepool.DB.Begin()
+				if err != nil {
+					errlog.Println(err)
+				}
+				defer tx.Rollback()
 				atStmt, err := tx.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
 				if err != nil {
 					errlog.Println("atStmt 초기화 실패 ", err)
@@ -340,9 +354,18 @@ func ReqReceive(c *gin.Context) {
 					errlog.Println(err)
 				}
 				atStmt.Close()
+				err = tx.Commit()
+				if err != nil {
+					errlog.Println(err)
+				}
 			}
 
 			if len(msgValues) >= saveCount {
+				tx, err := databasepool.DB.Begin()
+				if err != nil {
+					errlog.Println(err)
+				}
+				defer tx.Rollback()
 				msgStmt, err := tx.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
 				if err != nil {
 					errlog.Println("msgStmt 초기화 실패 ", err)
@@ -362,11 +385,20 @@ func ReqReceive(c *gin.Context) {
 					errlog.Println(err)
 				}
 				msgStmt.Close()
+				err = tx.Commit()
+				if err != nil {
+					errlog.Println(err)
+				}
 			}
 		}
 		
 		// 나머지 건수를 저장하기 위해 다시한번 정의
 		if len(ftValues) > 0 {
+			tx, err := databasepool.DB.Begin()
+			if err != nil {
+				errlog.Println(err)
+			}
+			defer tx.Rollback()
 			ftStmt, err := tx.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
 			if err != nil {
 				errlog.Println("ftStmt 초기화 실패 ", err)
@@ -387,9 +419,18 @@ func ReqReceive(c *gin.Context) {
 				errlog.Println(err)
 			}
 			ftStmt.Close()
+			err = tx.Commit()
+			if err != nil {
+				errlog.Println(err)
+			}
 		}
 
 		if len(atValues) > 0 {
+			tx, err := databasepool.DB.Begin()
+			if err != nil {
+				errlog.Println(err)
+			}
+			defer tx.Rollback()
 			atStmt, err := tx.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
 			if err != nil {
 				errlog.Println("atStmt 초기화 실패 ", err)
@@ -409,9 +450,18 @@ func ReqReceive(c *gin.Context) {
 				errlog.Println(err)
 			}
 			atStmt.Close()
+			err = tx.Commit()
+			if err != nil {
+				errlog.Println(err)
+			}
 		}
 
 		if len(msgValues) > 0 {
+			tx, err := databasepool.DB.Begin()
+			if err != nil {
+				errlog.Println(err)
+			}
+			defer tx.Rollback()
 			msgStmt, err := tx.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
 			if err != nil {
 				errlog.Println("msgStmt 초기화 실패 ", err)
@@ -431,14 +481,13 @@ func ReqReceive(c *gin.Context) {
 			}
 			execFlag = true
 			msgStmt.Close()
-		}
-
-		if execFlag {
 			err = tx.Commit()
 			if err != nil {
 				errlog.Println(err)
 			}
 		}
+
+		
 
 		errlog.Println("발송 메세지 수신 끝 ( ", userid, ") : ", len(msg), startTime)
 
@@ -453,78 +502,6 @@ func ReqReceive(c *gin.Context) {
 			"ip":      userip,
 		})
 	}
-}
-
-func ReqPqTest(c *gin.Context){
-	// errlog := config.Stdlog
-	// execFlag := false
-
-	// tx, err := databasepool.DB.Begin()
-	// if err != nil {
-	// 	errlog.Println(err)
-	// }
-	// defer tx.Rollback()
-
-	// ftStmt, err := tx.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
-	// if err != nil {
-	// 	errlog.Println(err)
-	// }
-	// defer ftStmt.Close()
-
-	// atStmt, err := tx.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
-	// if err != nil {
-	// 	errlog.Println(err)
-	// }
-	// defer atStmt.Close()
-
-	// msgStmt, err := tx.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
-	// if err != nil {
-	// 	errlog.Println(err)
-	// }
-	// defer atStmt.Close()
-
-	// msgTempStmt, _ := tx.Prepare(pq.CopyIn("dhn_result_temp", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
-	// if err != nil {
-	// 	errlog.Println(err)
-	// }
-	// defer msgTempStmt.Close()
-
-	// ftValues := []kaocommon.FtReqColumn{}
-	// atValues := []kaocommon.AtReqColumn{}
-	// msgValues := []kaocommon.MsgReqColumn{}
-
-	// if len(ftValues) > 0 {
-	// 	for _, data := range ftValues {
-	// 		_, err := ftStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Header,data.Carousel,data.Att_coupon,data.Attachments)
-	// 		if err != nil {
-	// 			errlog.Println(err)
-	// 		}
-	// 	}
-	// 	execFlag = true
-	// }
-
-	// if len(atValues) > 0 {
-	// 	for _, data := range atValues {
-	// 		_, err := atStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type)
-	// 		if err != nil {
-	// 			errlog.Println(err)
-	// 		}
-	// 	}
-	// 	execFlag = true
-	// }
-	
-
-	// if (execFlag){
-	// 	_, err = ftStmt.Exec()
-	// 	if err != nil {
-	// 		errlog.Println(err)
-	// 	}
-
-	// 	err = tx.Commit()
-	// 	if err != nil {
-	// 		errlog.Println(err)
-	// 	}
-	// }
 }
 
 
