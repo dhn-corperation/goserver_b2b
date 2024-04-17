@@ -14,7 +14,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	// _ "github.com/go-sql-driver/mysql"
-	pq "github.com/lib/pq"
+	// pq "github.com/lib/pq"
 )
 
 //언젠가는 다른곳으로 위치를 옮겨야 함
@@ -366,12 +366,12 @@ func ReqPqTest(){
 	// msgStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result", cm.GetReqColumnPq(cm.MsgReqColumn{})...))
 	// msgTempStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result_temp", cm.GetReqColumnPq(cm.MsgReqColumn{})...))
 
-	ftValues := []cm.FtReqColumn
+	var ftValues []cm.FtReqColumn
 	// atValues := []cm.AtReqColumn
 	// msgValues := []cm.MsgReqColumn
 	// msgTempValues := []cm.MsgReqColumn
 
-	var ftValue = cm.FtReqColumn
+	ftValue := cm.FtReqColumn{}
 	ftValue.Msgid = "test"
 	append(ftValues, ftValue)
 
