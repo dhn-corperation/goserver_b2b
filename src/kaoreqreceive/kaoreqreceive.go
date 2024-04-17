@@ -139,7 +139,7 @@ func ReqReceive(c *gin.Context) {
 				if len(msg[i].Price) > 0 {
 					ftValue.Price = msg[i].Price
 				} else {
-					ftValue.Price = "\\N"
+					ftValue.Price = ""
 				}
 
 				ftValue.Currency_type = msg[i].Currencytype
@@ -285,7 +285,7 @@ func ReqReceive(c *gin.Context) {
 				if len(msg[i].Price) > 0 {
 					atValue.Price = msg[i].Price
 				} else {
-					atValue.Price = "\\N"
+					atValue.Price = ""
 				}
 
 				atValue.Currency_type = msg[i].Currencytype
