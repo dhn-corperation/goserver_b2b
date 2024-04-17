@@ -134,10 +134,11 @@ func ReqReceive(c *gin.Context) {
 				ftValue.S_code = msg[i].Scode
 				ftValue.Tmpl_id = msg[i].Tmplid
 				ftValue.Wide = msg[i].Wide
-				ftValue.Send_group = "\\N"
+				ftValue.Send_group = nil
 				ftValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
-					ftValue.Price = msg[i].Price
+					price, _ := strconv.Atoi(msg[i].Price)
+					atValue.Price = price
 				} else {
 					ftValue.Price = nil
 				}
@@ -280,10 +281,11 @@ func ReqReceive(c *gin.Context) {
 				atValue.S_code = msg[i].Scode
 				atValue.Tmpl_id = msg[i].Tmplid
 				atValue.Wide = msg[i].Wide
-				atValue.Send_group = "\\N"
+				atValue.Send_group = nil
 				atValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
-					atValue.Price = msg[i].Price
+					price, _ := strconv.Atoi(msg[i].Price)
+					atValue.Price = price
 				} else {
 					atValue.Price = nil
 				}
