@@ -68,14 +68,19 @@ func ReqReceive(c *gin.Context) {
 		}
 		defer tx.Rollback()
 
-		ftStmt, err := tx.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
+		// ftStmt, err := tx.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
+		// if err != nil {
+		// 	errlog.Println("ftStmt 초기화 실패 ", err)
+		// 	return
+		// }
+		// defer ftStmt.Close()
+
+		atStmt, err := tx.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
 		if err != nil {
-			errlog.Println("ftStmt 초기화 실패 ", err)
+			errlog.Println("atStmt 초기화 실패 ", err)
 			return
 		}
-		defer ftStmt.Close()
-
-		
+		defer atStmt.Close()
 
 		msgStmt, err := tx.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
 		if err != nil {
@@ -84,19 +89,13 @@ func ReqReceive(c *gin.Context) {
 		}
 		defer msgStmt.Close()
 
-		msgTempStmt, _ := tx.Prepare(pq.CopyIn("dhn_result_temp", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
+		msgTempStmt, err := tx.Prepare(pq.CopyIn("dhn_result_temp", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
 		if err != nil {
 			errlog.Println("msgTempStmt 초기화 실패 ", err)
 			return
 		}
 		defer msgTempStmt.Close()
 
-		atStmt, err := tx.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
-		if err != nil {
-			errlog.Println("atStmt 초기화 실패 ", err)
-			return
-		}
-		defer atStmt.Close()
 
 		ftValues := []kaocommon.FtReqColumn{}
 		atValues := []kaocommon.AtReqColumn{}
@@ -328,17 +327,17 @@ func ReqReceive(c *gin.Context) {
 			saveCount := 500
 
 			if len(ftValues) >= saveCount {
-				for _, data := range ftValues {
-					_, err := ftStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Header,data.Carousel,data.Att_coupon,data.Attachments)
-					if err != nil {
-						errlog.Println(err)
-					}
-				}
-				ftValues = []kaocommon.FtReqColumn{}
-				_, err = ftStmt.Exec()
-				if err != nil {
-					errlog.Println(err)
-				}
+				// for _, data := range ftValues {
+				// 	_, err := ftStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Header,data.Carousel,data.Att_coupon,data.Attachments)
+				// 	if err != nil {
+				// 		errlog.Println(err)
+				// 	}
+				// }
+				// ftValues = []kaocommon.FtReqColumn{}
+				// _, err = ftStmt.Exec()
+				// if err != nil {
+				// 	errlog.Println(err)
+				// }
 			}
 
 			if len(atValues) >= saveCount {
@@ -374,18 +373,18 @@ func ReqReceive(c *gin.Context) {
 		
 		// 나머지 건수를 저장하기 위해 다시한번 정의
 		if len(ftValues) > 0 {
-			for _, data := range ftValues {
-				_, err := ftStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Header,data.Carousel,data.Att_coupon,data.Attachments)
-				if err != nil {
-					errlog.Println(err)
-				}
-			}
-			ftValues = []kaocommon.FtReqColumn{}
-			execFlag = true
-			_, err = ftStmt.Exec()
-			if err != nil {
-				errlog.Println(err)
-			}
+			// for _, data := range ftValues {
+			// 	_, err := ftStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Header,data.Carousel,data.Att_coupon,data.Attachments)
+			// 	if err != nil {
+			// 		errlog.Println(err)
+			// 	}
+			// }
+			// ftValues = []kaocommon.FtReqColumn{}
+			// execFlag = true
+			// _, err = ftStmt.Exec()
+			// if err != nil {
+			// 	errlog.Println(err)
+			// }
 		}
 
 		if len(atValues) > 0 {
