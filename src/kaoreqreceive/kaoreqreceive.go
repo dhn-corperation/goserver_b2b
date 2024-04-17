@@ -139,7 +139,7 @@ func ReqReceive(c *gin.Context) {
 				if len(msg[i].Price) > 0 {
 					ftValue.Price = msg[i].Price
 				} else {
-					ftValue.Price = ""
+					ftValue.Price = nil
 				}
 
 				ftValue.Currency_type = msg[i].Currencytype
@@ -218,7 +218,7 @@ func ReqReceive(c *gin.Context) {
 				msgValue.Wide = msg[i].Wide
 				msgValue.Send_group = "\\N"
 				msgValue.Supplement = msg[i].Supplement
-				msgValue.Price = "\\N"
+				msgValue.Price = nil
 				msgValue.Currency_type = "\\N"
 				msgValue.Header = msg[i].Header
 				msgValue.Carousel = msg[i].Carousel
@@ -285,7 +285,7 @@ func ReqReceive(c *gin.Context) {
 				if len(msg[i].Price) > 0 {
 					atValue.Price = msg[i].Price
 				} else {
-					atValue.Price = ""
+					atValue.Price = nil
 				}
 
 				atValue.Currency_type = msg[i].Currencytype
