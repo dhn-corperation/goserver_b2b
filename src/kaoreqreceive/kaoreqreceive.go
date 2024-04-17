@@ -157,13 +157,13 @@ func ReqReceive(c *gin.Context) {
 				ftValue.S_code = msg[i].Scode
 				ftValue.Tmpl_id = msg[i].Tmplid
 				ftValue.Wide = msg[i].Wide
-				ftValue.Send_group = sql.NullString{}
+				ftValue.Send_group = ""
 				ftValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
 					price, _ := strconv.Atoi(msg[i].Price)
-					ftValue.Price = sql.NullInt64{Int64: int64(price), Valid: true}
+					ftValue.Price = price
 				} else {
-					ftValue.Price = sql.NullInt64{}
+					ftValue.Price = 0
 				}
 
 				ftValue.Currency_type = msg[i].Currencytype
@@ -240,10 +240,10 @@ func ReqReceive(c *gin.Context) {
 				msgValue.Sync = "N"
 				msgValue.Tmpl_id = msg[i].Tmplid
 				msgValue.Wide = msg[i].Wide
-				msgValue.Send_group = sql.NullString{}
+				msgValue.Send_group = ""
 				msgValue.Supplement = msg[i].Supplement
-				msgValue.Price = sql.NullInt64{}
-				msgValue.Currency_type = sql.NullString{}
+				msgValue.Price = 0
+				msgValue.Currency_type = ""
 				msgValue.Header = msg[i].Header
 				msgValue.Carousel = msg[i].Carousel
 
@@ -308,9 +308,9 @@ func ReqReceive(c *gin.Context) {
 				atValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
 					price, _ := strconv.Atoi(msg[i].Price)
-					atValue.Price = sql.NullInt64{Int64: int64(price), Valid: true}
+					atValue.Price = price
 				} else {
-					atValue.Price = sql.NullInt64{}
+					atValue.Price = 0
 				}
 
 				atValue.Currency_type = msg[i].Currencytype

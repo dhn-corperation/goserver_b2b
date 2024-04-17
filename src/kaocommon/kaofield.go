@@ -36,9 +36,9 @@ type AtReqColumn struct {
 	S_code    		string	`db:"s_code"`
 	Tmpl_id    		string	`db:"tmpl_id"`
 	Wide    		string	`db:"wide"`
-	Send_group    	sql.NullString	`db:"send_group"`
+	Send_group    	string	`db:"send_group"`
 	Supplement    	string	`db:"supplement"`
-	Price           sql.NullInt64		`db:"price"`
+	Price           int	`db:"price"`
 	Currency_type   string	`db:"currency_type"`
 	Title           string  `db:"title"`
 }
@@ -75,9 +75,9 @@ type FtReqColumn struct {
 	S_code    		string	`db:"s_code"`
 	Tmpl_id    		string	`db:"tmpl_id"`
 	Wide    		string	`db:"wide"`
-	Send_group    	sql.NullString	`db:"send_group"`
+	Send_group    	string	`db:"send_group"`
 	Supplement    	string	`db:"supplement"`
-	Price           sql.NullInt64		`db:"price"`
+	Price           int		`db:"price"`
 	Currency_type   string	`db:"currency_type"`
 	Title           string  `db:"title"`
 	Header    		string	`db:"header"`
@@ -99,7 +99,7 @@ type MsgReqColumn struct {
 	Code     		string	`db:"code"`
 	Image_link		string	`db:"image_link"`
 	Image_url		string	`db:"image_url"`
-	Kind            sql.NullString	`db:"kind"`
+	Kind            string	`db:"kind"`
 	Message         string	`db:"message"`
 	Message_type    string	`db:"message_type"`
 	Msg    			string	`db:"msg"`
@@ -125,10 +125,10 @@ type MsgReqColumn struct {
 	Sync    		string	`db:"sync"`
 	Tmpl_id    		string	`db:"tmpl_id"`
 	Wide    		string	`db:"wide"`
-	Send_group    	sql.NullString	`db:"send_group"`
+	Send_group    	string	`db:"send_group"`
 	Supplement    	string	`db:"supplement"`
-	Price           sql.NullInt64		`db:"price"`
-	Currency_type   sql.NullString	`db:"currency_type"`
+	Price           int		`db:"price"`
+	Currency_type   string	`db:"currency_type"`
 	Header    		string	`db:"header"`
 	Carousel    	string	`db:"carousel"`
 }
