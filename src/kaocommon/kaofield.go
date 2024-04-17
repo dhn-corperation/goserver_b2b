@@ -73,7 +73,7 @@ type FtReqColumn struct {
 	Wide    		string	`db:"wide"`
 	Send_group    	*string	`db:"send_group"`
 	Supplement    	string	`db:"supplement"`
-	Price           *int64	`db:"price"`
+	Price           *int	`db:"price"`
 	Currency_type   string	`db:"currency_type"`
 	Title           string  `db:"title"`
 	Header    		string	`db:"header"`
@@ -123,7 +123,7 @@ type MsgReqColumn struct {
 	Wide    		string	`db:"wide"`
 	Send_group    	*string	`db:"send_group"`
 	Supplement    	string	`db:"supplement"`
-	Price           *int64	`db:"price"`
+	Price           *int	`db:"price"`
 	Currency_type   *string	`db:"currency_type"`
 	Header    		string	`db:"header"`
 	Carousel    	string	`db:"carousel"`
