@@ -13,7 +13,8 @@ import (
 	"database/sql"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/go-sql-driver/mysql"
+	// _ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 )
 
 //언젠가는 다른곳으로 위치를 옮겨야 함
@@ -357,6 +358,13 @@ func ReqReceive(c *gin.Context) {
 			"ip":      userip,
 		})
 	}
+}
+
+func ReqPqTest(){
+	ftStmt, err := databasepool.DB.Prepare(pq.CopyIn("dhn_request", cm.GetReqColumnPq(cm.FtReqColumn{})...))
+	atStmt, err := databasepool.DB.Prepare(pq.CopyIn("dhn_request_at", cm.GetReqColumnPq(cm.AtReqColumn{})...))
+	msgStmt, err := databasepool.DB.Prepare(pq.CopyIn("dhn_result", cm.GetReqColumnPq(cm.MsgReqColumn{})...))
+	msgTempStmt, err := databasepool.DB.Prepare(pq.CopyIn("dhn_result_temp", cm.GetReqColumnPq(cm.MsgReqColumn{})...))
 }
 
 

@@ -9,6 +9,7 @@ import(
 	s "strings"
 	"strconv"
 	"database/sql"
+	"reflect"
 )
 
 var errlog = config.Stdlog
@@ -283,4 +284,13 @@ func InitDatabaseColumn(columnTypes []*sql.ColumnType, length int) []interface{}
 	}
 
 	return scanArgs
+}
+
+func GetReqColumnPq(mtype struct) []string {
+	t := reflect.TypeOf(mtype)
+	columns := make([]string, t.NumField())
+	for i:=0;i<t.Numfield();i++{
+		columns[i] = t.Field(i).Tag.Get("db")
+	}
+	return columns
 }

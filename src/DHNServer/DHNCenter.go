@@ -462,6 +462,8 @@ func resultProc() {
 
 	r.GET("/get_crypto", kaocenter.Get_crypto)
 
+	r.GET("/test", kaoreqreceive.ReqPqTest)
+
 	r.Run(":" + config.Conf.PORT)
 }
 
