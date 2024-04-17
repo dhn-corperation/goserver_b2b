@@ -423,7 +423,7 @@ func ReqPqTest(c *gin.Context){
 		}
 	}
 
-	_, err = stmt.Exec()
+	_, err := stmt.Exec()
 	if err != nil {
 		errlog.Println(err)
 	}
