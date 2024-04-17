@@ -335,7 +335,7 @@ func ReqReceive(c *gin.Context) {
 
 			if len(ftValues) >= saveCount {
 				for _, data := range ftValues {
-					_, err := ftStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Header,data.Carousel,data.Att_coupon,data.Attachments)
+					_, err := ftStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.Phn,data.Profile,data.P_com,data.P_invoice,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.S_code,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Header,data.Carousel,data.Att_coupon,data.Attachments)
 					if err != nil {
 						errlog.Println(err)
 					}
@@ -349,7 +349,7 @@ func ReqReceive(c *gin.Context) {
 
 			if len(atValues) >= saveCount {
 				for _, data := range atValues {
-					_, err := atStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type)
+					_, err := atStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.Phn,data.Profile,data.P_com,data.P_invoice,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.S_code,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type)
 					if err != nil {
 						errlog.Println(err)
 					}
@@ -381,7 +381,7 @@ func ReqReceive(c *gin.Context) {
 		// 나머지 건수를 저장하기 위해 다시한번 정의
 		if len(ftValues) > 0 {
 			for _, data := range ftValues {
-				_, err := ftStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Header,data.Carousel,data.Att_coupon,data.Attachments)
+				_, err := ftStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.Phn,data.Profile,data.P_com,data.P_invoice,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.S_code,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Header,data.Carousel,data.Att_coupon,data.Attachments)
 				if err != nil {
 					errlog.Println(err)
 				}
@@ -397,7 +397,9 @@ func ReqReceive(c *gin.Context) {
 		if len(atValues) > 0 {
 			errlog.Println("여기오냐2")
 			for _, data := range atValues {
-				_, err := atStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type)
+				errlog.Println("여기오냐3")
+				errlog.Println(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.Phn,data.Profile,data.P_com,data.P_invoice,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.S_code,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type)
+				_, err := atStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.Phn,data.Profile,data.P_com,data.P_invoice,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.S_code,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type)
 				if err != nil {
 					errlog.Println(err)
 				}
