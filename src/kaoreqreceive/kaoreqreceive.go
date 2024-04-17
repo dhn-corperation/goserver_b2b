@@ -373,7 +373,7 @@ func ReqPqTest(){
 
 	ftValue := kaocommon.FtReqColumn{}
 	ftValue.Msgid = "test"
-	append(ftValues, ftValue)
+	ftValues = append(ftValues, ftValue)
 
 	errlog := config.Stdlog
 
