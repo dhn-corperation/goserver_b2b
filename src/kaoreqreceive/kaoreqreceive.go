@@ -375,6 +375,8 @@ func ReqPqTest(){
 	ftValue.Msgid = "test"
 	append(ftValues, ftValue)
 
+	errlog := config.Stdlog
+
 	errlog.Println(ftValue.Msgid)
 	errlog.Println(ftValues)
 }
