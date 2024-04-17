@@ -82,7 +82,7 @@ func ReqReceive(c *gin.Context) {
 			errlog.Println("msgStmt 초기화 실패 ", err)
 			return
 		}
-		defer atStmt.Close()
+		defer msgStmt.Close()
 
 		msgTempStmt, _ := tx.Prepare(pq.CopyIn("dhn_result_temp", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
 		if err != nil {
