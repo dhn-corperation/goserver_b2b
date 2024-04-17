@@ -327,7 +327,7 @@ func atsendProcess(group_no string, user_id string) {
 			}
 			atValue.Supplement = result["supplement"]
 			if len(result["price"]) > 0 {
-				price, _ := strconv.Atoi(msg[i].Price)
+				price, _ := strconv.Atoi(result["price"])
 				atValue.Price = price
 			} else {
 				atValue.Price = nil
