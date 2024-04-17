@@ -363,11 +363,18 @@ func ReqReceive(c *gin.Context) {
 func ReqPqTest(c *gin.Context){
 	errlog := config.Stdlog
 
-	ftStmt, err := databasepool.DB.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
+	tx, err := databasepool.DB.Begin()
+	if err != nil {
+		errlog.Println(err)
+	}
+	defer tx.Rollback()
+
+	ftStmt, err = tx.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
 	if err != nil {
 		errlog.Println(err)
 	}
 	defer ftStmt.Close()
+
 	// atStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
 	// msgStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
 	// msgTempStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result_temp", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
@@ -385,6 +392,11 @@ func ReqPqTest(c *gin.Context){
 	}
 
 	_, err = ftStmt.Exec()
+	if err != nil {
+		errlog.Println(err)
+	}
+
+	err = tx.Commit()
 	if err != nil {
 		errlog.Println(err)
 	}
