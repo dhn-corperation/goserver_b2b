@@ -41,5 +41,6 @@ type Reqtable struct {
 	Carousel     string `json:"carousel"`
 	Att_items    string `json:"att_items"`
 	Att_coupon   string `json:"att_coupon"`
+	Attachments  string `json:"ㅁttachments"`
 	Crypto       string `json:"crypto"`
 }
