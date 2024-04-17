@@ -68,20 +68,6 @@ func ReqReceive(c *gin.Context) {
 		}
 		defer tx.Rollback()
 
-		
-
-		
-
-		
-
-		// msgTempStmt, err := tx.Prepare(pq.CopyIn("dhn_result_temp", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
-		// if err != nil {
-		// 	errlog.Println("msgTempStmt 초기화 실패 ", err)
-		// 	return
-		// }
-		// defer msgTempStmt.Close()
-
-
 		ftValues := []kaocommon.FtReqColumn{}
 		atValues := []kaocommon.AtReqColumn{}
 		msgValues := []kaocommon.MsgReqColumn{}
@@ -148,12 +134,12 @@ func ReqReceive(c *gin.Context) {
 				ftValue.S_code = msg[i].Scode
 				ftValue.Tmpl_id = msg[i].Tmplid
 				ftValue.Wide = msg[i].Wide
-				ftValue.Send_group = "\\n"
+				ftValue.Send_group = "\\N"
 				ftValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
 					ftValue.Price = msg[i].Price
 				} else {
-					ftValue.Price = "\\n"
+					ftValue.Price = "\\N"
 				}
 
 				ftValue.Currency_type = msg[i].Currencytype
@@ -184,7 +170,7 @@ func ReqReceive(c *gin.Context) {
 				msgValue.Code = "9999"
 				msgValue.Image_link = msg[i].Imagelink
 				msgValue.Image_url = msg[i].Imageurl
-				msgValue.Kind = "\\n"
+				msgValue.Kind = "\\N"
 				msgValue.Message = ""
 				msgValue.Message_type = msg[i].Messagetype
 				if s.Contains(msg[i].Crypto, "MSG") {
@@ -230,10 +216,10 @@ func ReqReceive(c *gin.Context) {
 				msgValue.Sync = "N"
 				msgValue.Tmpl_id = msg[i].Tmplid
 				msgValue.Wide = msg[i].Wide
-				msgValue.Send_group = "\\n"
+				msgValue.Send_group = "\\N"
 				msgValue.Supplement = msg[i].Supplement
-				msgValue.Price = "\\n"
-				msgValue.Currency_type = "\\n"
+				msgValue.Price = "\\N"
+				msgValue.Currency_type = "\\N"
 				msgValue.Header = msg[i].Header
 				msgValue.Carousel = msg[i].Carousel
 
@@ -294,12 +280,12 @@ func ReqReceive(c *gin.Context) {
 				atValue.S_code = msg[i].Scode
 				atValue.Tmpl_id = msg[i].Tmplid
 				atValue.Wide = msg[i].Wide
-				atValue.Send_group = "\\n"
+				atValue.Send_group = "\\N"
 				atValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
 					atValue.Price = msg[i].Price
 				} else {
-					atValue.Price = "\\n"
+					atValue.Price = "\\N"
 				}
 
 				atValue.Currency_type = msg[i].Currencytype
