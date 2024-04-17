@@ -416,7 +416,7 @@ func ReqPqTest(c *gin.Context){
 			data.Header,
 			data.Carousel,
 			data.Att_coupon,
-			data.Attachments
+			data.Attachments,
 		)
 		if err != nil {
 			errlog.Println(err)
