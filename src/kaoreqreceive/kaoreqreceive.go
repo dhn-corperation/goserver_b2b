@@ -161,7 +161,7 @@ func ReqReceive(c *gin.Context) {
 				ftValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
 					price, _ := strconv.Atoi(msg[i].Price)
-					ftValue.Price = price
+					ftValue.Price = &price
 				} else {
 					ftValue.Price = nil
 				}
