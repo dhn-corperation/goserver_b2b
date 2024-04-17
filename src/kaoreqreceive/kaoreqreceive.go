@@ -360,7 +360,7 @@ func ReqReceive(c *gin.Context) {
 	}
 }
 
-func ReqPqTest(){
+func ReqPqTest(c *gin.Context){
 	// ftStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
 	// atStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
 	// msgStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
