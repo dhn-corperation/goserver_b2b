@@ -361,24 +361,72 @@ func ReqReceive(c *gin.Context) {
 }
 
 func ReqPqTest(c *gin.Context){
-	// ftStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
+	errlog := config.Stdlog
+
+	ftStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
+	defer ftStmt.Close()
 	// atStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
 	// msgStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
 	// msgTempStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result_temp", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
 
-	var ftValues []kaocommon.FtReqColumn
-	// atValues := []kaocommon.AtReqColumn
-	// msgValues := []kaocommon.MsgReqColumn
-	// msgTempValues := []kaocommon.MsgReqColumn
+	ftValues := []kaocommon.FtReqColumn{
+		{Msgid: "test1", Userid: "test1", Ad_flag: "N", Msg: "testesttest1", Phn: "01093440043", reg_dt: "0000000000", Reserve_dt: "12341234"},
+		{Msgid: "test2", Userid: "test2", Ad_flag: "N", Msg: "testesttest2", Phn: "01093440043", reg_dt: "0000000000", Reserve_dt: "12341234"},
+	}
 
-	ftValue := kaocommon.FtReqColumn{}
-	ftValue.Msgid = "test"
-	ftValues = append(ftValues, ftValue)
+	for _, data := range ftValues {
+		_, err := ftStmt.Exec(
+			data.Msgid,
+			data.Userid,
+			data.Ad_flag,
+			data.Button1,
+			data.Button2,
+			data.Button3,
+			data.Button4,
+			data.Button5,
+			data.Image_link,
+			data.Image_url,
+			data.Message_type,
+			data.Msg,
+			data.Msg_sms,
+			data.Only_sms,
+			data.P_com,
+			data.P_invoice,
+			data.Phn,
+			data.Profile,
+			data.Reg_dt,
+			data.Remark1,
+			data.Remark2,
+			data.Remark3,
+			data.Remark4,
+			data.Remark5,
+			data.Res_dt,
+			data.Reserve_dt,
+			data.Result,
+			data.S_code,
+			data.Sms_kind,
+			data.Sms_lms_tit,
+			data.Sms_sender,
+			data.Tmpl_id,
+			data.Wide,
+			data.Send_group,
+			data.Supplement,
+			data.Price,
+			data.Currency_type,
+			data.Header,
+			data.Carousel,
+			data.Att_coupon,
+			data.Attachments
+		)
+		if err != nil {
+			errlog.Println(err)
+		}
+	}
 
-	errlog := config.Stdlog
-
-	errlog.Println(ftValue.Msgid)
-	errlog.Println(ftValues)
+	_, err = stmt.Exec()
+	if err != nil {
+		errlog.Println(err)
+	}
 }
 
 
