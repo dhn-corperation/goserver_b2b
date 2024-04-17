@@ -102,7 +102,9 @@ func ReqReceive(c *gin.Context) {
 		msgValues := []kaocommon.MsgReqColumn{}
 
 		//맵핑한 데이터 row 처리
+		errlog.Println("msg length ", len(msg))
 		for i, _ := range msg {
+			errlog.Println("여기오냐 0")
 			var nonce string
 			if len(msg[i].Crypto) > 0 {
 				nonce = s.Split(msg[i].Crypto, ",")[0]
