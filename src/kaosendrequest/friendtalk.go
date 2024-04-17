@@ -47,15 +47,15 @@ func FriendtalkProc(ctx context.Context) {
 			    return
 			default:
 						
-				var count int
+				var count sql.NullInt64
 	
-				cnterr := databasepool.DB.QueryRow("select length(msgid) as cnt from DHN_REQUEST  where send_group is null and (reserve_dt IS NULL OR to_timestamp(coalesce(reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW()) limit 1").Scan(&count)
+				cnterr := databasepool.DB.QueryRow("select count(1) as cnt from DHN_REQUEST  where send_group is null and (reserve_dt IS NULL OR to_timestamp(coalesce(reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW()) limit 1").Scan(&count)
 	
 				if cnterr != nil {
 					//config.Stdlog.Println("DHN_REQUEST Table - select 오류 : " + cnterr.Error())
 				} else {
 	
-					if count > 0 {
+					if count.Valid && count.Int64 > 0 {
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
 				

@@ -30,11 +30,6 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 			
 			select {
 				case <- ctx.Done():
-			
-			    // uid := ctx.Value("user_id")
-			    // config.Stdlog.Println(uid, " - Alimtalk process가 20초 후에 종료 됨.")
-			    // time.Sleep(20 * time.Second)
-			    // config.Stdlog.Println(uid, " - Alimtalk process 종료 완료")
 			    config.Stdlog.Println(user_id, " - Alimtalk process가 20초 후에 종료 됨.")
 			    time.Sleep(20 * time.Second)
 			    config.Stdlog.Println(user_id, " - Alimtalk process 종료 완료")

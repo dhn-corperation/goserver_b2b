@@ -101,7 +101,7 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 	set	send_group = ?
 	where result = 'P'
 	  and send_group is null
-	  and coalesce(reserve_dt, '00000000000000') <= TO_CHAR(now(), '%Y%m%d%H%i%S')
+	  and (dr.reserve_dt IS NULL OR to_timestamp(coalesce(dr.reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW())
 	  and userid = ?
 	LIMIT 500
 	`
@@ -202,13 +202,13 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	    (SELECT MAX(sms_len_check) FROM DHN_CLIENT_LIST dcl WHERE dcl.user_id = drr.userid) AS sms_len_check,
 	    COALESCE((SELECT MAX(oshot) FROM DHN_CLIENT_LIST dcl WHERE dcl.user_id = drr.userid), 'OShot') AS oshot  
 	FROM DHN_RESULT drr 
-	WHERE send_group = ?
+	WHERE send_group = '`+group_no+`'
 	  AND result = 'P'
-	  AND userid = ?
+	  AND userid = '`+user_id+`'
 	ORDER BY userid
 	`
 
-	resrows, err := db.QueryContext(ctx, resquery, group_no, user_id)
+	resrows, err := db.QueryContext(ctx, resquery)
 
 	if err != nil {
 		stdlog.Println("Result Table 조회 중 오류 발생")
