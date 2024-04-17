@@ -75,7 +75,7 @@ func ReqReceive(c *gin.Context) {
 		}
 		defer ftStmt.Close()
 
-		errlog.Println(s.join(kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{}), ","))
+		errlog.Println(s.Join(kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{}), ","))
 		atStmt, err := tx.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
 		if err != nil {
 			errlog.Println("atStmt 초기화 실패 ", err)
