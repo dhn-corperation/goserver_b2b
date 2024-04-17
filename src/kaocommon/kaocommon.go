@@ -183,6 +183,7 @@ func GetQuestionMark(column []string) string {
 //테이블 insert 처리
 func InsMsg(query string, insStrs []string, insValues []interface{}) ([]string, []interface{}){
 	stmt := fmt.Sprintf(query, s.Join(insStrs, ","))
+	errlog.Println("sql ", stmt)
 	_, err := databasepool.DB.Exec(stmt, insValues...)
 
 	if err != nil {
