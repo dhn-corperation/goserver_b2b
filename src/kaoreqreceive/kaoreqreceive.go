@@ -194,7 +194,7 @@ func ReqReceive(c *gin.Context) {
 				msgValue.Code = "9999"
 				msgValue.Image_link = msg[i].Imagelink
 				msgValue.Image_url = msg[i].Imageurl
-				msgValue.Kind = ""
+				msgValue.Kind = sql.NullString{}
 				msgValue.Message = ""
 				msgValue.Message_type = msg[i].Messagetype
 				if s.Contains(msg[i].Crypto, "MSG") {
@@ -240,10 +240,10 @@ func ReqReceive(c *gin.Context) {
 				msgValue.Sync = "N"
 				msgValue.Tmpl_id = msg[i].Tmplid
 				msgValue.Wide = msg[i].Wide
-				msgValue.Send_group = ""
+				msgValue.Send_group = sql.NullString{}
 				msgValue.Supplement = msg[i].Supplement
-				msgValue.Price = nil
-				msgValue.Currency_type = ""
+				msgValue.Price = sql.NullInt64{}
+				msgValue.Currency_type = sql.NullString{}
 				msgValue.Header = msg[i].Header
 				msgValue.Carousel = msg[i].Carousel
 
@@ -304,7 +304,7 @@ func ReqReceive(c *gin.Context) {
 				atValue.S_code = msg[i].Scode
 				atValue.Tmpl_id = msg[i].Tmplid
 				atValue.Wide = msg[i].Wide
-				atValue.Send_group = ""
+				atValue.Send_group = sql.NullString{}
 				atValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
 					price, _ := strconv.Atoi(msg[i].Price)
