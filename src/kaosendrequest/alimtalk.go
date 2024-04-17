@@ -280,6 +280,7 @@ func atsendProcess(group_no string, user_id string) {
 			atValue.Only_sms = result["only_sms"]
 			atValue.P_com = result["p_com"]
 			atValue.P_invoice = result["p_invoice"]
+			atValue.Phn = result["phn"]
 			atValue.Profile = result["profile"]
 			atValue.Reg_dt = result["reg_dt"]
 			atValue.Remark1 = result["remark1"]
