@@ -402,13 +402,12 @@ func ReqReceive(c *gin.Context) {
 		}
 
 		if len(atValues) > 0 {
-			eatStmt, err := tx.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
+			atStmt, err := tx.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
 			if err != nil {
 				errlog.Println("atStmt 초기화 실패 ", err)
 				return
 			}
 			for _, data := range atValues {
-				errlog.Println(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.Phn,data.Profile,data.P_com,data.P_invoice,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.S_code,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type)
 				_, err := atStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.Phn,data.Profile,data.P_com,data.P_invoice,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.S_code,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type)
 				if err != nil {
 					errlog.Println(err)
