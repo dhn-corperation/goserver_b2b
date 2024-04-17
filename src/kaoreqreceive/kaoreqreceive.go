@@ -370,8 +370,8 @@ func ReqPqTest(c *gin.Context){
 	// msgTempStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result_temp", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
 
 	ftValues := []kaocommon.FtReqColumn{
-		{Msgid: "test1", Userid: "test1", Ad_flag: "N", Msg: "testesttest1", Phn: "01093440043", reg_dt: "0000000000", Reserve_dt: "12341234"},
-		{Msgid: "test2", Userid: "test2", Ad_flag: "N", Msg: "testesttest2", Phn: "01093440043", reg_dt: "0000000000", Reserve_dt: "12341234"},
+		{Msgid: "test1", Userid: "test1", Ad_flag: "N", Msg: "testesttest1", Phn: "01093440043", Reg_dt: "0000000000", Reserve_dt: "12341234"},
+		{Msgid: "test2", Userid: "test2", Ad_flag: "N", Msg: "testesttest2", Phn: "01093440043", Reg_dt: "0000000000", Reserve_dt: "12341234"},
 	}
 
 	for _, data := range ftValues {
