@@ -21,9 +21,9 @@ import (
 var SecretKey = "9b4dabe9d4fed126a58f8639846143c7"
 
 func ReqReceive(c *gin.Context) {
-	ftColumn := common.GetReqFtColumn()
-	atColumn := common.GetReqAtColumn()
-	msgColumn := common.GetReqMsgColumn()
+	ftColumn := kaocommon.GetReqFtColumn()
+	atColumn := kaocommon.GetReqAtColumn()
+	msgColumn := kaocommon.GetReqMsgColumn()
 	ftColumnStr := s.Join(ftColumn, ",")
 	atColumnStr := s.Join(atColumn, ",")
 	msgColumnStr := s.Join(msgColumn, ",")
@@ -94,9 +94,9 @@ func ReqReceive(c *gin.Context) {
 		//temp 테이블 컬럼 셋팅(DHN_RESULT_TEMP : 에러 시 데이터 유실을 막기 위한 테이블)
 		resinstempquery := `insert into DHN_RESULT_TEMP(`+msgColumnStr+`) values %s`
 
-		ftQmarkStr := common.GetQuestionMark(ftColumn)
-		atQmarkStr := common.GetQuestionMark(atColumn)
-		msgQmarkStr := common.GetQuestionMark(msgColumn)
+		ftQmarkStr := kaocommon.GetQuestionMark(ftColumn)
+		atQmarkStr := kaocommon.GetQuestionMark(atColumn)
+		msgQmarkStr := kaocommon.GetQuestionMark(msgColumn)
 
 		//맵핑한 데이터 row 처리
 		for i, _ := range msg {
@@ -119,19 +119,19 @@ func ReqReceive(c *gin.Context) {
 				reqinsValues = append(reqinsValues, msg[i].Imageurl)
 				reqinsValues = append(reqinsValues, msg[i].Messagetype)
 				if s.Contains(msg[i].Crypto, "MSG") {
-					reqinsValues = append(reqinsValues, common.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
+					reqinsValues = append(reqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
 				} else {
 					reqinsValues = append(reqinsValues, msg[i].Msg)
 				}
 				if s.Contains(msg[i].Crypto, "Msgsms") && len(msg[i].Msgsms) > 0 {
-					reqinsValues = append(reqinsValues, common.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
+					reqinsValues = append(reqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
 				} else {
 					reqinsValues = append(reqinsValues, msg[i].Msgsms)
 				}
 				reqinsValues = append(reqinsValues, msg[i].Onlysms)
-				reqinsValues = append(reqinsValues, common.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
+				reqinsValues = append(reqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
 				if s.Contains(msg[i].Crypto, "Profile") && len(msg[i].Profile) > 0 {
-					reqinsValues = append(reqinsValues, common.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
+					reqinsValues = append(reqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
 				} else {
 					reqinsValues = append(reqinsValues, msg[i].Profile)
 				}
@@ -146,12 +146,12 @@ func ReqReceive(c *gin.Context) {
 				reqinsValues = append(reqinsValues, msg[i].Reservedt)
 				reqinsValues = append(reqinsValues, msg[i].Smskind)
 				if s.Contains(msg[i].Crypto, "Smslmstit") && len(msg[i].Smslmstit) > 0 {
-					reqinsValues = append(reqinsValues, common.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
+					reqinsValues = append(reqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
 				} else {
 					reqinsValues = append(reqinsValues, msg[i].Smslmstit)
 				}
 				if s.Contains(msg[i].Crypto, "Smssender") && len(msg[i].Smssender) > 0 {
-					reqinsValues = append(reqinsValues, common.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
+					reqinsValues = append(reqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
 				} else {
 					reqinsValues = append(reqinsValues, msg[i].Smssender)
 				}
@@ -192,22 +192,22 @@ func ReqReceive(c *gin.Context) {
 				resinsValues = append(resinsValues, "")  // 결과 Message
 				resinsValues = append(resinsValues, msg[i].Messagetype)
 				if s.Contains(msg[i].Crypto, "MSG") {
-					resinsValues = append(resinsValues, common.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
+					resinsValues = append(resinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Msg)
 				}
 
 				if s.Contains(msg[i].Crypto, "Msgsms") && len(msg[i].Msgsms) > 0 {
-					resinsValues = append(resinsValues, common.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
+					resinsValues = append(resinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Msgsms)
 				}
 				resinsValues = append(resinsValues, msg[i].Onlysms)
 				resinsValues = append(resinsValues, msg[i].Pcom)
 				resinsValues = append(resinsValues, msg[i].Pinvoice)
-				resinsValues = append(resinsValues, common.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
+				resinsValues = append(resinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
 				if s.Contains(msg[i].Crypto, "Profile") && len(msg[i].Profile) > 0 {
-					resinsValues = append(resinsValues, common.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
+					resinsValues = append(resinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Profile)
 				}
@@ -223,13 +223,13 @@ func ReqReceive(c *gin.Context) {
 				resinsValues = append(resinsValues, msg[i].Scode)
 				resinsValues = append(resinsValues, msg[i].Smskind)
 				if s.Contains(msg[i].Crypto, "Smslmstit") && len(msg[i].Smslmstit) > 0 {
-					resinsValues = append(resinsValues, common.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
+					resinsValues = append(resinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Smslmstit)
 				}
 
 				if s.Contains(msg[i].Crypto, "Smssender") && len(msg[i].Smssender) > 0 {
-					resinsValues = append(resinsValues, common.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
+					resinsValues = append(resinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Smssender)
 				}
@@ -257,22 +257,22 @@ func ReqReceive(c *gin.Context) {
 				atreqinsValues = append(atreqinsValues, msg[i].Imageurl)
 				atreqinsValues = append(atreqinsValues, msg[i].Messagetype)
 				if s.Contains(msg[i].Crypto, "MSG") {
-					atreqinsValues = append(atreqinsValues, common.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
+					atreqinsValues = append(atreqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
 				} else {
 					atreqinsValues = append(atreqinsValues, msg[i].Msg)
 				}
 
 				if s.Contains(msg[i].Crypto, "Msgsms") && len(msg[i].Msgsms) > 0 {
-					atreqinsValues = append(atreqinsValues, common.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
+					atreqinsValues = append(atreqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
 				} else {
 					atreqinsValues = append(atreqinsValues, msg[i].Msgsms)
 				}
 				atreqinsValues = append(atreqinsValues, msg[i].Onlysms)
 
-				atreqinsValues = append(atreqinsValues, common.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
+				atreqinsValues = append(atreqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
 				// atreqinsValues = append(atreqinsValues, msg[i].Phn)
 				if s.Contains(msg[i].Crypto, "Profile") && len(msg[i].Profile) > 0 {
-					atreqinsValues = append(atreqinsValues, common.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
+					atreqinsValues = append(atreqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
 				} else {
 					atreqinsValues = append(atreqinsValues, msg[i].Profile)
 				}
@@ -287,13 +287,13 @@ func ReqReceive(c *gin.Context) {
 				atreqinsValues = append(atreqinsValues, msg[i].Reservedt)
 				atreqinsValues = append(atreqinsValues, msg[i].Smskind)
 				if s.Contains(msg[i].Crypto, "Smslmstit") && len(msg[i].Smslmstit) > 0 {
-					atreqinsValues = append(atreqinsValues, common.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
+					atreqinsValues = append(atreqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
 				} else {
 					atreqinsValues = append(atreqinsValues, msg[i].Smslmstit)
 				}
 
 				if s.Contains(msg[i].Crypto, "Smssender") && len(msg[i].Smssender) > 0 {
-					atreqinsValues = append(atreqinsValues, common.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
+					atreqinsValues = append(atreqinsValues, kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
 				} else {
 					atreqinsValues = append(atreqinsValues, msg[i].Smssender)
 				}
@@ -319,30 +319,30 @@ func ReqReceive(c *gin.Context) {
 			// 500건 단위로 처리한다(클라이언트에서 1000건씩 전송하더라도 지정한 단위의 건수로 insert한다.)
 			saveCount := 500
 			if len(reqinsStrs) >= saveCount {
-				reqinsStrs, reqinsValues = common.InsMsg(reqinsQuery, reqinsStrs, reqinsValues)
+				reqinsStrs, reqinsValues = kaocommon.InsMsg(reqinsQuery, reqinsStrs, reqinsValues)
 			}
 
 			if len(atreqinsStrs) >= saveCount {
-				atreqinsStrs, atreqinsValues = common.InsMsg(atreqinsQuery, atreqinsStrs, atreqinsValues)
+				atreqinsStrs, atreqinsValues = kaocommon.InsMsg(atreqinsQuery, atreqinsStrs, atreqinsValues)
 			}
 
 			if len(resinsStrs) >= saveCount {
-				resinsStrs, resinsValues = common.InsMsgTemp(resinsquery, resinsStrs, resinsValues, true, resinstempquery)
+				resinsStrs, resinsValues = kaocommon.InsMsgTemp(resinsquery, resinsStrs, resinsValues, true, resinstempquery)
 			}
 		}
 		
 		// 나머지 건수를 저장하기 위해 다시한번 정의
 		if len(reqinsStrs) > 0 {
-			reqinsStrs, reqinsValues = common.InsMsg(reqinsQuery, reqinsStrs, reqinsValues)
+			reqinsStrs, reqinsValues = kaocommon.InsMsg(reqinsQuery, reqinsStrs, reqinsValues)
 		}
 
 		if len(atreqinsStrs) > 0 {
 			errlog.Println("sql : ", fmt.Sprintf(atreqinsQuery, s.Join(atreqinsStrs, ",")))
-			atreqinsStrs, atreqinsValues = common.InsMsg(atreqinsQuery, atreqinsStrs, atreqinsValues)
+			atreqinsStrs, atreqinsValues = kaocommon.InsMsg(atreqinsQuery, atreqinsStrs, atreqinsValues)
 		}
 
 		if len(resinsStrs) > 0 {
-			resinsStrs, resinsValues = common.InsMsgTemp(resinsquery, resinsStrs, resinsValues, true, resinstempquery)
+			resinsStrs, resinsValues = kaocommon.InsMsgTemp(resinsquery, resinsStrs, resinsValues, true, resinstempquery)
 		}
 
 		errlog.Println("발송 메세지 수신 끝 ( ", userid, ") : ", len(msg), startTime)
@@ -361,15 +361,15 @@ func ReqReceive(c *gin.Context) {
 }
 
 func ReqPqTest(){
-	// ftStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_request", common.GetReqColumnPq(common.FtReqColumn{})...))
-	// atStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_request_at", common.GetReqColumnPq(common.AtReqColumn{})...))
-	// msgStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result", common.GetReqColumnPq(common.MsgReqColumn{})...))
-	// msgTempStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result_temp", common.GetReqColumnPq(common.MsgReqColumn{})...))
+	// ftStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
+	// atStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
+	// msgStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
+	// msgTempStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result_temp", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
 
 	var ftValues []kaocommon.FtReqColumn
-	// atValues := []common.AtReqColumn
-	// msgValues := []common.MsgReqColumn
-	// msgTempValues := []common.MsgReqColumn
+	// atValues := []kaocommon.AtReqColumn
+	// msgValues := []kaocommon.MsgReqColumn
+	// msgTempValues := []kaocommon.MsgReqColumn
 
 	ftValue := kaocommon.FtReqColumn{}
 	ftValue.Msgid = "test"
