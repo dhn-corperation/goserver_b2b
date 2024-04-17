@@ -70,25 +70,25 @@ func ReqReceive(c *gin.Context) {
 
 		ftStmt, err := tx.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
 		if err != nil {
-			errlog.Println(err)
+			errlog.Println("ftStmt 초기화 실패 ", err)
 		}
 		defer ftStmt.Close()
 
 		atStmt, err := tx.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
 		if err != nil {
-			errlog.Println(err)
+			errlog.Println("atStmt 초기화 실패 ", err)
 		}
 		defer atStmt.Close()
 
 		msgStmt, err := tx.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
 		if err != nil {
-			errlog.Println(err)
+			errlog.Println("msgStmt 초기화 실패 ", err)
 		}
 		defer atStmt.Close()
 
 		msgTempStmt, _ := tx.Prepare(pq.CopyIn("dhn_result_temp", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
 		if err != nil {
-			errlog.Println(err)
+			errlog.Println("msgTempStmt 초기화 실패 ", err)
 		}
 		defer msgTempStmt.Close()
 
@@ -161,7 +161,7 @@ func ReqReceive(c *gin.Context) {
 				ftValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
 					price, _ := strconv.Atoi(msg[i].Price)
-					ftValue.Price = price
+					ftValue.Price = sql.NullInt64{Int64: price, Valid: true}
 				} else {
 					ftValue.Price = sql.NullInt64{Valid: false}
 				}
@@ -308,7 +308,7 @@ func ReqReceive(c *gin.Context) {
 				atValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
 					price, _ := strconv.Atoi(msg[i].Price)
-					atValue.Price = price
+					atValue.Price = sql.NullInt64{Int64: price, Valid: true}
 				} else {
 					atValue.Price = sql.NullInt64{Valid: false}
 				}
