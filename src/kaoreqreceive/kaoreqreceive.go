@@ -361,10 +361,22 @@ func ReqReceive(c *gin.Context) {
 }
 
 func ReqPqTest(){
-	ftStmt, err := databasepool.DB.Prepare(pq.CopyIn("dhn_request", cm.GetReqColumnPq(cm.FtReqColumn{})...))
-	atStmt, err := databasepool.DB.Prepare(pq.CopyIn("dhn_request_at", cm.GetReqColumnPq(cm.AtReqColumn{})...))
-	msgStmt, err := databasepool.DB.Prepare(pq.CopyIn("dhn_result", cm.GetReqColumnPq(cm.MsgReqColumn{})...))
-	msgTempStmt, err := databasepool.DB.Prepare(pq.CopyIn("dhn_result_temp", cm.GetReqColumnPq(cm.MsgReqColumn{})...))
+	// ftStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_request", cm.GetReqColumnPq(cm.FtReqColumn{})...))
+	// atStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_request_at", cm.GetReqColumnPq(cm.AtReqColumn{})...))
+	// msgStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result", cm.GetReqColumnPq(cm.MsgReqColumn{})...))
+	// msgTempStmt, _ := databasepool.DB.Prepare(pq.CopyIn("dhn_result_temp", cm.GetReqColumnPq(cm.MsgReqColumn{})...))
+
+	ftValues := []cm.FtReqColumn{}
+	atValues := []cm.AtReqColumn{}
+	msgValues := []cm.MsgReqColumn{}
+	msgTempValues := []cm.MsgReqColumn{}
+
+	var ftValue = cm.FtReqColumn{}
+	ftValue.Msgid = "test"
+	append(ftValues, ftValue)
+
+	errlog.Println(ftValue.Msgid)
+	errlog.Println(ftValues)
 }
 
 
