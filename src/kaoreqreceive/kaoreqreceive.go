@@ -157,11 +157,11 @@ func ReqReceive(c *gin.Context) {
 				ftValue.S_code = msg[i].Scode
 				ftValue.Tmpl_id = msg[i].Tmplid
 				ftValue.Wide = msg[i].Wide
-				ftValue.Send_group = ""
+				ftValue.Send_group = sql.NullString{}
 				ftValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
 					price, _ := strconv.Atoi(msg[i].Price)
-					ftValue.Price = price
+					ftValue.Price = sql.NullInt64{Int64: int64(price), Valid: true}
 				} else {
 					ftValue.Price = sql.NullInt64{}
 				}
@@ -308,7 +308,7 @@ func ReqReceive(c *gin.Context) {
 				atValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
 					price, _ := strconv.Atoi(msg[i].Price)
-					atValue.Price = price
+					atValue.Price = sql.NullInt64{Int64: int64(price), Valid: true}
 				} else {
 					atValue.Price = sql.NullInt64{}
 				}
