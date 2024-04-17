@@ -268,7 +268,7 @@ func InitDatabaseColumn(columnTypes []*sql.ColumnType, length int) []interface{}
 	scanArgs := make([]interface{}, length)
 
 	for i, v := range columnTypes {
-
+		errlog.Println(i, " : ", v.DatabaseTypeName())
 		switch v.DatabaseTypeName() {
 		case "VARCHAR", "TEXT", "UUID", "TIMESTAMP":
 			scanArgs[i] = new(sql.NullString)
