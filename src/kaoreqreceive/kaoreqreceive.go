@@ -375,49 +375,7 @@ func ReqPqTest(c *gin.Context){
 	}
 
 	for _, data := range ftValues {
-		_, err := ftStmt.Exec(
-			data.Msgid,
-			data.Userid,
-			data.Ad_flag,
-			data.Button1,
-			data.Button2,
-			data.Button3,
-			data.Button4,
-			data.Button5,
-			data.Image_link,
-			data.Image_url,
-			data.Message_type,
-			data.Msg,
-			data.Msg_sms,
-			data.Only_sms,
-			data.P_com,
-			data.P_invoice,
-			data.Phn,
-			data.Profile,
-			data.Reg_dt,
-			data.Remark1,
-			data.Remark2,
-			data.Remark3,
-			data.Remark4,
-			data.Remark5,
-			data.Res_dt,
-			data.Reserve_dt,
-			data.Result,
-			data.S_code,
-			data.Sms_kind,
-			data.Sms_lms_tit,
-			data.Sms_sender,
-			data.Tmpl_id,
-			data.Wide,
-			data.Send_group,
-			data.Supplement,
-			data.Price,
-			data.Currency_type,
-			data.Header,
-			data.Carousel,
-			data.Att_coupon,
-			data.Attachments,
-		)
+		_, err := ftStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Res_dt,data.Reserve_dt,data.Result,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Header,data.Carousel,data.Att_coupon,data.Attachments)
 		if err != nil {
 			errlog.Println(err)
 		}
