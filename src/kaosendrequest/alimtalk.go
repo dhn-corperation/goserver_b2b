@@ -67,8 +67,6 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 }
 
 func atsendProcess(group_no string, user_id string) {
-	atColumn := kaocommon.GetResAtColumn()
-	atColumnStr := s.Join(atColumn, ",")
 
 	var db = databasepool.DB
 	var conf = config.Conf
@@ -374,7 +372,7 @@ func atsendProcess(group_no string, user_id string) {
 	}
 
 	//Center에서도 사용하고 있는 함수이므로 공용 라이브러리 생성이 필요함
-	if len(resinsStrs) > 0 {
+	if len(atValues) > 0 {
 		tx, err := databasepool.DB.Begin()
 		if err != nil {
 			errlog.Println(err)
