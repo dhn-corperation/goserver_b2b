@@ -369,7 +369,7 @@ func ReqPqTest(c *gin.Context){
 	}
 	defer tx.Rollback()
 
-	ftStmt, err = tx.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
+	ftStmt, err := tx.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
 	if err != nil {
 		errlog.Println(err)
 	}
