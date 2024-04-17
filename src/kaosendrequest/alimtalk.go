@@ -113,7 +113,7 @@ func atsendProcess(group_no string, user_id string) {
 		var supplement kakao.Supplement
 		var button []kakao.Button
 		var quickreply []kakao.Quickreply
-		result := map[string]string{}
+		result := map[string]interface{}{}
 
 		for i, v := range columnTypes {
 
@@ -194,18 +194,21 @@ func atsendProcess(group_no string, user_id string) {
 			}
 
 			if z, ok := (scanArgs[i]).(*sql.NullString); ok {
-				errlog.Println(i, " : ", z.String)
 				result[s.ToLower(v.Name())] = z.String
+			} else {
+				result[s.ToLower(v.Name())] = nil
 			}
 
 			if z, ok := (scanArgs[i]).(*sql.NullInt32); ok {
-				errlog.Println(i, " : ", string(z.Int32))
 				result[s.ToLower(v.Name())] = string(z.Int32)
+			} else {
+				result[s.ToLower(v.Name())] = nil
 			}
 
 			if z, ok := (scanArgs[i]).(*sql.NullInt64); ok {
-				errlog.Println(i, " : ", string(z.Int64))
 				result[s.ToLower(v.Name())] = string(z.Int64)
+			} else {
+				result[s.ToLower(v.Name())] = nil
 			}
 
 		}
