@@ -43,14 +43,15 @@ func ReqReceive(c *gin.Context) {
 			user_id = '`+userid+`'
 			and ip = '`+userip+`'
 			and use_flag = 'Y'`
-
-	var cnt int
+	errlog.Println("여기 들어오냐1")
+	var cnt sql.NullInt64
 	err := databasepool.DB.QueryRowContext(ctx, sqlstr).Scan(&cnt)
-	if err != nil { errlog.Println(err) }
+	if err != nil { errlog.Println("DHN_CLIENT_LIST 쿼리 에러 ", err) }
+	errlog.Println("여기 들어오냐2")
 
 	
 
-	if cnt > 0 { 
+	if cnt.Valid && cnt.Int64 > 0 { 
 		isValidation = true 
 	} else {
 		errlog.Println("허용되지 않은 사용자 및 아이피에서 발송 요청!! (userid : ", userid, "/ ip : ", userip, ")")
