@@ -36,7 +36,7 @@ type AtReqColumn struct {
 	Supplement    	string	`db:"supplement"`
 	Price           string	`db:"price"`
 	Currency_type   string	`db:"currency_type"`
-	Title           string  `db:"title"`
+	Title           string	`db:"title"`
 }
 
 type FtReqColumn struct {

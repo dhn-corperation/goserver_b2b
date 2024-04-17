@@ -75,12 +75,7 @@ func ReqReceive(c *gin.Context) {
 		}
 		defer ftStmt.Close()
 
-		atStmt, err := tx.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
-		if err != nil {
-			errlog.Println("atStmt 초기화 실패 ", err)
-			return
-		}
-		defer atStmt.Close()
+		
 
 		msgStmt, err := tx.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
 		if err != nil {
@@ -95,6 +90,13 @@ func ReqReceive(c *gin.Context) {
 			return
 		}
 		defer msgTempStmt.Close()
+
+		atStmt, err := tx.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
+		if err != nil {
+			errlog.Println("atStmt 초기화 실패 ", err)
+			return
+		}
+		defer atStmt.Close()
 
 		ftValues := []kaocommon.FtReqColumn{}
 		atValues := []kaocommon.AtReqColumn{}
