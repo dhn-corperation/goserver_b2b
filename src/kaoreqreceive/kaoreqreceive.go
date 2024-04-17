@@ -63,10 +63,12 @@ func ReqReceive(c *gin.Context) {
 		errlog.Println("발송 메세지 수신 시작 ( ", userid, ") : ", len(msg), startTime)
 
 		tx, err := databasepool.DB.Begin()
+		errlog.Println("뭔데 0")
 		if err != nil {
 			errlog.Println(err)
 		}
 		defer tx.Rollback()
+		errlog.Println("뭔데 1")
 
 		// ftStmt, err := tx.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
 		// if err != nil {
