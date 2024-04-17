@@ -210,8 +210,6 @@ func atsendProcess(group_no string, user_id string) {
 
 		}
 
-		errlog.Println(s.Join(result, ", "))
-
 		if s.EqualFold(result["message_type"], "at") {
 			alimtalk.Response_method = "realtime"
 		} else if s.EqualFold(result["message_type"], "ai") {
