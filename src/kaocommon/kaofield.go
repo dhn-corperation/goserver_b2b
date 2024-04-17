@@ -1,8 +1,5 @@
 package kaocommon
 
-import(
-	"database/sql"
-)
 
 type AtReqColumn struct {
 	Msgid			string	`db:"msgid"`
