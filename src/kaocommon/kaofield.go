@@ -1,9 +1,5 @@
 package kaocommon
 
-import (
-	"database/sql"
-)
-
 type AtReqColumn struct {
 	Msgid			string	`db:"msgid"`
 	Userid			string	`db:"userid"`
@@ -38,7 +34,7 @@ type AtReqColumn struct {
 	Wide    		string	`db:"wide"`
 	Send_group    	string	`db:"send_group"`
 	Supplement    	string	`db:"supplement"`
-	Price           sql.NullInt64		`db:"price"`
+	Price           string	`db:"price"`
 	Currency_type   string	`db:"currency_type"`
 	Title           string  `db:"title"`
 }
@@ -77,7 +73,7 @@ type FtReqColumn struct {
 	Wide    		string	`db:"wide"`
 	Send_group    	string	`db:"send_group"`
 	Supplement    	string	`db:"supplement"`
-	Price           sql.NullInt64		`db:"price"`
+	Price           string	`db:"price"`
 	Currency_type   string	`db:"currency_type"`
 	Title           string  `db:"title"`
 	Header    		string	`db:"header"`
@@ -127,7 +123,7 @@ type MsgReqColumn struct {
 	Wide    		string	`db:"wide"`
 	Send_group    	string	`db:"send_group"`
 	Supplement    	string	`db:"supplement"`
-	Price           sql.NullInt64		`db:"price"`
+	Price           string	`db:"price"`
 	Currency_type   string	`db:"currency_type"`
 	Header    		string	`db:"header"`
 	Carousel    	string	`db:"carousel"`

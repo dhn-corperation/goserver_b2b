@@ -160,10 +160,9 @@ func ReqReceive(c *gin.Context) {
 				ftValue.Send_group = "\\n"
 				ftValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
-					price, _ := strconv.Atoi(msg[i].Price)
-					ftValue.Price = sql.NullInt64{Int64: int64(price), Valid: true}
+					ftValue.Price = msg[i].Price
 				} else {
-					ftValue.Price = sql.NullInt64{Valid: false}
+					ftValue.Price = "\\n"
 				}
 
 				ftValue.Currency_type = msg[i].Currencytype
@@ -242,7 +241,7 @@ func ReqReceive(c *gin.Context) {
 				msgValue.Wide = msg[i].Wide
 				msgValue.Send_group = "\\n"
 				msgValue.Supplement = msg[i].Supplement
-				msgValue.Price = sql.NullInt64{Valid: false}
+				msgValue.Price = "\\n"
 				msgValue.Currency_type = "\\n"
 				msgValue.Header = msg[i].Header
 				msgValue.Carousel = msg[i].Carousel
@@ -307,10 +306,10 @@ func ReqReceive(c *gin.Context) {
 				atValue.Send_group = "\\n"
 				atValue.Supplement = msg[i].Supplement
 				if len(msg[i].Price) > 0 {
-					price, _ := strconv.Atoi(msg[i].Price)
-					atValue.Price = sql.NullInt64{Int64: int64(price), Valid: true}
+					// price, _ := strconv.Atoi(msg[i].Price)
+					atValue.Price = msg[i].Price
 				} else {
-					atValue.Price = sql.NullInt64{Valid: false}
+					atValue.Price = "\\n"
 				}
 
 				atValue.Currency_type = msg[i].Currencytype
