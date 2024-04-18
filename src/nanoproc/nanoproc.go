@@ -64,11 +64,11 @@ limit 1
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%02d%06d", startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), (startNow.Nanosecond() / 1000))
 
-						upError := updateReqeust(group_no, user_id)
+						// upError := updateReqeust(group_no, user_id)
 						if upError != nil {
 							config.Stdlog.Println(user_id, "- Nano Group No Update 오류", group_no)
 						} else {
-							go resProcess(group_no, user_id)
+							// go resProcess(group_no, user_id)
 						}
 					}
 				}
