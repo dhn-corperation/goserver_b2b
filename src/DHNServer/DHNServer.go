@@ -278,19 +278,19 @@ func resultProc() {
 
 			}
 
-			nlctx, nlcancel := context.WithCancel(context.Background())
+			// nlctx, nlcancel := context.WithCancel(context.Background())
 
-			go nanoproc.NanoLMSProcess(nlctx)
+			// go nanoproc.NanoLMSProcess(nlctx)
 
-			allCtxC["nanolms"] = nlcancel
-			allService["nanolms"] = "Nano LMS"
+			// allCtxC["nanolms"] = nlcancel
+			// allService["nanolms"] = "Nano LMS"
 
-			nsctx, nscancel := context.WithCancel(context.Background())
+			// nsctx, nscancel := context.WithCancel(context.Background())
 
-			go nanoproc.NanoSMSProcess(nsctx)
+			// go nanoproc.NanoSMSProcess(nsctx)
 
-			allCtxC["nanosms"] = nscancel
-			allService["nanosms"] = "Nano SMS"
+			// allCtxC["nanosms"] = nscancel
+			// allService["nanosms"] = "Nano SMS"
 
 			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
 
