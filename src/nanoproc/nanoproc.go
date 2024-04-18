@@ -68,7 +68,7 @@ limit 1
 						if upError != nil {
 							config.Stdlog.Println(user_id, "- Nano Group No Update 오류", group_no)
 						} else {
-							// go resProcess(group_no, user_id)
+							go resProcess(group_no, user_id)
 						}
 					}
 				}
@@ -105,7 +105,6 @@ where result = 'P'
 LIMIT 500
 	`
 	_, err = tx.Query(gudQuery)
-	config.Stdlog.Println(gudQuery)
 	if err != nil {
 		config.Stdlog.Println(user_id, "-", "Group NO Update - Select error : ( " + group_no + " ) : " + err.Error())
 		config.Stdlog.Println(gudQuery)
