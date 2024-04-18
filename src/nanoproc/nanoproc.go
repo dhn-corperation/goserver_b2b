@@ -79,38 +79,38 @@ limit 1
 
 func updateReqeust(group_no string, user_id string) error {
 
-// 	tx, err := databasepool.DB.Begin()
-// 	if err != nil {
-// 		return err
-// 	}
+	tx, err := databasepool.DB.Begin()
+	if err != nil {
+		return err
+	}
 
-// 	defer func() error {
-// 		//config.Stdlog.Println("Group No Update End", group_no)
-// 		if err != nil {
-// 			tx.Rollback()
-// 			return err
-// 		}
-// 		err = tx.Commit()
-// 		return err
-// 	}()
+	defer func() error {
+		//config.Stdlog.Println("Group No Update End", group_no)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+		err = tx.Commit()
+		return err
+	}()
 
-// 	config.Stdlog.Println(user_id, "- Nano Group No Update 시작", group_no)
+	config.Stdlog.Println(user_id, "- Nano Group No Update 시작", group_no)
 
-// 	gudQuery := `update	DHN_RESULT dr
-// set	send_group = '` + group_no + `'
-// where result = 'P'
-//   and send_group is null
-//   and ifnull(reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
-//   and userid = '` + user_id + `'
-// LIMIT 500
-// 	`
-// 	_, err = tx.Query(gudQuery)
-
-// 	if err != nil {
-// 		config.Stdlog.Println(user_id, "-", "Group NO Update - Select error : ( " + group_no + " ) : " + err.Error())
-// 		config.Stdlog.Println(gudQuery)
-// 		return err
-// 	}
+	gudQuery := `update	DHN_RESULT dr
+set	send_group = '` + group_no + `'
+where result = 'P'
+  and send_group is null
+  and ifnull(reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
+  and userid = '` + user_id + `'
+LIMIT 500
+	`
+	_, err = tx.Query(gudQuery)
+	config.Stdlog.Println(gudQuery)
+	if err != nil {
+		config.Stdlog.Println(user_id, "-", "Group NO Update - Select error : ( " + group_no + " ) : " + err.Error())
+		config.Stdlog.Println(gudQuery)
+		return err
+	}
 
 	return nil
 }
