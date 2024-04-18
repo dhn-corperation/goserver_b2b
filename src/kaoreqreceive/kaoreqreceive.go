@@ -72,7 +72,6 @@ func ReqReceive(c *gin.Context) {
 		msgValues := []kaocommon.MsgReqColumn{}
 
 		//맵핑한 데이터 row 처리
-		errlog.Println("msg length ", len(msg))
 		for i, _ := range msg {
 			var nonce string
 			if len(msg[i].Crypto) > 0 {
