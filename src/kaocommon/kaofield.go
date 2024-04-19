@@ -179,7 +179,7 @@ type AtResColumn struct {
 }
 
 type CheckUserReturnField struct {
-	Vaildation	bool
+	Validation	bool
 	Userid 	   	string
 	Userip		string
 	Ctx 		context.Context
