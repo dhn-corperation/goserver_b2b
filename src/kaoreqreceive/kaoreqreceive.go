@@ -500,7 +500,7 @@ func ReqReceive(c *gin.Context) {
 	}
 }
 
-func insertAtData(atValues []kaocommon.FtReqColumn{}) error {
+func insertAtData(atValues []kaocommon.FtReqColumn) error {
 	tx, err := databasepool.DB.Begin()
 	if err != nil {
 		errlog.Println(err)
