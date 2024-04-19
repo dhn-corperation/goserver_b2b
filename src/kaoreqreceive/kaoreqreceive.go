@@ -22,7 +22,7 @@ var SecretKey = "9b4dabe9d4fed126a58f8639846143c7"
 
 func ReqReceive(c *gin.Context) {
 	errlog := config.Stdlog
-	isValidation := kaocommon.CheckUser(c)
+	isValidation, userid := kaocommon.CheckUser(c)
 
 	var startNow = time.Now()
 	var startTime = fmt.Sprintf("%02d:%02d:%02d", startNow.Hour(), startNow.Minute(), startNow.Second())

@@ -266,7 +266,7 @@ func convertByte(src string) ([]byte, error) {
 }
 
 //유저 및 아이피 확인
-func CheckUser(c *gin.Context) bool{
+func CheckUser(c *gin.Context) (bool, string){
 	ctx := c.Request.Context()
 
 	userid := c.Request.Header.Get("userid")
@@ -287,14 +287,14 @@ func CheckUser(c *gin.Context) bool{
 	err := databasepool.DB.QueryRowContext(ctx, sqlstr, userid, userip).Scan(&cnt)
 	if err != nil { 
 		errlog.Println("DHN_CLIENT_LIST 쿼리 에러 ", err)
-		return false
+		return false, ""
 	}
 
 	if cnt.Valid && cnt.Int64 > 0 { 
-		return true 
+		return true, userid
 	} else {
 		errlog.Println("허용되지 않은 사용자 및 아이피에서 발송 요청!! (userid : ", userid, "/ ip : ", userip, ")")
-		return false
+		return false, ""
 	}
 }
 

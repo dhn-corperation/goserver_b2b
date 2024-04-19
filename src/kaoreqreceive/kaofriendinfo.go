@@ -19,7 +19,7 @@ import (
 )
 
 func FriendInforeq(c *gin.Context) {
-	// ctx := c.Request.Context()
+	ctx := c.Request.Context()
 
 	errlog := config.Stdlog
 	db := databasepool.DB
@@ -38,7 +38,7 @@ func FriendInforeq(c *gin.Context) {
 	}
 	defer val.Close()
 
-	var cnt sql.NullInt64
+	var use_flag, send_limit sql.NullString
 	val.Next()
 	val.Scan(&use_flag, &send_limit)
 
