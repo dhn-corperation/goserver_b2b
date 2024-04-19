@@ -22,14 +22,16 @@ var SecretKey = "9b4dabe9d4fed126a58f8639846143c7"
 func ReqReceive(c *gin.Context) {
 	errlog := config.Stdlog
 	var checkResult kaocommon.CheckUserReturnField = kaocommon.CheckUser(c)
+	userid := checkResult.Userid
+	userip := checkResult.Userip
+	ctx := checkResult.Ctx
 
 	var startNow = time.Now()
 	var startTime = fmt.Sprintf("%02d:%02d:%02d", startNow.Hour(), startNow.Minute(), startNow.Second())
 
 	if checkResult.Validation {
-		userid := checkResult.Userid
-		userip := checkResult.Userip
-		ctx := checkResult.Ctx
+		
+		
 		var msg []kaoreqtable.Reqtable
 		//전달온 데이터 kaoreqtable.Reqtable에 맵핑
 		err1 := c.ShouldBindJSON(&msg)

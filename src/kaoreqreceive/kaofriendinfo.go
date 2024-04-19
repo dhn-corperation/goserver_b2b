@@ -24,10 +24,10 @@ func FriendInforeq(c *gin.Context) {
 	db := databasepool.DB
 	errlog := config.Stdlog
 	var checkResult kaocommon.CheckUserReturnField = kaocommon.CheckUser(c)
-
+	userid := checkResult.Userid
+	userip := checkResult.Userip
+		
 	if checkResult.Validation {
-		userid := checkResult.Userid
-		userip := checkResult.Userip
 		sqlstr := "select * from sw_talk_link where partner_send_yn = 'N' and send_user_id = '" + userid + "'"
 
 		reqrows, err := db.Query(sqlstr)
