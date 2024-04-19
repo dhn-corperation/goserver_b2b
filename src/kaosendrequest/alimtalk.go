@@ -10,9 +10,9 @@ import (
 	databasepool "mycs/src/kaodatabasepool"
 	"mycs/src/kaocommon"
 
-	//"io/ioutil"
-	//	"net"
-	//"net/http"
+	"io/ioutil"
+	"net"
+	"net/http"
 	"strconv"
 	s "strings"
 	"sync"
@@ -432,9 +432,9 @@ func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- resultStr, alimtalk kakao
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
-	
+
 	temp.Statuscode = resp.StatusCode
-	temp.BodyData = resp.Body
+	temp.BodyData = ioutil.ReadAll(resp.Body)
 
 	c <- temp
 }
