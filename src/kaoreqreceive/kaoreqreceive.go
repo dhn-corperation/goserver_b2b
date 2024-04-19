@@ -410,7 +410,7 @@ func insertMsgData(msgValues []kaocommon.MsgReqColumn) {
 	defer tx.Rollback()
 	msgStmt, err := tx.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
 	if err != nil {
-		errlog.Println("msgStmt 초기화 실패 ", err)
+		config.Stdlog.Println("msgStmt 초기화 실패 ", err)
 		return
 	}
 	for _, data := range msgValues {
@@ -420,12 +420,12 @@ func insertMsgData(msgValues []kaocommon.MsgReqColumn) {
 		}
 	}
 	
-	_, err = atStmt.Exec()
+	_, err = msgStmt.Exec()
 	if err != nil {
-		atStmt.Close()
+		msgStmt.Close()
 		config.Stdlog.Println("msgStmt Exec ", err)
 	}
-	atStmt.Close()
+	msgStmt.Close()
 	err = tx.Commit()
 	if err != nil {
 		config.Stdlog.Println("msgStmt commit ", err)
