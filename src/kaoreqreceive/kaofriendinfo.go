@@ -9,6 +9,7 @@ import (
 
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
+	"mycs/src/kaocommon"
 
 	//"kaoreqtable"
 
@@ -22,9 +23,11 @@ func FriendInforeq(c *gin.Context) {
 
 	db := databasepool.DB
 	errlog := config.Stdlog
-	isValidation, userid, userip := kaocommon.CheckUser(c)
-	
-	if isValidation {
+	var checkResult kaocommon.CheckUserReturnField = kaocommon.CheckUser(c)
+
+	if checkResult.Validation {
+		userid := checkResult.Userid
+		userip := checkResult.Userip
 		sqlstr := "select * from sw_talk_link where partner_send_yn = 'N' and send_user_id = '" + userid + "'"
 
 		reqrows, err := db.Query(sqlstr)

@@ -266,10 +266,17 @@ func convertByte(src string) ([]byte, error) {
 }
 
 //유저 및 아이피 확인
-func CheckUser(c *gin.Context) (bool, string, string, interface{}){
+func CheckUser(c *gin.Context) CheckUserReturnField {
 	ctx := c.Request.Context()
 	userid := c.Request.Header.Get("userid")
 	userip := c.ClientIP()
+
+	res := CheckUserReturnField{
+		Validation: false,
+		Userid: userid,
+		Userip: userip,
+		Ctx: ctx
+	}
 
 	// 허가된 userid 인지 테이블에서 확인
 	sqlstr := `
@@ -286,15 +293,16 @@ func CheckUser(c *gin.Context) (bool, string, string, interface{}){
 	err := databasepool.DB.QueryRowContext(ctx, sqlstr, userid, userip).Scan(&cnt)
 	if err != nil { 
 		errlog.Println("DHN_CLIENT_LIST 쿼리 에러 ", err)
-		return false, "", "", nil
+		res.Validation = false
 	}
 
 	if cnt.Valid && cnt.Int64 > 0 { 
-		return true, userid, userip, ctx
+		res.Validation = true
 	} else {
 		errlog.Println("허용되지 않은 사용자 및 아이피에서 발송 요청!! (userid : ", userid, "/ ip : ", userip, ")")
-		return false, "", "", nil
+		res.Validation = false
 	}
+	return res
 }
 
 //데이터베이스 default 값 초기화

@@ -1,5 +1,9 @@
 package kaocommon
 
+import (
+	"context"
+)
+
 type AtReqColumn struct {
 	Msgid			interface{}	`db:"msgid"`
 	Userid			interface{}	`db:"userid"`
@@ -172,4 +176,11 @@ type AtResColumn struct {
 	Price           interface{}	`db:"price"`
 	Currency_type   interface{}	`db:"currency_type"`
 	Title           interface{}	`db:"title"`
+}
+
+type CheckUserReturnField struct {
+	Vaildation	bool
+	Userid 	   	string
+	Userip		string
+	Ctx 		context.Context
 }
