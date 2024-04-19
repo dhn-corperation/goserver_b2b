@@ -300,7 +300,7 @@ func CheckUser(c *gin.Context) CheckUserReturnField {
 
 	if cnt.Valid && cnt.Int64 > 0 { 
 		res.Validation = true
-		res.SendLimit = sendLimit.stirng
+		res.SendLimit = sendLimit.String
 	} else {
 		errlog.Println("허용되지 않은 사용자 및 아이피에서 발송 요청!! (userid : ", userid, "/ ip : ", userip, ")")
 		res.Validation = false
