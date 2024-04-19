@@ -154,7 +154,7 @@ func CheckUser(c *gin.Context) CheckUserReturnField {
 	// 허가된 userid 인지 테이블에서 확인
 	sqlstr := `
 		select 
-			count(1) as cnt,
+			user_id,
 			send_limit
 		from
 			DHN_CLIENT_LIST
@@ -163,15 +163,14 @@ func CheckUser(c *gin.Context) CheckUserReturnField {
 			and ip = $2
 			and use_flag = 'Y'
 	`
-	var cnt sql.NullInt64
-	var sendLimit sql.NullString
-	err := databasepool.DB.QueryRowContext(ctx, sqlstr, userid, userip).Scan(&cnt, &sendLimit)
+	var userId, sendLimit sql.NullString
+	err := databasepool.DB.QueryRowContext(ctx, sqlstr, userid, userip).Scan(&userId, &sendLimit)
 	if err != nil { 
 		errlog.Println("DHN_CLIENT_LIST 쿼리 에러 ", err)
 		res.Validation = false
 	}
 
-	if cnt.Valid && cnt.Int64 > 0 { 
+	if userId.Valid { 
 		res.Validation = true
 		res.SendLimit = sendLimit.String
 	} else {
