@@ -266,7 +266,7 @@ func convertByte(src string) ([]byte, error) {
 }
 
 //유저 및 아이피 확인
-func CheckUser(c *gin.Context) (bool, string){
+func CheckUser(c *gin.Context) (bool, string, string){
 	ctx := c.Request.Context()
 
 	userid := c.Request.Header.Get("userid")
