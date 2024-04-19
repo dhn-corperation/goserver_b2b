@@ -21,6 +21,7 @@ import (
 var SecretKey = "9b4dabe9d4fed126a58f8639846143c7"
 
 func ReqReceive(c *gin.Context) {
+	errlog := config.Stdlog
 	isValidation := kaocommon.CheckUser(c)
 
 	var startNow = time.Now()
