@@ -19,7 +19,7 @@ import (
 
 //언젠가는 다른곳으로 위치를 옮겨야 함
 var SecretKey = "9b4dabe9d4fed126a58f8639846143c7"
-errlog := config.Stdlog
+var errlog = config.Stdlog
 
 func ReqReceive(c *gin.Context) {
 	ctx := c.Request.Context()
