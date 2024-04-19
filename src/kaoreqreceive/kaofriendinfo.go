@@ -20,31 +20,10 @@ import (
 
 func FriendInforeq(c *gin.Context) {
 
-	errlog := config.Stdlog
 	db := databasepool.DB
-
-	userid := c.Request.Header.Get("userid")
-	userip := c.ClientIP()
-	isValidation := false
-
-	sqlstr := "select use_flag, send_limit from DHN_CLIENT_LIST where user_id = '" + userid + "' and ip ='" + userip + "' and use_flag = 'Y'  "
-	//	fmt.Println(sqlstr)
-
-	val, verr := databasepool.DB.Query(sqlstr)
-
-	if verr != nil {
-		errlog.Println(verr)
-	}
-	defer val.Close()
-
-	var use_flag, send_limit sql.NullString
-	val.Next()
-	val.Scan(&use_flag, &send_limit)
-
-	if s.EqualFold(use_flag.String, "Y") {
-		isValidation = true
-	}
-
+	errlog := config.Stdlog
+	isValidation, userid, userip := kaocommon.CheckUser(c)
+	
 	if isValidation {
 		sqlstr := "select * from sw_talk_link where partner_send_yn = 'N' and send_user_id = '" + userid + "'"
 
