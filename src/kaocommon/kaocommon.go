@@ -10,7 +10,6 @@ import(
 	"strconv"
 	"database/sql"
 	"reflect"
-	"context"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,111 +20,111 @@ func init(){
 	
 }
 
-//발송 전 친구톡, 알림톡 공통 컬럼(알림톡 칼럼, 알림톡의 삽입 테이블 DHN_REQUEST_AT)
-func GetReqAtColumn() []string {
-	atReqColumn := []string{
-		"msgid",
-		"userid",
-		"ad_flag",
-		"button1",
-		"button2",
-		"button3",
-		"button4",
-		"button5",
-		"image_link",
-		"image_url",
-		"message_type",
-		"msg",
-		"msg_sms",
-		"only_sms",
-		"phn",
-		"profile",
-		"p_com",
-		"p_invoice",
-		"reg_dt",
-		"remark1",
-		"remark2",
-		"remark3",
-		"remark4",
-		"remark5",
-		"reserve_dt",
-		"sms_kind",
-		"sms_lms_tit",
-		"sms_sender",
-		"s_code",
-		"tmpl_id",
-		"wide",
-		"send_group",
-		"supplement",
-		"price",
-		"currency_type",
-		"title",
-		// "header",
-		// "carousel",
-	}
-	return atReqColumn
-}
+// //발송 전 친구톡, 알림톡 공통 컬럼(알림톡 칼럼, 알림톡의 삽입 테이블 DHN_REQUEST_AT)
+// func GetReqAtColumn() []string {
+// 	atReqColumn := []string{
+// 		"msgid",
+// 		"userid",
+// 		"ad_flag",
+// 		"button1",
+// 		"button2",
+// 		"button3",
+// 		"button4",
+// 		"button5",
+// 		"image_link",
+// 		"image_url",
+// 		"message_type",
+// 		"msg",
+// 		"msg_sms",
+// 		"only_sms",
+// 		"phn",
+// 		"profile",
+// 		"p_com",
+// 		"p_invoice",
+// 		"reg_dt",
+// 		"remark1",
+// 		"remark2",
+// 		"remark3",
+// 		"remark4",
+// 		"remark5",
+// 		"reserve_dt",
+// 		"sms_kind",
+// 		"sms_lms_tit",
+// 		"sms_sender",
+// 		"s_code",
+// 		"tmpl_id",
+// 		"wide",
+// 		"send_group",
+// 		"supplement",
+// 		"price",
+// 		"currency_type",
+// 		"title",
+// 		// "header",
+// 		// "carousel",
+// 	}
+// 	return atReqColumn
+// }
 
-//발송 전 친구톡 추가 칼럼(사입 테이블 : DHN_REQUEST)
-func GetReqFtColumn() []string {
-	ftReqColumn := GetReqAtColumn()
-	ftReqColumn = append(ftReqColumn, "header")
-	ftReqColumn = append(ftReqColumn, "carousel")
-	ftReqColumn = append(ftReqColumn, "att_items")
-	ftReqColumn = append(ftReqColumn, "att_coupon")
-	ftReqColumn = append(ftReqColumn, "attachments")
-	return ftReqColumn
-}
+// //발송 전 친구톡 추가 칼럼(사입 테이블 : DHN_REQUEST)
+// func GetReqFtColumn() []string {
+// 	ftReqColumn := GetReqAtColumn()
+// 	ftReqColumn = append(ftReqColumn, "header")
+// 	ftReqColumn = append(ftReqColumn, "carousel")
+// 	ftReqColumn = append(ftReqColumn, "att_items")
+// 	ftReqColumn = append(ftReqColumn, "att_coupon")
+// 	ftReqColumn = append(ftReqColumn, "attachments")
+// 	return ftReqColumn
+// }
 
-//발송 전 메시지 삽입 데이터 컬럼(삽입 테이블 DHN_RESULT)
-func GetReqMsgColumn() []string {
-	msgColumn := []string{
-		"msgid",
-		"userid",
-		"ad_flag",
-		"button1",
-		"button2",
-		"button3",
-		"button4",
-		"button5",
-		"code",
-		"image_link",
-		"image_url",
-		"kind",
-		"message",
-		"message_type",
-		"msg",
-		"msg_sms",
-		"only_sms",
-		"p_com",
-		"p_invoice",
-		"phn",
-		"profile",
-		"reg_dt",
-		"remark1",
-		"remark2",
-		"remark3",
-		"remark4",
-		"remark5",
-		"res_dt",
-		"reserve_dt",
-		"result",
-		"s_code",
-		"sms_kind",
-		"sms_lms_tit",
-		"sms_sender",
-		"sync",
-		"tmpl_id",
-		"wide",
-		"send_group",
-		"supplement",
-		"price",
-		"currency_type",
-		"header",
-		"carousel",
-	}
-	return msgColumn
-}
+// //발송 전 메시지 삽입 데이터 컬럼(삽입 테이블 DHN_RESULT)
+// func GetReqMsgColumn() []string {
+// 	msgColumn := []string{
+// 		"msgid",
+// 		"userid",
+// 		"ad_flag",
+// 		"button1",
+// 		"button2",
+// 		"button3",
+// 		"button4",
+// 		"button5",
+// 		"code",
+// 		"image_link",
+// 		"image_url",
+// 		"kind",
+// 		"message",
+// 		"message_type",
+// 		"msg",
+// 		"msg_sms",
+// 		"only_sms",
+// 		"p_com",
+// 		"p_invoice",
+// 		"phn",
+// 		"profile",
+// 		"reg_dt",
+// 		"remark1",
+// 		"remark2",
+// 		"remark3",
+// 		"remark4",
+// 		"remark5",
+// 		"res_dt",
+// 		"reserve_dt",
+// 		"result",
+// 		"s_code",
+// 		"sms_kind",
+// 		"sms_lms_tit",
+// 		"sms_sender",
+// 		"sync",
+// 		"tmpl_id",
+// 		"wide",
+// 		"send_group",
+// 		"supplement",
+// 		"price",
+// 		"currency_type",
+// 		"header",
+// 		"carousel",
+// 	}
+// 	return msgColumn
+// }
 
 func GetResAtColumn() []string {
 	atResColumn := []string{
@@ -198,24 +197,24 @@ func InsMsg(query string, insStrs []string, insValues []interface{}) ([]string, 
 	return nil, nil
 }
 
-func InsMsgTemp(query string, insStrs []string, insValues []interface{}, tempFlag bool, tempQuery string) ([]string, []interface{}){
-	stmt := fmt.Sprintf(query, s.Join(insStrs, ","))
-	_, err := databasepool.DB.Exec(stmt, insValues...)
+// func InsMsgTemp(query string, insStrs []string, insValues []interface{}, tempFlag bool, tempQuery string) ([]string, []interface{}){
+// 	stmt := fmt.Sprintf(query, s.Join(insStrs, ","))
+// 	_, err := databasepool.DB.Exec(stmt, insValues...)
 
-	if err != nil {
-		errlog.Println("Result Table Insert 처리 중 오류 발생 ", err.Error())
-		errlog.Println("table : ", query)
-		if tempFlag {
-			errlog.Println("Result Temp Table Insert 시작")
-			stmtt := fmt.Sprintf(tempQuery, s.Join(insStrs, ","))
-			_, errt := databasepool.DB.Exec(stmtt, insValues...)
-			if errt != nil {
-				errlog.Println("Result Temp Table Insert 처리 중 오류 발생 ", errt.Error())
-			}
-		}
-	}
-	return nil, nil
-}
+// 	if err != nil {
+// 		errlog.Println("Result Table Insert 처리 중 오류 발생 ", err.Error())
+// 		errlog.Println("table : ", query)
+// 		if tempFlag {
+// 			errlog.Println("Result Temp Table Insert 시작")
+// 			stmtt := fmt.Sprintf(tempQuery, s.Join(insStrs, ","))
+// 			_, errt := databasepool.DB.Exec(stmtt, insValues...)
+// 			if errt != nil {
+// 				errlog.Println("Result Temp Table Insert 처리 중 오류 발생 ", errt.Error())
+// 			}
+// 		}
+// 	}
+// 	return nil, nil
+// }
 
 //AES 복호화
 func AES256GSMDecrypt(secretKey []byte, ciphertext_ string, nonce_ string) string {
