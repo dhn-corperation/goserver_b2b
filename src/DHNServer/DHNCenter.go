@@ -292,7 +292,7 @@ func resultProc() {
 
 	r.POST("/mms/image", kaocenter.MMS_Image)
 
-	r.POST("/friendinfo", kaoreqreceive.FriendInforeq)
+	// r.POST("/friendinfo", kaoreqreceive.FriendInforeq)
 
 	// 친구톡 와이드 아이템 리스트 이미지 업로드 요청
 	// POST /v1/{partner_key}/image/friendtalk/wideItemList
