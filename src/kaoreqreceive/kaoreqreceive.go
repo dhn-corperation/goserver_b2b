@@ -24,7 +24,6 @@ func ReqReceive(c *gin.Context) {
 	var checkResult kaocommon.CheckUserReturnField = kaocommon.CheckUser(c)
 	userid := checkResult.Userid
 	userip := checkResult.Userip
-	ctx := checkResult.Ctx
 
 	var startNow = time.Now()
 	var startTime = fmt.Sprintf("%02d:%02d:%02d", startNow.Hour(), startNow.Minute(), startNow.Second())
