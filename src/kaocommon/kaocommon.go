@@ -275,7 +275,7 @@ func CheckUser(c *gin.Context) CheckUserReturnField {
 		Validation: false,
 		Userid: userid,
 		Userip: userip,
-		Ctx: ctx
+		Ctx: ctx,
 	}
 
 	// 허가된 userid 인지 테이블에서 확인
