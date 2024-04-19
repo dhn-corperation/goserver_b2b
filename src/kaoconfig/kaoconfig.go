@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"time"
+	"net"
+	"net/http"
 
 	ini "github.com/BurntSushi/toml"
 	"github.com/go-resty/resty/v2"
@@ -39,6 +41,16 @@ var BasePath string
 var IsRunning bool = true
 var ResultLimit int = 1000
 var Client *resty.Client
+var GoClient *http.Client = &http.Client{
+	Timeout: time.Second * 30,
+	Transport: &http.Transport{
+		Dial: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).Dial,
+		TLSHandshakeTimeout: 10 * time.Second,
+	},
+}
 
 func InitConfig() {
 	realpath, _ := os.Executable()

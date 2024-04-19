@@ -420,19 +420,22 @@ func atsendProcess(group_no string, user_id string) {
 //카카오 서버에 발송을 요청한다.
 func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- resultStr, alimtalk kakao.Alimtalk, temp resultStr) {
 	defer reswg.Done()
+	req, err := http.NewRequest("POST", config.Conf.API_SERVER + "/v3/" + config.Conf.PROFILE_KEY + "/alimtalk/send", alimtalk)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err.Error())
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
 
-	// resp, err := config.Client.R().
-	// 	SetHeaders(map[string]string{"Content-Type": "application/json"}).
-	// 	SetBody(alimtalk).
-	// 	Post(config.Conf.API_SERVER + "/v3/" + config.Conf.PROFILE_KEY + "/alimtalk/send")
+	resp, err := config.GoClient.Do(req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err.Error())
+		return
+	}
+	
+	temp.Statuscode = resp.StatusCode
+	temp.BodyData = resp.Body
 
-	// if err != nil {
-	// 	config.Stdlog.Println("알림톡 메시지 서버 호출 오류 : ", err)
-	// } else {
-	// 	temp.Statuscode = resp.StatusCode()
-	// 	temp.BodyData = resp.Body()
-	// }
-	temp.Statuscode = 200
 	c <- temp
 }
 

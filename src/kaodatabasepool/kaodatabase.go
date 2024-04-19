@@ -15,7 +15,6 @@ var DB *sql.DB
 func InitDatabase() {
 	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", "210.114.225.58", "5432", "postgres", "dhn7985!", "kakao")
 	db, err := sql.Open("postgres", psqlInfo)
-	// db, err := sql.Open(config.Conf.DB, config.Conf.DBURL)
 	if err != nil {
 		log.Fatal(err)
 	}
