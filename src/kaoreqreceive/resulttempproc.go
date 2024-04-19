@@ -8,7 +8,7 @@ import (
     "context"
     "time"
     "database/sql"
-    "String"
+    "strconv"
 )
 
 func TempCopyProc() {
@@ -27,7 +27,7 @@ func TempCopyProc() {
 
             copyQuery := `
             INSERT INTO DHN_RESULT
-                `+String.Join(kaocommon.ResultTempMigrationColumn, ",")+`
+                `+strconv.Join(kaocommon.ResultTempMigrationColumn, ",")+`
                 from DHN_RESULT_TEMP
                 where send_group = '` + group_no + `'`
             _, err := databasepool.DB.Exec(copyQuery)
