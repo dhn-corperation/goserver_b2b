@@ -1,7 +1,7 @@
 package kaosendrequest
 
 import (
-	//"bytes"
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -420,7 +420,8 @@ func atsendProcess(group_no string, user_id string) {
 //카카오 서버에 발송을 요청한다.
 func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- resultStr, alimtalk kakao.Alimtalk, temp resultStr) {
 	defer reswg.Done()
-	req, err := http.NewRequest("POST", config.Conf.API_SERVER + "/v3/" + config.Conf.PROFILE_KEY + "/alimtalk/send", json.Marshal(alimtalk))
+	jsonData, _ := json.Marshal(alimtalk)
+	req, err := http.NewRequest("POST", config.Conf.API_SERVER + "/v3/" + config.Conf.PROFILE_KEY + "/alimtalk/send", bytes.NewBuffer(jsonData))
 	if err != nil {
 		config.Stdlog.Println("알림톡 발송 에러 request 만들기 실패 ", err.Error())
 		return
