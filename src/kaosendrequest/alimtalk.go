@@ -11,7 +11,7 @@ import (
 	"mycs/src/kaocommon"
 
 	"io/ioutil"
-	"net"
+	// "net"
 	"net/http"
 	"strconv"
 	s "strings"
@@ -422,14 +422,14 @@ func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- resultStr, alimtalk kakao
 	defer reswg.Done()
 	req, err := http.NewRequest("POST", config.Conf.API_SERVER + "/v3/" + config.Conf.PROFILE_KEY + "/alimtalk/send", alimtalk)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, err.Error())
+		config.Stdlog.Println("알림톡 발송 에러 request 만들기 실패 ", err.Error())
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := config.GoClient.Do(req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, err.Error())
+		config.Stdlog.Println("알림톡 발송 실패 ", err.Error())
 		return
 	}
 
