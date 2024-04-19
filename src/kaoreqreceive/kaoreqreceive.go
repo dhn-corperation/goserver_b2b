@@ -10,7 +10,7 @@ import (
 	"strconv"
 	s "strings"
 	"time"
-
+	"context"
 	"github.com/gin-gonic/gin"
 	// _ "github.com/go-sql-driver/mysql"
 	"github.com/lib/pq"
@@ -21,7 +21,7 @@ var SecretKey = "9b4dabe9d4fed126a58f8639846143c7"
 
 func ReqReceive(c *gin.Context) {
 	errlog := config.Stdlog
-	isValidation, userid, userip, ctx.(*gin.Context.Context) := kaocommon.CheckUser(c)
+	isValidation, userid, userip, ctx.(context.Context) := kaocommon.CheckUser(c)
 
 	var startNow = time.Now()
 	var startTime = fmt.Sprintf("%02d:%02d:%02d", startNow.Hour(), startNow.Minute(), startNow.Second())
