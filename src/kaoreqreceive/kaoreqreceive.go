@@ -19,11 +19,10 @@ import (
 
 //언젠가는 다른곳으로 위치를 옮겨야 함
 var SecretKey = "9b4dabe9d4fed126a58f8639846143c7"
-var errlog = config.Stdlog
 
 func ReqReceive(c *gin.Context) {
 	ctx := c.Request.Context()
-	
+	errlog := config.Stdlog
 
 	userid := c.Request.Header.Get("userid")
 	userip := c.ClientIP()
@@ -503,30 +502,30 @@ func ReqReceive(c *gin.Context) {
 func insertAtData(atValues []kaocommon.AtReqColumn) {
 	tx, err := databasepool.DB.Begin()
 	if err != nil {
-		errlog.Println(err)
+		config.Stdlog.Println(err)
 	}
 	defer tx.Rollback()
 	atStmt, err := tx.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
 	if err != nil {
-		errlog.Println("atStmt 초기화 실패 ", err)
+		config.Stdlog.Println("atStmt 초기화 실패 ", err)
 		return
 	}
 	for _, data := range atValues {
 		_, err := atStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.Phn,data.Profile,data.P_com,data.P_invoice,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.S_code,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Title)
 		if err != nil {
-			errlog.Println("atStmt personal Exec ", err)
+			config.Stdlog.Println("atStmt personal Exec ", err)
 		}
 	}
 	
 	_, err = atStmt.Exec()
 	if err != nil {
 		atStmt.Close()
-		errlog.Println("atStmt Exec ", err)
+		config.Stdlog.Println("atStmt Exec ", err)
 	}
 	atStmt.Close()
 	err = tx.Commit()
 	if err != nil {
-		errlog.Println("atStmt commit ", err)
+		config.Stdlog.Println("atStmt commit ", err)
 	}
 }
 
