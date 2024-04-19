@@ -21,32 +21,7 @@ import (
 var SecretKey = "9b4dabe9d4fed126a58f8639846143c7"
 
 func ReqReceive(c *gin.Context) {
-	ctx := c.Request.Context()
-	errlog := config.Stdlog
-
-	userid := c.Request.Header.Get("userid")
-	userip := c.ClientIP()
-	isValidation := false
-
-	// 허가된 userid 인지 테이블에서 확인
-	sqlstr := `
-		select 
-			count(1) as cnt 
-		from
-			DHN_CLIENT_LIST
-		where
-			user_id = $1
-			and ip = $2
-			and use_flag = 'Y'`
-	var cnt sql.NullInt64
-	err := databasepool.DB.QueryRowContext(ctx, sqlstr, userid, userip).Scan(&cnt)
-	if err != nil { errlog.Println("DHN_CLIENT_LIST 쿼리 에러 ", err) }
-
-	if cnt.Valid && cnt.Int64 > 0 { 
-		isValidation = true 
-	} else {
-		errlog.Println("허용되지 않은 사용자 및 아이피에서 발송 요청!! (userid : ", userid, "/ ip : ", userip, ")")
-	}
+	isValidation := kaocommon.CheckUser(c)
 
 	var startNow = time.Now()
 	var startTime = fmt.Sprintf("%02d:%02d:%02d", startNow.Hour(), startNow.Minute(), startNow.Second())

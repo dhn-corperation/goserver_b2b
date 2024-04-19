@@ -19,6 +19,7 @@ import (
 )
 
 func FriendInforeq(c *gin.Context) {
+	ctx := c.Request.Context()
 
 	errlog := config.Stdlog
 	db := databasepool.DB

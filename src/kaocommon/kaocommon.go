@@ -10,6 +10,9 @@ import(
 	"strconv"
 	"database/sql"
 	"reflect"
+	"context"
+
+	"github.com/gin-gonic/gin"
 )
 
 var errlog = config.Stdlog
@@ -261,6 +264,40 @@ func convertByte(src string) ([]byte, error) {
 	}
 
 	return ba, nil
+}
+
+//유저 및 아이피 확인
+func CheckUser(c *gin.Context) bool{
+	ctx := c.Request.Context()
+	errlog := config.Stdlog
+
+	userid := c.Request.Header.Get("userid")
+	userip := c.ClientIP()
+
+	// 허가된 userid 인지 테이블에서 확인
+	sqlstr := `
+		select 
+			count(1) as cnt 
+		from
+			DHN_CLIENT_LIST
+		where
+			user_id = $1
+			and ip = $2
+			and use_flag = 'Y'
+	`
+	var cnt sql.NullInt64
+	err := databasepool.DB.QueryRowContext(ctx, sqlstr, userid, userip).Scan(&cnt)
+	if err != nil { 
+		errlog.Println("DHN_CLIENT_LIST 쿼리 에러 ", err)
+		return false
+	}
+
+	if cnt.Valid && cnt.Int64 > 0 { 
+		return true 
+	} else {
+		errlog.Println("허용되지 않은 사용자 및 아이피에서 발송 요청!! (userid : ", userid, "/ ip : ", userip, ")")
+		return false
+	}
 }
 
 //데이터베이스 default 값 초기화
