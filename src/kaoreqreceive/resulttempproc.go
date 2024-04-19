@@ -8,7 +8,7 @@ import (
     "context"
     "time"
     "database/sql"
-    "strconv"
+    s "strings"
 )
 
 func TempCopyProc() {
@@ -19,7 +19,7 @@ func TempCopyProc() {
         if cnterr != nil {
             config.Stdlog.Println("DHN_RESULT_TEMP Table - select error : " + cnterr.Error())
         } else {
-        if count > 0 {
+        if count.Valid && count.Int64 > 0 {
             var startNow = time.Now()
             var group_no = fmt.Sprintf("%02d%02d%02d%02d%06d", startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), (startNow.Nanosecond()/1000))
 
@@ -27,7 +27,7 @@ func TempCopyProc() {
 
             copyQuery := `
             INSERT INTO DHN_RESULT
-                `+strconv.Join(kaocommon.ResultTempMigrationColumn, ",")+`
+                `+s.Join(kaocommon.ResultTempMigrationColumn, ",")+`
                 from DHN_RESULT_TEMP
                 where send_group = '` + group_no + `'`
             _, err := databasepool.DB.Exec(copyQuery)
