@@ -434,8 +434,9 @@ func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- resultStr, alimtalk kakao
 		return
 	}
 
+	bodyData, _ := ioutil.ReadAll(resp.Body)
 	temp.Statuscode = resp.StatusCode
-	temp.BodyData = ioutil.ReadAll(resp.Body)
+	temp.BodyData = bodyData
 
 	c <- temp
 }
