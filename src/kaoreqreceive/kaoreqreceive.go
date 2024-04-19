@@ -328,7 +328,7 @@ func ReqReceive(c *gin.Context) {
 			}
 
 			if len(atValues) >= saveCount {
-				atValues, err = []kaocommon.AtReqColumn{}
+				atValues, err = insertData("at")
 				if err != nil {
 					errlog.Println(err)
 				}
@@ -398,7 +398,7 @@ func ReqReceive(c *gin.Context) {
 		}
 
 		if len(atValues) > 0 {
-			atValues, err = []kaocommon.AtReqColumn{}
+			atValues, err = insertData("at")
 			if err != nil {
 				errlog.Println(err)
 			}
@@ -451,14 +451,20 @@ func ReqReceive(c *gin.Context) {
 	}
 }
 
-func insertData() (interface{}, error){
+func insertData(tp string) (interface{}, error){
 	tx, err := databasepool.DB.Begin()
 	if err != nil {
 		errlog.Println(err)
 	}
 	defer tx.Rollback()
+	if tp == "ft" {
+		
+	} else if tp == "at" {
+		err = setAtData(tx)	
+	} else if tp == "msg" {
 
-	err = setAtData(tx)
+	}
+	
 	if err != nil {
 		errlog.Println(err)
 	} else {
