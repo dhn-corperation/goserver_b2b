@@ -162,11 +162,9 @@ func Resultreq(c *gin.Context) {
 		}
 		if len(upmsgids) > 0 {
 			updateResultData(upmsgids, userid)
-			upmsgids = nil
 		}
 		if len(finalRows) > 0 {
 			errlog.Println("결과 전송 ( ", userid, " ) : ", len(finalRows))
-			//errlog.Println(finalRows)
 		}
 		c.JSON(200, finalRows)
 	} else {
