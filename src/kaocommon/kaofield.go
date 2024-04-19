@@ -183,4 +183,5 @@ type CheckUserReturnField struct {
 	Userid 	   	string
 	Userip		string
 	Ctx 		context.Context
+	SendLimit   string
 }

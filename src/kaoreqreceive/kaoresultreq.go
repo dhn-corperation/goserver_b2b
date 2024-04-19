@@ -78,7 +78,7 @@ func Resultreq(c *gin.Context) {
 
 		sqlstr := "select * from DHN_RESULT_PROC where userid = $1 and sync='N' and result = 'Y' limit $2"
 
-		reqrows, err := db.QueryContext(ctx, sqlstr, userid, send_limit.String)
+		reqrows, err := db.QueryContext(ctx, sqlstr, userid, checkResult.SendLimit)
 		if err != nil {
 			errlog.Println("Resultreq 쿼리 에러 query : ", sqlstr)
 			errlog.Println("Resultreq 쿼리 에러 : ", err)
@@ -156,12 +156,12 @@ func Resultreq(c *gin.Context) {
 			finalRows = append(finalRows, masterData)
 
 			if len(upmsgids) >= 500 {
-				updateResultData(upmsgids)
+				updateResultData(upmsgids, userid)
 				upmsgids = nil
 			}
 		}
 		if len(upmsgids) > 0 {
-			updateResultData(upmsgids)
+			updateResultData(upmsgids, userid)
 			upmsgids = nil
 		}
 		if len(finalRows) > 0 {
@@ -179,8 +179,8 @@ func Resultreq(c *gin.Context) {
 	}
 }
 
-func updateResultData(upmsgids []interface{}){
-	tx, err := db.Begin()
+func updateResultData(upmsgids []interface{}, userid string){
+	tx, err := databasepool.DB.Begin()
 	if err != nil {
 		config.Stdlog.Println(err)
 	}
