@@ -12,7 +12,7 @@ import (
 )
 
 func TempCopyProc() {
-    ctx := c.context.Context()
+    ctx := context.Background()
     var count sql.NullInt64
     for {
         cnterr := databasepool.DB.QueryRowContext(ctx, " select count(1) as cnt from DHN_RESULT_TEMP where send_group is null").Scan(&count)
