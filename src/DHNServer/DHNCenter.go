@@ -13,9 +13,6 @@ import (
 	"mycs/src/kaoreqreceive"
 
 	"mycs/src/kaocenter"
-	//"kaosendrequest"
-	//"strconv"
-	//"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/takama/daemon"
@@ -97,17 +94,10 @@ func main() {
 func resultProc() {
 	config.Stdlog.Println("DHN Center API 시작")
 
-	// 알림톡 / 친구톡 동시 호출 시 http client 호출 오류가 발생하여
-	// AlimtalkProc 에서 순차적으로 알림톡 / 친구톡 호출 하도록 수정 함.
-	//go kaosendrequest.AlimtalkProc()
-
-	//go kaosendrequest.FriendtalkProc()
-
-	//go kaosendrequest.PollingProc()
 	go kaoreqreceive.TempCopyProc()
+
 	r := gin.New()
 	r.Use(gin.Recovery())
-	//r := gin.Default()
 
 	r.GET("/", func(c *gin.Context) {
 		//time.Sleep(30 * time.Second)
