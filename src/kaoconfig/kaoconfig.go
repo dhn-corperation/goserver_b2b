@@ -44,10 +44,6 @@ var Client *resty.Client
 var GoClient *http.Client = &http.Client{
 	Timeout: time.Second * 30,
 	Transport: &http.Transport{
-		Dial: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).Dial,
 		TLSHandshakeTimeout: 10 * time.Second,
 	},
 }
