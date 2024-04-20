@@ -430,7 +430,14 @@ func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- resultStr, alimtalk kakao
 
 	resp, err := config.GoClient.Do(req)
 	if err != nil {
-		config.Stdlog.Println("알림톡 발송 실패 ", err.Error())
+		// 에러가 발생한 경우 처리
+		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+			// 타임아웃 오류 처리
+			config.Stdlog.Println("알림톡 발송 타임아웃 Serial_number : ", alimtalk.Serial_number, " / error : ", err.Error())
+		} else {
+			// 기타 오류 처리
+			config.Stdlog.Println("알림톡 발송 실패 Serial_number : ", alimtalk.Serial_number, " / error : ", err.Error())
+		}
 		return
 	}
 
