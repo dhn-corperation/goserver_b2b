@@ -129,6 +129,7 @@ func resProcess(group_no string, user_id string) {
 		}
 	}()
 
+	// 2024-04-23 나노 식별자코드 추가
 	var msgid, code, message, message_type, msg_sms, phn, remark1, remark2, result, sms_lms_tit, sms_kind, sms_sender, res_dt, reserve_dt, mms_file1, mms_file2, mms_file3, userid, sms_len_check, identification_code sql.NullString
 	var msgLen sql.NullInt64
 	var phnstr string
@@ -139,6 +140,7 @@ func resProcess(group_no string, user_id string) {
 	osmmsStrs := []string{}
 	osmmsValues := []interface{}{}
 
+	// 2024-04-23 나노 식별자코드 추가
 	var resquery = `SELECT msgid, 
 	code, 
 	message, 
@@ -282,7 +284,7 @@ func resProcess(group_no string, user_id string) {
 					ossmsValues = append(ossmsValues, "0")
 					ossmsValues = append(ossmsValues, msgid.String)
 					ossmsValues = append(ossmsValues, userid.String)
-					ossmsValues = append(ossmsValues, identification_code.String)
+					ossmsValues = append(ossmsValues, identification_code.String) // 2024-04-23 나노 식별자코드 추가
 					smscnt++
 				} else {
 					db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code = '7003', dr.message = '메세지 길이 오류', dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + userid.String + "' and msgid = '" + msgid.String + "'")
@@ -318,7 +320,7 @@ func resProcess(group_no string, user_id string) {
 
 				osmmsValues = append(osmmsValues, msgid.String)
 				osmmsValues = append(osmmsValues, userid.String)
-				osmmsValues = append(osmmsValues, identification_code.String)
+				osmmsValues = append(osmmsValues, identification_code.String) // 2024-04-23 나노 식별자코드 추가
 				lmscnt++
 			}
 
