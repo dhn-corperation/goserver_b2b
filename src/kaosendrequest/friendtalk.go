@@ -5,7 +5,7 @@ import (
 	// "database/sql"
 	// "encoding/json"
 	// "fmt"
-	// kakao "mycs/src/kakaojson"
+	kakao "mycs/src/kakaojson"
 	// config "mycs/src/kaoconfig"
 	// databasepool "mycs/src/kaodatabasepool"
 
@@ -15,9 +15,9 @@ import (
 	// s "strings"
 
 	// "strconv"
-	// "sync"
+	"sync"
 	// "time"
-	// "context"
+	"context"
 )
 
 // var ftprocCnt int
