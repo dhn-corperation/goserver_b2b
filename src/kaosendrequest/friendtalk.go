@@ -304,14 +304,17 @@ carousel
 			}
 
 			if z, ok := (scanArgs[i]).(*sql.NullString); ok {
+				config.Stdlog.Println(z.String)
 				result[s.ToLower(v.Name())] = z.String
 			}
 
 			if z, ok := (scanArgs[i]).(*sql.NullInt32); ok {
+				config.Stdlog.Println(string(z.Int32))
 				result[s.ToLower(v.Name())] = string(z.Int32)
 			}
 
 			if z, ok := (scanArgs[i]).(*sql.NullInt64); ok {
+				config.Stdlog.Println(string(z.Int64))
 				result[s.ToLower(v.Name())] = string(z.Int64)
 			}
 
