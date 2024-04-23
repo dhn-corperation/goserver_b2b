@@ -239,7 +239,7 @@ func atsendProcess(group_no string, user_id string) {
 	for i := 0; i < chanCnt; i++ {
 
 		resChan := <-resultChan
-		// result := resChan.Result
+		result := resChan.Result
 		resChan.Statuscode = 200
 		if resChan.Statuscode == 200 {
 
