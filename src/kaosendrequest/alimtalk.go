@@ -1,7 +1,7 @@
 package kaosendrequest
 
 import (
-	// "bytes"
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -10,9 +10,9 @@ import (
 	databasepool "mycs/src/kaodatabasepool"
 	"mycs/src/kaocommon"
 
-	// "io/ioutil"
+	"io/ioutil"
 	// "net"
-	// "net/http"
+	"net/http"
 	"strconv"
 	s "strings"
 	"sync"
