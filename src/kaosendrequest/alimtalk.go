@@ -251,8 +251,8 @@ func atsendProcess(group_no string, user_id string) {
 			// var resCode = kakaoResp.Code
 			// var resMessage = kakaoResp.Message
 
-			var resCode "0000"
-			var resMessage ""
+			var resCode = "0000"
+			var resMessage = ""
 			
 			if s.EqualFold(resCode, "3005") {
 				resCode = "0000"
