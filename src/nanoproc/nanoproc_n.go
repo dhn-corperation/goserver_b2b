@@ -130,7 +130,7 @@ func resProcess_N(group_no string, user_id string) {
 		}
 	}()
 
-	var msgid, code, message, message_type, msg_sms, phn, remark1, remark2, result, sms_lms_tit, sms_kind, sms_sender, res_dt, reserve_dt, mms_file1, mms_file2, mms_file3, userid, sms_len_check sql.NullString
+	var msgid, code, message, message_type, msg_sms, phn, remark1, remark2, result, sms_lms_tit, sms_kind, sms_sender, res_dt, reserve_dt, mms_file1, mms_file2, mms_file3, userid, sms_len_check, identification_code sql.NullString
 	var msgLen sql.NullInt64
 	var phnstr string
 
@@ -170,6 +170,7 @@ func resProcess_N(group_no string, user_id string) {
 						,(case when sms_kind = 'S' then length(convert(REMOVE_WS(msg_sms) using euckr)) else 100 end) as msg_len
 						,userid
 						,(select max(sms_len_check) from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as sms_len_check 
+						,coalesce((select max(identification_code) from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid),'302190001') AS identification_code 
 					FROM DHN_RESULT drr 
 					WHERE send_group = '` + group_no + `' 
 						and result = 'P'
@@ -195,7 +196,7 @@ func resProcess_N(group_no string, user_id string) {
 	preOshot := ""
 
 	for resrows.Next() {
-		resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check)
+		resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check, &identification_code)
 
 		phnstr = phn.String
 
@@ -283,7 +284,7 @@ func resProcess_N(group_no string, user_id string) {
 					ossmsValues = append(ossmsValues, "0")
 					ossmsValues = append(ossmsValues, msgid.String)
 					ossmsValues = append(ossmsValues, userid.String)
-					ossmsValues = append(ossmsValues, config.Conf.NANO_IDENTI_CODE)
+					ossmsValues = append(ossmsValues, identification_code.String)
 					smscnt++
 				} else {
 					db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code = '7003', dr.message = '메세지 길이 오류', dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + userid.String + "' and msgid = '" + msgid.String + "'")
@@ -319,7 +320,7 @@ func resProcess_N(group_no string, user_id string) {
 
 				osmmsValues = append(osmmsValues, msgid.String)
 				osmmsValues = append(osmmsValues, userid.String)
-				osmmsValues = append(osmmsValues, config.Conf.NANO_IDENTI_CODE)
+				osmmsValues = append(osmmsValues, identification_code.String)
 				lmscnt++
 			}
 
