@@ -240,7 +240,7 @@ func atsendProcess(group_no string, user_id string) {
 
 		resChan := <-resultChan
 		result := resChan.Result
-		
+
 		if resChan.Statuscode == 200 {
 
 			var resdt = time.Now()
@@ -397,6 +397,7 @@ func insertAtResData(atValues []kaocommon.AtResColumn) {
 //카카오 서버에 발송을 요청한다.
 func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- resultStr, alimtalk kakao.Alimtalk, temp resultStr) {
 	defer reswg.Done()
+	config.Stdlog.Println(time.Now())
 	jsonData, _ := json.Marshal(alimtalk)
 	req, err := http.NewRequest("POST", config.Conf.API_SERVER + "/v3/" + config.Conf.PROFILE_KEY + "/alimtalk/send", bytes.NewBuffer(jsonData))
 	if err != nil {
@@ -423,6 +424,8 @@ func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- resultStr, alimtalk kakao
 	}	
 
 	resp.Body.Close()
+
+	config.Stdlog.Println(time.Now())
 
 	c <- temp
 }
