@@ -323,90 +323,90 @@ func ReqReceive(c *gin.Context) {
 func insertFtData(ftValues []kaocommon.FtReqColumn) {
 	tx, err := databasepool.DB.Begin()
 	if err != nil {
-		config.Stdlog.Println(err)
+		config.Stdlog.Println("kaoreqreceive.go / insertFtData / dhn_request / 트랜잭션 초기화 실패 ", err)
 	}
 	defer tx.Rollback()
 	ftStmt, err := tx.Prepare(pq.CopyIn("dhn_request", kaocommon.GetReqColumnPq(kaocommon.FtReqColumn{})...))
 	if err != nil {
-		config.Stdlog.Println("ftStmt 초기화 실패 ", err)
+		config.Stdlog.Println("kaoreqreceive.go / insertFtData / dhn_request / ftStmt 초기화 실패 ", err)
 		return
 	}
 	for _, data := range ftValues {
 		_, err := ftStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.Phn,data.Profile,data.P_com,data.P_invoice,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.S_code,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Header,data.Carousel,data.Att_coupon,data.Attachments)
 		if err != nil {
-			config.Stdlog.Println("ftStmt personal Exec ", err)
+			config.Stdlog.Println("kaoreqreceive.go / insertFtData / dhn_request / ftStmt personal Exec ", err)
 		}
 	}
 	
 	_, err = ftStmt.Exec()
 	if err != nil {
 		ftStmt.Close()
-		config.Stdlog.Println("ftStmt Exec ", err)
+		config.Stdlog.Println("kaoreqreceive.go / insertFtData / dhn_request / ftStmt Exec ", err)
 	}
 	ftStmt.Close()
 	err = tx.Commit()
 	if err != nil {
-		config.Stdlog.Println("ftStmt commit ", err)
+		config.Stdlog.Println("kaoreqreceive.go / insertFtData / dhn_request / ftStmt commit ", err)
 	}
 }
 
 func insertAtData(atValues []kaocommon.AtReqColumn) {
 	tx, err := databasepool.DB.Begin()
 	if err != nil {
-		config.Stdlog.Println(err)
+		config.Stdlog.Println("kaoreqreceive.go / insertAtData / dhn_request_at / 트랜잭션 초기화 실패 ", err)
 	}
 	defer tx.Rollback()
 	atStmt, err := tx.Prepare(pq.CopyIn("dhn_request_at", kaocommon.GetReqColumnPq(kaocommon.AtReqColumn{})...))
 	if err != nil {
-		config.Stdlog.Println("atStmt 초기화 실패 ", err)
+		config.Stdlog.Println("kaoreqreceive.go / insertAtData / dhn_request_at / atStmt 초기화 실패 ", err)
 		return
 	}
 	for _, data := range atValues {
 		_, err := atStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Image_link,data.Image_url,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.Phn,data.Profile,data.P_com,data.P_invoice,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Reserve_dt,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.S_code,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Title)
 		if err != nil {
-			config.Stdlog.Println("atStmt personal Exec ", err)
+			config.Stdlog.Println("kaoreqreceive.go / insertAtData / dhn_request_at / atStmt personal Exec ", err)
 		}
 	}
 	
 	_, err = atStmt.Exec()
 	if err != nil {
 		atStmt.Close()
-		config.Stdlog.Println("atStmt Exec ", err)
+		config.Stdlog.Println("kaoreqreceive.go / insertAtData / dhn_request_at / atStmt Exec ", err)
 	}
 	atStmt.Close()
 	err = tx.Commit()
 	if err != nil {
-		config.Stdlog.Println("atStmt commit ", err)
+		config.Stdlog.Println("kaoreqreceive.go / insertAtData / dhn_request_at / atStmt commit ", err)
 	}
 }
 
 func insertMsgData(msgValues []kaocommon.MsgReqColumn) {
 	tx, err := databasepool.DB.Begin()
 	if err != nil {
-		config.Stdlog.Println(err)
+		config.Stdlog.Println("kaoreqreceive.go / insertMsgData / dhn_result / 트랜잭션 초기화 실패 ", err)
 	}
 	defer tx.Rollback()
 	msgStmt, err := tx.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.MsgReqColumn{})...))
 	if err != nil {
-		config.Stdlog.Println("msgStmt 초기화 실패 ", err)
+		config.Stdlog.Println("kaoreqreceive.go / insertMsgData / dhn_result / msgStmt 초기화 실패 ", err)
 		return
 	}
 	for _, data := range msgValues {
 		_, err := msgStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Code,data.Image_link,data.Image_url,data.Kind,data.Message,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.Phn,data.Profile,data.P_com,data.P_invoice,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Res_dt,data.Reserve_dt,data.Result,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Sync,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Header,data.Carousel)
 		if err != nil {
-			config.Stdlog.Println("msgStmt personal Exec ", err)
+			config.Stdlog.Println("kaoreqreceive.go / insertMsgData / dhn_result / msgStmt personal Exec ", err)
 		}
 	}
 	
 	_, err = msgStmt.Exec()
 	if err != nil {
 		msgStmt.Close()
-		config.Stdlog.Println("msgStmt Exec ", err)
+		config.Stdlog.Println("kaoreqreceive.go / insertMsgData / dhn_result / msgStmt Exec ", err)
 	}
 	msgStmt.Close()
 	err = tx.Commit()
 	if err != nil {
-		config.Stdlog.Println("msgStmt commit ", err)
+		config.Stdlog.Println("kaoreqreceive.go / insertMsgData / dhn_result / msgStmt commit ", err)
 	}
 }
 

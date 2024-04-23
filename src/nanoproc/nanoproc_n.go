@@ -50,7 +50,6 @@ func NanoProcess_N(user_id string, ctx context.Context) {
 								and ifnull(dr.reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
 								and userid = '` + user_id + `'
 								and sms_sender not like '010%'
-								and 
 							limit 1
 			`
 				cnterr := databasepool.DB.QueryRow(tickSql).Scan(&count)

@@ -242,17 +242,17 @@ func atsendProcess(group_no string, user_id string) {
 		result := resChan.Result
 		if resChan.Statuscode == 200 {
 
-			// var kakaoResp kakao.KakaoResponse
-			// json.Unmarshal(resChan.BodyData, &kakaoResp)
-
 			var resdt = time.Now()
 			var resdtstr = fmt.Sprintf("%4d-%02d-%02d %02d:%02d:%02d", resdt.Year(), resdt.Month(), resdt.Day(), resdt.Hour(), resdt.Minute(), resdt.Second())
+
+			// var kakaoResp kakao.KakaoResponse
+			// json.Unmarshal(resChan.BodyData, &kakaoResp)
 			
 			// var resCode = kakaoResp.Code
 			// var resMessage = kakaoResp.Message
 
-			var resCode = "0000"
-			var resMessage = ""
+			var resCode "0000"
+			var resMessage ""
 			
 			if s.EqualFold(resCode, "3005") {
 				resCode = "0000"
@@ -338,35 +338,9 @@ func atsendProcess(group_no string, user_id string) {
 
 			atValues = append(atValues, atValue)
 
-			//Center에서도 사용하고 있는 함수이므로 공용 라이브러리 생성이 필요함
 			if len(atValues) >= 500 {
-				tx, err := databasepool.DB.Begin()
-				if err != nil {
-					errlog.Println(err)
-				}
-				defer tx.Rollback()
-				atStmt, err := tx.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.AtResColumn{})...))
-				if err != nil {
-					errlog.Println("atStmt 초기화 실패 ", err)
-					return
-				}
-				for _, data := range atValues {
-					_, err := atStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Code,data.Image_link,data.Image_url,data.Kind,data.Message,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Res_dt,data.Reserve_dt,data.Result,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Sync,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Title)
-					if err != nil {
-						errlog.Println(err)
-					}
-				}
+				insertAtResData(atValues)
 				atValues = []kaocommon.AtResColumn{}
-				_, err = atStmt.Exec()
-				if err != nil {
-					atStmt.Close()
-					errlog.Println(err)
-				}
-				atStmt.Close()
-				err = tx.Commit()
-				if err != nil {
-					errlog.Println(err)
-				}
 			}
 		} else {
 			// stdlog.Println(user_id, "알림톡 서버 처리 오류 !! ( ", string(resChan.BodyData), " )", result["msgid"])
@@ -378,33 +352,7 @@ func atsendProcess(group_no string, user_id string) {
 
 	//Center에서도 사용하고 있는 함수이므로 공용 라이브러리 생성이 필요함
 	if len(atValues) > 0 {
-		tx, err := databasepool.DB.Begin()
-		if err != nil {
-			errlog.Println(err)
-		}
-		defer tx.Rollback()
-		atStmt, err := tx.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.AtResColumn{})...))
-		if err != nil {
-			errlog.Println("atStmt 초기화 실패 ", err)
-			return
-		}
-		for _, data := range atValues {
-			_, err := atStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Code,data.Image_link,data.Image_url,data.Kind,data.Message,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Res_dt,data.Reserve_dt,data.Result,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Sync,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Title)
-			if err != nil {
-				errlog.Println(err)
-			}
-		}
-		atValues = []kaocommon.AtResColumn{}
-		_, err = atStmt.Exec()
-		if err != nil {
-			atStmt.Close()
-			errlog.Println(err)
-		}
-		atStmt.Close()
-		err = tx.Commit()
-		if err != nil {
-			errlog.Println(err)
-		}
+		insertAtResData(atValues)
 	}
 
 	//알림톡 발송 후 DHN_REQUEST_AT 테이블의 데이터는 제거한다.
@@ -417,35 +365,65 @@ func atsendProcess(group_no string, user_id string) {
 	atprocCnt--
 }
 
+func insertAtResData(atValues []kaocommon.AtResColumn) {
+	tx, err := databasepool.DB.Begin()
+	if err != nil {
+		config.Stdlog.Println("alimtalk.go / insertAtResData / dhn_result / 트랜젝션 초기화 실패 ", err)
+	}
+	defer tx.Rollback()
+	atStmt, err := tx.Prepare(pq.CopyIn("dhn_result", kaocommon.GetReqColumnPq(kaocommon.AtResColumn{})...))
+	if err != nil {
+		config.Stdlog.Println("alimtalk.go / insertAtResData / dhn_result / atStmt 초기화 실패 ", err)
+		return
+	}
+	for _, data := range atValues {
+		_, err := atStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Code,data.Image_link,data.Image_url,data.Kind,data.Message,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Res_dt,data.Reserve_dt,data.Result,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Sync,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Title)
+		if err != nil {
+			config.Stdlog.Println("alimtalk.go / insertAtResData / dhn_result / atStmt personal Exec ", err)
+		}
+	}
+	
+	_, err = atStmt.Exec()
+	if err != nil {
+		atStmt.Close()
+		config.Stdlog.Println("alimtalk.go / insertAtResData / dhn_result / atStmt Exec ", err)
+	}
+	atStmt.Close()
+	err = tx.Commit()
+	if err != nil {
+		config.Stdlog.Println("alimtalk.go / insertAtResData / dhn_result / atStmt commit ", err)
+	}
+}
+
 //카카오 서버에 발송을 요청한다.
 func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- resultStr, alimtalk kakao.Alimtalk, temp resultStr) {
 	defer reswg.Done()
-	jsonData, _ := json.Marshal(alimtalk)
-	req, err := http.NewRequest("POST", config.Conf.API_SERVER + "/v3/" + config.Conf.PROFILE_KEY + "/alimtalk/send", bytes.NewBuffer(jsonData))
-	if err != nil {
-		config.Stdlog.Println("알림톡 발송 에러 request 만들기 실패 ", err.Error())
-		return
-	}
-	req.Header.Set("Content-Type", "application/json")
+	// jsonData, _ := json.Marshal(alimtalk)
+	// req, err := http.NewRequest("POST", config.Conf.API_SERVER + "/v3/" + config.Conf.PROFILE_KEY + "/alimtalk/send", bytes.NewBuffer(jsonData))
+	// if err != nil {
+	// 	config.Stdlog.Println("알림톡 발송 에러 request 만들기 실패 ", err.Error())
+	// 	return
+	// }
+	// req.Header.Set("Content-Type", "application/json")
 
-	resp, err := config.GoClient.Do(req)
-	if err != nil {
-		// 에러가 발생한 경우 처리
-		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-			// 타임아웃 오류 처리
-			config.Stdlog.Println("알림톡 발송 타임아웃 Serial_number : ", alimtalk.Serial_number, " / error : ", err.Error())
-		} else {
-			// 기타 오류 처리
-			config.Stdlog.Println("알림톡 발송 실패 Serial_number : ", alimtalk.Serial_number, " / error : ", err.Error())
-		}
-		return
-	}
+	// resp, err := config.GoClient.Do(req)
+	// if err != nil {
+	// 	// 에러가 발생한 경우 처리
+	// 	if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+	// 		// 타임아웃 오류 처리
+	// 		config.Stdlog.Println("알림톡 발송 타임아웃 Serial_number : ", alimtalk.Serial_number, " / error : ", err.Error())
+	// 	} else {
+	// 		// 기타 오류 처리
+	// 		config.Stdlog.Println("알림톡 발송 실패 Serial_number : ", alimtalk.Serial_number, " / error : ", err.Error())
+	// 	}
+	// 	return
+	// }
 
-	bodyData, _ := ioutil.ReadAll(resp.Body)
-	temp.Statuscode = resp.StatusCode
-	temp.BodyData = bodyData
+	// bodyData, _ := ioutil.ReadAll(resp.Body)
+	// temp.Statuscode = resp.StatusCode
+	// temp.BodyData = bodyData
 
-	resp.Body.Close()
+	// resp.Body.Close()
 
 	c <- temp
 }

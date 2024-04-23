@@ -349,6 +349,7 @@ Command :
 /all             -> DHNServer process list
 /allstop         -> DHNServer process stop
 `
+
 	r.GET("/", func(c *gin.Context) {
 		//time.Sleep(30 * time.Second)
 		c.String(200, serCmd)
