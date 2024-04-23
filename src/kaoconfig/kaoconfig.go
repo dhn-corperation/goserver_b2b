@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"time"
-	"net"
+	// "net"
 	"net/http"
 
 	ini "github.com/BurntSushi/toml"
