@@ -246,14 +246,11 @@ func atsendProcess(group_no string, user_id string) {
 			var resdt = time.Now()
 			var resdtstr = fmt.Sprintf("%4d-%02d-%02d %02d:%02d:%02d", resdt.Year(), resdt.Month(), resdt.Day(), resdt.Hour(), resdt.Minute(), resdt.Second())
 
-			// var kakaoResp kakao.KakaoResponse
-			// json.Unmarshal(resChan.BodyData, &kakaoResp)
+			var kakaoResp kakao.KakaoResponse
+			json.Unmarshal(resChan.BodyData, &kakaoResp)
 			
-			// var resCode = kakaoResp.Code
-			// var resMessage = kakaoResp.Message
-
-			var resCode = "0000"
-			var resMessage = ""
+			var resCode = kakaoResp.Code
+			var resMessage = kakaoResp.Message
 			
 			if s.EqualFold(resCode, "3005") {
 				resCode = "0000"
@@ -400,32 +397,32 @@ func insertAtResData(atValues []kaocommon.AtResColumn) {
 //카카오 서버에 발송을 요청한다.
 func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- resultStr, alimtalk kakao.Alimtalk, temp resultStr) {
 	defer reswg.Done()
-	// jsonData, _ := json.Marshal(alimtalk)
-	// req, err := http.NewRequest("POST", config.Conf.API_SERVER + "/v3/" + config.Conf.PROFILE_KEY + "/alimtalk/send", bytes.NewBuffer(jsonData))
-	// if err != nil {
-	// 	config.Stdlog.Println("알림톡 발송 에러 request 만들기 실패 ", err.Error())
-	// 	return
-	// }
-	// req.Header.Set("Content-Type", "application/json")
+	jsonData, _ := json.Marshal(alimtalk)
+	req, err := http.NewRequest("POST", config.Conf.API_SERVER + "/v3/" + config.Conf.PROFILE_KEY + "/alimtalk/send", bytes.NewBuffer(jsonData))
+	if err != nil {
+		config.Stdlog.Println("알림톡 발송 에러 request 만들기 실패 ", err.Error())
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
 
-	// resp, err := config.GoClient.Do(req)
-	// if err != nil {
-	// 	// 에러가 발생한 경우 처리
-	// 	if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-	// 		// 타임아웃 오류 처리
-	// 		config.Stdlog.Println("알림톡 발송 타임아웃 Serial_number : ", alimtalk.Serial_number, " / error : ", err.Error())
-	// 	} else {
-	// 		// 기타 오류 처리
-	// 		config.Stdlog.Println("알림톡 발송 실패 Serial_number : ", alimtalk.Serial_number, " / error : ", err.Error())
-	// 	}
-	// 	return
-	// } else {
-	// 	bodyData, _ := ioutil.ReadAll(resp.Body)
-	// 	temp.Statuscode = resp.StatusCode
-	// 	temp.BodyData = bodyData
-	// }	
+	resp, err := config.GoClient.Do(req)
+	if err != nil {
+		// 에러가 발생한 경우 처리
+		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+			// 타임아웃 오류 처리
+			config.Stdlog.Println("알림톡 발송 타임아웃 Serial_number : ", alimtalk.Serial_number, " / error : ", err.Error())
+		} else {
+			// 기타 오류 처리
+			config.Stdlog.Println("알림톡 발송 실패 Serial_number : ", alimtalk.Serial_number, " / error : ", err.Error())
+		}
+		return
+	} else {
+		bodyData, _ := ioutil.ReadAll(resp.Body)
+		temp.Statuscode = resp.StatusCode
+		temp.BodyData = bodyData
+	}	
 
-	// resp.Body.Close()
+	resp.Body.Close()
 
 	c <- temp
 }
