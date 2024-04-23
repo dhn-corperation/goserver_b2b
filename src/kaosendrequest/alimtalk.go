@@ -378,6 +378,7 @@ func insertAtResData(atValues []kaocommon.AtResColumn) {
 		return
 	}
 	for _, data := range atValues {
+		config.Stdlog.Println(data.Msgid)
 		_, err := atStmt.Exec(data.Msgid,data.Userid,data.Ad_flag,data.Button1,data.Button2,data.Button3,data.Button4,data.Button5,data.Code,data.Image_link,data.Image_url,data.Kind,data.Message,data.Message_type,data.Msg,data.Msg_sms,data.Only_sms,data.P_com,data.P_invoice,data.Phn,data.Profile,data.Reg_dt,data.Remark1,data.Remark2,data.Remark3,data.Remark4,data.Remark5,data.Res_dt,data.Reserve_dt,data.Result,data.S_code,data.Sms_kind,data.Sms_lms_tit,data.Sms_sender,data.Sync,data.Tmpl_id,data.Wide,data.Send_group,data.Supplement,data.Price,data.Currency_type,data.Title)
 		if err != nil {
 			config.Stdlog.Println("alimtalk.go / insertAtResData / dhn_result / atStmt personal Exec ", err)
@@ -418,11 +419,11 @@ func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- resultStr, alimtalk kakao
 	// 		config.Stdlog.Println("알림톡 발송 실패 Serial_number : ", alimtalk.Serial_number, " / error : ", err.Error())
 	// 	}
 	// 	return
-	// }
-
-	// bodyData, _ := ioutil.ReadAll(resp.Body)
-	// temp.Statuscode = resp.StatusCode
-	// temp.BodyData = bodyData
+	// } else {
+	// 	bodyData, _ := ioutil.ReadAll(resp.Body)
+	// 	temp.Statuscode = resp.StatusCode
+	// 	temp.BodyData = bodyData
+	// }	
 
 	// resp.Body.Close()
 
