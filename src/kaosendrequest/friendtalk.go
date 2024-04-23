@@ -24,11 +24,11 @@ package kaosendrequest
 // var FisRunning bool
 // var isStoping bool
 
-// type resultStr struct {
-// 	Statuscode int
-// 	BodyData   []byte
-// 	Result     map[string]string
-// }
+type resultStr struct {
+	Statuscode int
+	BodyData   []byte
+	Result     map[string]string
+}
 
 // func FriendtalkProc(ctx context.Context) {
 // 	ftprocCnt = 1
