@@ -165,7 +165,7 @@ carousel
 		scanArgs := make([]interface{}, count)
 
 		for i, v := range columnTypes {
-
+			config.Stdlog.Println(v.DatabaseTypeName())
 			switch v.DatabaseTypeName() {
 			case "VARCHAR", "TEXT", "UUID", "TIMESTAMP":
 				scanArgs[i] = new(sql.NullString)
