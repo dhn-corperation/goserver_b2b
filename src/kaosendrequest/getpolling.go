@@ -142,7 +142,7 @@ func getPollingProcess(wg *sync.WaitGroup) {
 				return
 			}
 
-			resp, err = config.GoClient.Do(req)
+			resp2, err = config.GoClient.Do(req)
 			if err != nil {
 				// 에러가 발생한 경우 처리
 				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
@@ -154,11 +154,11 @@ func getPollingProcess(wg *sync.WaitGroup) {
 				}
 				return
 			}
-			bodyData, _ = ioutil.ReadAll(resp.Body)
-			defer resp.Body.Close()
+			bodyData, _ = ioutil.ReadAll(resp2.Body)
+			defer resp2.Body.Close()
 
 			var kakaoPollingResult kakao.PollingResultResponse
-			json.Marshal([]byte(bodyData), &kakaoPollingResult)
+			json.Unmarshal([]byte(bodyData), &kakaoPollingResult)
 
 			if kakaoPollingResult.Code != "0000" {
 				stdlog.Println("알림톡(폴링) 결과수신 후처리 Response_id : ", strconv.Itoa(kakaoResp.Response_id), " / Message : ", kakaoPollingResult.Message, " / error : ", err.Error())
