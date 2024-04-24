@@ -94,9 +94,9 @@ func getPollingProcess(wg *sync.WaitGroup) {
 			msgid := kakaoResp.Response.Success[i].Serial_number[9:len(kakaoResp.Response.Success[i].Serial_number)]
 			stdlog.Println("성공 : " + msgid + " / " + kakaoResp.Response.Success[i].Received_at)
 
-			atValues = append(atValues, kaocommon.AtPollingResColumn{}{
+			atValues = append(atValues, kaocommon.AtPollingResColumn{
 				Msgid : msgid,
-				Type : "S"
+				Type : "S",
 			})
 		}
 
@@ -106,7 +106,7 @@ func getPollingProcess(wg *sync.WaitGroup) {
 			
 			atValues = append(atValues, kaocommon.AtPollingResColumn{
 				Msgid : msgid,
-				Type : "F"
+				Type : "F",
 			})
 
 		}
