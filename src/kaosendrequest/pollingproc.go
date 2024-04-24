@@ -88,7 +88,7 @@ func resPollingProcess(wg *sync.WaitGroup) {
 	  
 }
 
-func insDelResData(idValues []interface, res string) {
+func insDelResData(idValues []interface, res string) error {
 	tx, err := databasepool.DB.Begin()
 	if err != nil {
 		confiag.Stdlog.Println("polling_proc.go / getPollingProcess / dhn_result / 트랜젝션 초기화 실패 ", err)
@@ -133,4 +133,5 @@ func insDelResData(idValues []interface, res string) {
 	if err != nil {
 		confiag.Stdlog.Println("polling_proc.go / getPollingProcess / dhn_result / ftStmt commit ", err)
 	}
+
 }
