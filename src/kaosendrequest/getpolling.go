@@ -1,23 +1,21 @@
 package kaosendrequest
 
 import (
-	//"bytes"
-	//"database/sql"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	kakao "mycs/src/kakaojson"
 	config "mycs/src/kaoconfig"
-
 	databasepool "mycs/src/kaodatabasepool"
+	"mycs/src/kaocommon"
 
-	//"io/ioutil"
-	//"net"
-	//"net/http"
+	"io/ioutil"
+	"net"
+	"net/http"
 
 	"strconv"
 	s "strings"
 	"sync"
-	//"time"
 
 	"github.com/go-resty/resty/v2"
 	"context"
@@ -50,7 +48,6 @@ func PollingProc(ctx context.Context) {
 func getPollingProcess(wg *sync.WaitGroup) {
 
 	defer wg.Done()
-	//fmt.Println("시작")
 	var db = databasepool.DB
 	var conf = config.Conf
 	var stdlog = config.Stdlog
@@ -59,128 +56,109 @@ func getPollingProcess(wg *sync.WaitGroup) {
 	channel := make(map[string]interface{})
 	channel["channel_key"] = conf.CHANNEL
 
-	//jsonstr, _ := json.Marshal(channel)
-	//buff := bytes.NewBuffer(jsonstr)
-
-	// req, err := http.NewRequest("POST", conf.API_SERVER+"/v3/"+conf.PROFILE_KEY+"/responseAll", buff)
-	// if err != nil {
-	// 	errlog.Println(err)
-	// 	errlog.Println("메시지 서버 호출 오류")
-	// } else {
-	// 	//http.DefaultClient.Timeout = time.Minute * 3
-	// 	respClient := &http.Client{
-	// 		Timeout: time.Second * 20,
-	// 	}
-	// 	req.Header.Add("Content-type", "application/json")
-	// 	//req.Header.Add("channel_key", conf.CHANNEL)
-
-	// 	resp, err := respClient.Do(req)
-
-	//atResClient := resty.New()
-	resp, err := config.Client.R().
-		SetHeaders(map[string]string{"Content-Type": "application/json", "channel_key": conf.CHANNEL}).
-		SetBody(channel).
-		Post(conf.API_SERVER + "v3/" + conf.PROFILE_KEY + "/responseAll")
-
+	jsonData, _ := json.Marshal(channel)
+	req, err := http.NewRequest("POST", conf.API_SERVER + "v3/" + conf.PROFILE_KEY + "/responseAll", bytes.NewBuffer(jsonData))
 	if err != nil {
-		errlog.Println(err)
-		errlog.Println("메시지 서버 호출 오류 2")
+		config.Stdlog.Println("알림톡(폴링) 결과수신 에러 request 만들기 실패 ", err.Error())
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("channel_key", conf.CHANNEL)
+
+	resp, err := config.GoClient.Do(req)
+	if err != nil {
+		// 에러가 발생한 경우 처리
+		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+			// 타임아웃 오류 처리
+			config.Stdlog.Println("알림톡(폴링) 결과수신 타임아웃 / error : ", err.Error())
+		} else {
+			// 기타 오류 처리
+			config.Stdlog.Println("알림톡(폴링) 결과수신 실패 / error : ", err.Error())
+		}
+		return
 	} else {
+		bodyData, _ := ioutil.ReadAll(resp.Body)
+		statusCode := resp.StatusCode
+	}
 
-		// defer resp.Body.Close()
+	resp.Body.Close()
 
-		// respBydy, err := ioutil.ReadAll(resp.Body)
+	if statusCode == 200 {
+		var kakaoResp kakao.PollingResponse
+		json.Unmarshal([]byte(bodyData), &kakaoResp)
+        
+        atValues = []kaocommon.AtPollingResColumn{}
 
-		// if err != nil {
-		// 	errlog.Println("Body 읽기 실패")
+		for i, _ := range kakaoResp.Response.Success {
 
-		// } else {
+			msgid := kakaoResp.Response.Success[i].Serial_number[9:len(kakaoResp.Response.Success[i].Serial_number)]
+			stdlog.Println("성공 : " + msgid + " / " + kakaoResp.Response.Success[i].Received_at)
 
-		//str := string(respBydy)
+			atValues = append(atValues, kaocommon.AtPollingResColumn{
+				Msgid : msgid,
+				Type : "S"
+			})
+		}
 
-		if resp.StatusCode() == 200 {
-			str := resp.Body()
-			var kakaoResp kakao.PollingResponse
-			json.Unmarshal([]byte(str), &kakaoResp)
-
-			sinsStrs := []string{}
-	        sinsValues := []interface{}{}
-	        
-	        finsStrs := []string{}
-	        finsValues := []interface{}{}
-	        
-	        insquery := `insert into DHN_POLLING_RESULT(
-msg_id ,
-type ,
-result_dt) values %s`
-
-			for i, _ := range kakaoResp.Response.Success {
-				stdlog.Println("성공 : " + kakaoResp.Response.Success[i].Serial_number[9:len(kakaoResp.Response.Success[i].Serial_number)] + " / " + kakaoResp.Response.Success[i].Received_at)
-				//db.Exec("update DHN_RESULT set result = 'Y' where msgid = '" + kakaoResp.Response.Success[i].Serial_number[9:len(kakaoResp.Response.Success[i].Serial_number)] + "'")
-				//supmsgids = append(supmsgids, kakaoResp.Response.Success[i].Serial_number[9:len(kakaoResp.Response.Success[i].Serial_number)])
-				sinsStrs = append(sinsStrs, "(?,'S',now())");
-				sinsValues = append(sinsValues, kakaoResp.Response.Success[i].Serial_number[9:len(kakaoResp.Response.Success[i].Serial_number)])
-			}
-
-			for i, _ := range kakaoResp.Response.Fail {
-				stdlog.Println("실퍠 : " + kakaoResp.Response.Fail[i].Serial_number[9:len(kakaoResp.Response.Fail[i].Serial_number)] + " / " + kakaoResp.Response.Fail[i].Received_at)
-				//db.Exec("update DHN_RESULT set result = 'Y', code = '9999', message = 'ME09' where msgid = '" + kakaoResp.Response.Fail[i].Serial_number[9:len(kakaoResp.Response.Fail[i].Serial_number)] + "'")
-				//fupmsgids = append(fupmsgids, kakaoResp.Response.Fail[i].Serial_number[9:len(kakaoResp.Response.Fail[i].Serial_number)])
-				finsStrs = append(finsStrs, "(?,'F',now())");
-				finsValues = append(finsValues, kakaoResp.Response.Fail[i].Serial_number[9:len(kakaoResp.Response.Fail[i].Serial_number)])
-
-			}
+		for i, _ := range kakaoResp.Response.Fail {
+			msgid := kakaoResp.Response.Fail[i].Serial_number[9:len(kakaoResp.Response.Fail[i].Serial_number)]
+			stdlog.Println("실퍠 : " + msgid + " / " + kakaoResp.Response.Fail[i].Received_at)
 			
-			if len(sinsStrs) > 0 {
- 			
- 				stmt := fmt.Sprintf(insquery, s.Join(sinsStrs, ","))
-				//fmt.Println(stmt)
-				_, err := db.Exec(stmt, sinsValues...)
+			atValues = append(atValues, kaocommon.AtPollingResColumn{
+				Msgid : msgid,
+				Type : "F"
+			})
 
+		}
+		
+		if len(atValues) > 0 {
+			tx, err := databasepool.DB.Begin()
+			if err != nil {
+				config.Stdlog.Println("getpolling.go / getPollingProcess / dhn_polling_result / 트랜젝션 초기화 실패 ", err)
+			}
+			defer tx.Rollback()
+
+			atStmt, err := tx.Prepare("insert into dhn_polling_result values ($1, $2, now())")
+			if err != nil {
+				config.Stdlog.Println("getpolling.go / getPollingProcess / dhn_polling_result / ftStmt 초기화 실패 ", err)
+				return
+			}
+
+			for _, data := range atValues {
+				_, err := atStmt.Exec(data.Msgid, data.Type)
 				if err != nil {
-					stdlog.Println("Polling Result S Insert 처리 중 오류 발생 ", err)
+					config.Stdlog.Println("getpolling.go / getPollingProcess / dhn_polling_result / ftStmt personal Exec ", err)
 				}
-
-				sinsStrs = nil
-				sinsValues = nil
-
 			}
 			
-			if len(finsStrs) > 0 {
- 			
- 				stmt := fmt.Sprintf(insquery, s.Join(finsStrs, ","))
-				//fmt.Println(stmt)
-				_, err := db.Exec(stmt, finsValues...)
+			atStmt.Close()
 
-				if err != nil {
-					stdlog.Println("Polling Result F Insert 처리 중 오류 발생 ", err)
-				}
-
-				finsStrs = nil
-				finsValues = nil
-
+			err = tx.Commit()
+			if err != nil {
+				config.Stdlog.Println("getpolling.go / getPollingProcess / dhn_polling_result / ftStmt commit ", err)
 			}
-			
-			if kakaoResp.Response_id > 0 {
 
-				//compreq, err1 := http.NewRequest("POST", conf.API_SERVER+"v3/"+conf.PROFILE_KEY+"/response/"+strconv.Itoa(kakaoResp.Response_id)+"/complete", nil)
+		}
+		
+		if kakaoResp.Response_id > 0 {
+			req, err := http.NewRequest("POST", conf.API_SERVER + "v3/" + conf.PROFILE_KEY + "/response/" + strconv.Itoa(kakaoResp.Response_id) + "/complete", nil)
+			if err != nil {
+				config.Stdlog.Println("알림톡(폴링) 결과수신 후처리 에러 ", err.Error())
+				return
+			}
 
-				atResidClient := resty.New()
-				resp, err := atResidClient.R().
-					Post(conf.API_SERVER + "v3/" + conf.PROFILE_KEY + "/response/" + strconv.Itoa(kakaoResp.Response_id) + "/complete")
-
-				if err != nil {
-					//errlog.Println(err1)
-					errlog.Println("알림톡 결과 처리 중 오류 : ", kakaoResp.Response_id, " / ", err, " / ", resp)
+			_, err := config.GoClient.Do(req)
+			if err != nil {
+				// 에러가 발생한 경우 처리
+				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+					// 타임아웃 오류 처리
+					config.Stdlog.Println("알림톡(폴링) 결과수신 후처리 타임아웃 error : ", err.Error())
 				} else {
-					stdlog.Println("알림톡 결과 처리 : ", kakaoResp.Response_id, " / ", resp)
+					// 기타 오류 처리
+					config.Stdlog.Println("알림톡(폴링) 결과수신 후처리 실패 error : ", err.Error())
 				}
+				return
 			}
 		}
-		//}
-
 	}
-	//respClient.CloseIdleConnections()
-	//}
-
 }

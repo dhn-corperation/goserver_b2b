@@ -224,6 +224,12 @@ type FtResColumn struct {
 	Carousel        interface{}	`db:"carousel"`
 }
 
+type AtPollingResColumn struct {
+	Msgid			interface{}	`db:"msgid"`
+	Type			interface{}	`db:"type"`
+}
+
+
 type CheckUserReturnField struct {
 	Validation	bool
 	Userid 	   	string
