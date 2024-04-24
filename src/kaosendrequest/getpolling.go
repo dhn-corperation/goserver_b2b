@@ -3,7 +3,6 @@ package kaosendrequest
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	kakao "mycs/src/kakaojson"
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
@@ -14,10 +13,8 @@ import (
 	"net/http"
 
 	"strconv"
-	s "strings"
 	"sync"
 
-	"github.com/go-resty/resty/v2"
 	"context"
 	"time"
 )
@@ -145,7 +142,7 @@ func getPollingProcess(wg *sync.WaitGroup) {
 				return
 			}
 
-			_, err := config.GoClient.Do(req)
+			resp, err := config.GoClient.Do(req)
 			if err != nil {
 				// 에러가 발생한 경우 처리
 				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
