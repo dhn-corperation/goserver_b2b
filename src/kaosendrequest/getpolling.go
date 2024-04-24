@@ -156,10 +156,12 @@ func getPollingProcess(wg *sync.WaitGroup) {
 			}
 			bodyData, _ := ioutil.ReadAll(resp.Body)
 			defer resp.Body.Close()
-			var kakaoResp kakao.PollingResultResponse
-			json.Marshal([]byte(bodyData), &kakaoResp)
-			if kakaoResp.Code != "0000" {
-				stdlog.Println("알림톡(폴링) 결과수신 후처리 Response_id : ", strconv.Itoa(kakaoResp.Response_id), " / Message : ", kakaoResp.Message, " / error : ", err.Error())
+
+			var kakaoPollingResult kakao.PollingResultResponse
+			json.Marshal([]byte(bodyData), &kakaoPollingResult)
+
+			if kakaoPollingResult.Code != "0000" {
+				stdlog.Println("알림톡(폴링) 결과수신 후처리 Response_id : ", strconv.Itoa(kakaoPollingResult.Response_id), " / Message : ", kakaoPollingResult.Message, " / error : ", err.Error())
 			} else {
 
 			}
