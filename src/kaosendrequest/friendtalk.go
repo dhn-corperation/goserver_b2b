@@ -8,6 +8,7 @@ import (
 	kakao "mycs/src/kakaojson"
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
+	"mycs/src/kaocommon"
 
 	"io/ioutil"
 	"net"
@@ -18,6 +19,7 @@ import (
 	"sync"
 	"time"
 	"context"
+	"github.com/lib/pq"
 )
 
 var ftprocCnt int
@@ -96,7 +98,7 @@ func ftsendProcess(group_no string) {
 
 	columnTypes, err := reqrows.ColumnTypes()
 	if err != nil {
-		errlog.Println("ftsendProcess 컬럼 초기화 에러 group_no : ", group_no, " / userid  : ", user_id)
+		errlog.Println("ftsendProcess 컬럼 초기화 에러 group_no : ", group_no)
 		errlog.Println("ftsendProcess 컬럼 초기화 에러 : ", err)
 		errlog.Fatal(err)
 	}
@@ -116,7 +118,7 @@ func ftsendProcess(group_no string) {
 
 		err := reqrows.Scan(scanArgs...)
 		if err != nil {
-			errlog.Println("ftsendProcess 컬럼 스캔 에러 group_no : ", group_no, " / userid  : ", user_id)
+			errlog.Println("ftsendProcess 컬럼 스캔 에러 group_no : ", group_no)
 			errlog.Println("ftsendProcess 컬럼 스캔 에러 : ", err)
 			errlog.Fatal(err)
 		}
@@ -359,7 +361,7 @@ func ftsendProcess(group_no string) {
 
 			if len(ftValues) >= 500 {
 				insertFtResData(ftValues)
-				atValues = []kaocommon.FtResColumn{}
+				ftValues = []kaocommon.FtResColumn{}
 			}
 
 		} else {
@@ -370,7 +372,7 @@ func ftsendProcess(group_no string) {
 		procCount++
 	}
 
-	if len(resinsStrs) > 0 {
+	if len(ftValues) > 0 {
 		insertFtResData(ftValues)
 	}
 
