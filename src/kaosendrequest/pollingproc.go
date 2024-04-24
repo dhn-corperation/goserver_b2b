@@ -88,7 +88,7 @@ func resPollingProcess(wg *sync.WaitGroup) {
 	  
 }
 
-func insDelResData(idValues []interface, res string) error {
+func insDelResData(idValues []interface, res string) {
 	tx, err := databasepool.DB.Begin()
 	if err != nil {
 		confiag.Stdlog.Println("polling_proc.go / getPollingProcess / dhn_result / 트랜젝션 초기화 실패 ", err)
@@ -116,7 +116,7 @@ func insDelResData(idValues []interface, res string) error {
 	}
 
 	for _, data := range idValues {
-		_, err := stmt.Exec(data)
+		_, err = stmt.Exec(data)
 		if err != nil {
 			confiag.Stdlog.Println("polling_proc.go / getPollingProcess / dhn_result / stmt insert Exec ", err)
 		}
