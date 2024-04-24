@@ -48,10 +48,8 @@ func PollingProc(ctx context.Context) {
 func getPollingProcess(wg *sync.WaitGroup) {
 
 	defer wg.Done()
-	var db = databasepool.DB
 	var conf = config.Conf
 	var stdlog = config.Stdlog
-	var errlog = config.Stdlog
 
 	channel := make(map[string]interface{})
 	channel["channel_key"] = conf.CHANNEL
@@ -76,10 +74,10 @@ func getPollingProcess(wg *sync.WaitGroup) {
 			config.Stdlog.Println("알림톡(폴링) 결과수신 실패 / error : ", err.Error())
 		}
 		return
-	} else {
-		bodyData, _ := ioutil.ReadAll(resp.Body)
-		statusCode := resp.StatusCode
 	}
+
+	bodyData, _ := ioutil.ReadAll(resp.Body)
+	statusCode := resp.StatusCode
 
 	resp.Body.Close()
 
@@ -87,7 +85,7 @@ func getPollingProcess(wg *sync.WaitGroup) {
 		var kakaoResp kakao.PollingResponse
 		json.Unmarshal([]byte(bodyData), &kakaoResp)
         
-        atValues = []kaocommon.AtPollingResColumn{}
+        atValues := []kaocommon.AtPollingResColumn{}
 
 		for i, _ := range kakaoResp.Response.Success {
 
@@ -114,20 +112,20 @@ func getPollingProcess(wg *sync.WaitGroup) {
 		if len(atValues) > 0 {
 			tx, err := databasepool.DB.Begin()
 			if err != nil {
-				config.Stdlog.Println("getpolling.go / getPollingProcess / dhn_polling_result / 트랜젝션 초기화 실패 ", err)
+				stdlog.Println("getpolling.go / getPollingProcess / dhn_polling_result / 트랜젝션 초기화 실패 ", err)
 			}
 			defer tx.Rollback()
 
 			atStmt, err := tx.Prepare("insert into dhn_polling_result values ($1, $2, now())")
 			if err != nil {
-				config.Stdlog.Println("getpolling.go / getPollingProcess / dhn_polling_result / ftStmt 초기화 실패 ", err)
+				stdlog.Println("getpolling.go / getPollingProcess / dhn_polling_result / ftStmt 초기화 실패 ", err)
 				return
 			}
 
 			for _, data := range atValues {
 				_, err := atStmt.Exec(data.Msgid, data.Type)
 				if err != nil {
-					config.Stdlog.Println("getpolling.go / getPollingProcess / dhn_polling_result / ftStmt personal Exec ", err)
+					stdlog.Println("getpolling.go / getPollingProcess / dhn_polling_result / ftStmt personal Exec ", err)
 				}
 			}
 			
@@ -135,7 +133,7 @@ func getPollingProcess(wg *sync.WaitGroup) {
 
 			err = tx.Commit()
 			if err != nil {
-				config.Stdlog.Println("getpolling.go / getPollingProcess / dhn_polling_result / ftStmt commit ", err)
+				stdlog.Println("getpolling.go / getPollingProcess / dhn_polling_result / ftStmt commit ", err)
 			}
 
 		}
@@ -143,7 +141,7 @@ func getPollingProcess(wg *sync.WaitGroup) {
 		if kakaoResp.Response_id > 0 {
 			req, err := http.NewRequest("POST", conf.API_SERVER + "v3/" + conf.PROFILE_KEY + "/response/" + strconv.Itoa(kakaoResp.Response_id) + "/complete", nil)
 			if err != nil {
-				config.Stdlog.Println("알림톡(폴링) 결과수신 후처리 에러 ", err.Error())
+				stdlog.Println("알림톡(폴링) 결과수신 후처리 에러 ", err.Error())
 				return
 			}
 
@@ -152,10 +150,10 @@ func getPollingProcess(wg *sync.WaitGroup) {
 				// 에러가 발생한 경우 처리
 				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
 					// 타임아웃 오류 처리
-					config.Stdlog.Println("알림톡(폴링) 결과수신 후처리 타임아웃 error : ", err.Error())
+					stdlog.Println("알림톡(폴링) 결과수신 후처리 타임아웃 error : ", err.Error())
 				} else {
 					// 기타 오류 처리
-					config.Stdlog.Println("알림톡(폴링) 결과수신 후처리 실패 error : ", err.Error())
+					stdlog.Println("알림톡(폴링) 결과수신 후처리 실패 error : ", err.Error())
 				}
 				return
 			}
