@@ -403,7 +403,7 @@ func insertFtResData(ftValues []kaocommon.FtResColumn) {
 	
 	_, err = ftStmt.Exec()
 	if err != nil {
-		atStmt.Close()
+		ftStmt.Close()
 		config.Stdlog.Println("friendtalk.go / insertFtResData / dhn_result / ftStmt Exec ", err)
 	}
 	ftStmt.Close()
@@ -429,10 +429,10 @@ func sendKakao(reswg *sync.WaitGroup, c chan<- resultStr, friendtalk kakao.Frien
 		// 에러가 발생한 경우 처리
 		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
 			// 타임아웃 오류 처리
-			config.Stdlog.Println("친구톡 발송 타임아웃 Serial_number : ", alimtalk.Serial_number, " / error : ", err.Error())
+			config.Stdlog.Println("친구톡 발송 타임아웃 error : ", err.Error())
 		} else {
 			// 기타 오류 처리
-			config.Stdlog.Println("친구톡 발송 실패 Serial_number : ", alimtalk.Serial_number, " / error : ", err.Error())
+			config.Stdlog.Println("친구톡 발송 실패 error : ", err.Error())
 		}
 		return
 	} else {
