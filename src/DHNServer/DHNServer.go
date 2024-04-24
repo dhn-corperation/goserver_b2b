@@ -158,12 +158,12 @@ func resultProc() {
 		}
 	}
 
-	// ftctx, ftcancel := context.WithCancel(context.Background())
+	ftctx, ftcancel := context.WithCancel(context.Background())
 
-	// go kaosendrequest.FriendtalkProc(ftctx)
+	go kaosendrequest.FriendtalkProc(ftctx)
 
-	// allCtxC["ft"] = ftcancel
-	// allService["ft"] = "ft"
+	allCtxC["ft"] = ftcancel
+	allService["ft"] = "ft"
 
 	if s.EqualFold(config.Conf.RESPONSE_METHOD, "polling") {
 
