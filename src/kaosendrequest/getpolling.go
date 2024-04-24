@@ -161,7 +161,7 @@ func getPollingProcess(wg *sync.WaitGroup) {
 			json.Marshal([]byte(bodyData), &kakaoPollingResult)
 
 			if kakaoPollingResult.Code != "0000" {
-				stdlog.Println("알림톡(폴링) 결과수신 후처리 Response_id : ", strconv.Itoa(kakaoPollingResult.Response_id), " / Message : ", kakaoPollingResult.Message, " / error : ", err.Error())
+				stdlog.Println("알림톡(폴링) 결과수신 후처리 Response_id : ", strconv.Itoa(kakaoResp.Response_id), " / Message : ", kakaoPollingResult.Message, " / error : ", err.Error())
 			} else {
 
 			}
