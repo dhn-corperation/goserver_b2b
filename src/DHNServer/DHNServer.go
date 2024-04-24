@@ -195,8 +195,7 @@ func resultProc() {
 			group by a.user_id
 		) a on dcl.user_id = a.user_id
 		where dcl.use_flag = 'Y'
-		and lower(a.dest) like 'oshot%'`
-	)
+		and lower(a.dest) like 'oshot%'`)
 	isOshot := true
 	if error != nil {
 		config.Stdlog.Println("Oshot 유저 select 오류 ")
@@ -244,8 +243,7 @@ func resultProc() {
 			group by a.user_id
 		) a on dcl.user_id = a.user_id
 		where dcl.use_flag = 'Y'
-		and lower(a.dest) like 'nano%'`
-	)
+		and lower(a.dest) like 'nano%'`)
 	isNano := true
 	if error != nil {
 		config.Stdlog.Println("Nano 유저 select 오류 ")
