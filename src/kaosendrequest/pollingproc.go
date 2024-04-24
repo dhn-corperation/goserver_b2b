@@ -91,7 +91,7 @@ func resPollingProcess(wg *sync.WaitGroup) {
 func insDelResData(idValues []interface{}, res string) {
 	tx, err := databasepool.DB.Begin()
 	if err != nil {
-		confiag.Stdlog.Println("polling_proc.go / getPollingProcess / dhn_result / 트랜젝션 초기화 실패 ", err)
+		config.Stdlog.Println("polling_proc.go / getPollingProcess / dhn_result / 트랜젝션 초기화 실패 ", err)
 	}
 	defer tx.Rollback()
 
@@ -103,14 +103,14 @@ func insDelResData(idValues []interface{}, res string) {
 	}
 
 	if err != nil {
-		confiag.Stdlog.Println("polling_proc.go / getPollingProcess / dhn_result / stmt insert 초기화 실패 ", err)
+		config.Stdlog.Println("polling_proc.go / getPollingProcess / dhn_result / stmt insert 초기화 실패 ", err)
 		return
 	}
 
 	stmt2, err := tx.Prepare("delete from DHN_POLLING_RESULT where msg_id = $1")
 	
 	if err != nil {
-		confiag.Stdlog.Println("polling_proc.go / getPollingProcess / dhn_result / delete stmt 초기화 실패 ", err)
+		config.Stdlog.Println("polling_proc.go / getPollingProcess / dhn_result / delete stmt 초기화 실패 ", err)
 		stmt.Close()
 		return
 	}
@@ -118,11 +118,11 @@ func insDelResData(idValues []interface{}, res string) {
 	for _, data := range idValues {
 		_, err = stmt.Exec(data)
 		if err != nil {
-			confiag.Stdlog.Println("polling_proc.go / getPollingProcess / dhn_result / stmt insert Exec ", err)
+			config.Stdlog.Println("polling_proc.go / getPollingProcess / dhn_result / stmt insert Exec ", err)
 		}
 		_, err = stmt2.Exec(data)
 		if err != nil {
-			confiag.Stdlog.Println("polling_proc.go / getPollingProcess / dhn_result / stmt delete Exec ", err)
+			config.Stdlog.Println("polling_proc.go / getPollingProcess / dhn_result / stmt delete Exec ", err)
 		}
 	}
 
@@ -131,7 +131,7 @@ func insDelResData(idValues []interface{}, res string) {
 
 	err = tx.Commit()
 	if err != nil {
-		confiag.Stdlog.Println("polling_proc.go / getPollingProcess / dhn_result / ftStmt commit ", err)
+		config.Stdlog.Println("polling_proc.go / getPollingProcess / dhn_result / ftStmt commit ", err)
 	}
 
 }
