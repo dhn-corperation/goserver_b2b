@@ -142,7 +142,7 @@ func getPollingProcess(wg *sync.WaitGroup) {
 				return
 			}
 
-			resp2, err = config.GoClient.Do(req)
+			resp, err = config.GoClient.Do(req)
 			if err != nil {
 				// 에러가 발생한 경우 처리
 				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
@@ -154,8 +154,8 @@ func getPollingProcess(wg *sync.WaitGroup) {
 				}
 				return
 			}
-			bodyData, _ = ioutil.ReadAll(resp2.Body)
-			defer resp2.Body.Close()
+			bodyData, _ = ioutil.ReadAll(resp.Body)
+			defer resp.Body.Close()
 
 			var kakaoPollingResult kakao.PollingResultResponse
 			json.Unmarshal([]byte(bodyData), &kakaoPollingResult)
