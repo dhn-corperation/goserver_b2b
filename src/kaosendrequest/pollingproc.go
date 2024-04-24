@@ -1,7 +1,6 @@
 package kaosendrequest
 
 import (
-	//"encoding/json"
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
 	s "strings"
@@ -38,11 +37,13 @@ func resPollingProcess(wg *sync.WaitGroup) {
 	defer wg.Done()
  
 	var db = databasepool.DB
-	//var conf = config.Conf
-	//var stdlog = config.Stdlog
 	var errlog = config.Stdlog
 
-	pollingsql := "SELECT dpr.msg_id, dpr.type FROM DHN_POLLING_RESULT dpr INNER JOIN DHN_RESULT dr ON dpr.msg_id = dr.msgid WHERE dr.result = 'N' AND dr.sync = 'N'"
+	pollingsql := `
+	SELECT dpr.msg_id, dpr.type 
+	FROM DHN_POLLING_RESULT dpr 
+	INNER JOIN DHN_RESULT dr ON dpr.msg_id = dr.msgid 
+	WHERE dr.result = 'N' AND dr.sync = 'N'`
 
 	resrows, err := db.Query(pollingsql)
 	if err != nil {
@@ -177,4 +178,38 @@ func resPollingProcess(wg *sync.WaitGroup) {
 		fupmsgids = nil 
 	}
 	  
+}
+
+func proto(idValues []interface, res string){
+	tx, err := databasepool.DB.Begin()
+	if err != nil {
+		confiag.Stdlog.Println("polling_proc.go / getPollingProcess / dhn_polling_result / 트랜젝션 초기화 실패 ", err)
+	}
+	defer tx.Rollback()
+
+	var stmt
+	if res == "S" {
+		stmt, err = tx.Prepare("update DHN_RESULT set result = 'Y' where sync = 'N' and msgid = $1")
+	} else {
+		stmt, err = tx.Prepare("update DHN_RESULT set result = 'Y',code = '9999', message = 'ME09' where sync = 'N' and msgid = $1")
+	}
+	
+	if err != nil {
+		confiag.Stdlog.Println("getpolling.go / getPollingProcess / dhn_polling_result / ftStmt 초기화 실패 ", err)
+		return
+	}
+
+	for _, data := range idValues {
+		_, err := atStmt.Exec(data)
+		if err != nil {
+			confiag.Stdlog.Println("getpolling.go / getPollingProcess / dhn_polling_result / ftStmt personal Exec ", err)
+		}
+	}
+	
+	stmt.Close()
+
+	err = tx.Commit()
+	if err != nil {
+		confiag.Stdlog.Println("getpolling.go / getPollingProcess / dhn_polling_result / ftStmt commit ", err)
+	}
 }

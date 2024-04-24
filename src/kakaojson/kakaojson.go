@@ -122,6 +122,11 @@ type PollingResponse struct {
 	Message      string
 }
 
+type PollingResultResponse struct {
+	Code           string `json:"code"`
+	Message        string `json:"message"`
+}
+
 type PResponse struct {
 	Success []PResult
 	Fail    []PResult

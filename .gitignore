@@ -9,6 +9,7 @@
 /src/DHNServer/*.ini
 /src/DHNServer/DHNCenter
 /src/DHNServer/DHNServer
+/src/kaosendrequest/polling_proc.go
 /logs
 DHNCenter
 DHNServer
