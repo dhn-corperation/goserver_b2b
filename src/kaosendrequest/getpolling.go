@@ -154,7 +154,7 @@ func getPollingProcess(wg *sync.WaitGroup) {
 				}
 				return
 			}
-			bodyData, _ := ioutil.ReadAll(resp.Body)
+			bodyData, _ = ioutil.ReadAll(resp.Body)
 			defer resp.Body.Close()
 
 			var kakaoPollingResult kakao.PollingResultResponse
