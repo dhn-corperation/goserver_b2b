@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 
-	//"sync"
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
 
@@ -15,16 +14,12 @@ import (
 	"unicode/utf8"
 
 	//"bytes"
-	//iconv "github.com/djimenez/iconv-go"
-	//"golang.org/x/text/encoding/korean"
-	//"golang.org/x/text/transform"
 	"context"
 )
 
 var procCnt int
 
 func OshotProcess(user_id string, ctx context.Context) {
-	//var wg sync.WaitGroup
 	config.Stdlog.Println(user_id, " Oshot Process 시작 됨.")
 	procCnt = 0
 	for {
@@ -34,27 +29,26 @@ func OshotProcess(user_id string, ctx context.Context) {
 			select {
 			case <-ctx.Done():
 
-				uid := ctx.Value("user_id")
-				config.Stdlog.Println(uid, " - Oshot process가 10초 후에 종료 됨.")
+				config.Stdlog.Println(user_id, " - Oshot process가 10초 후에 종료 됨.")
 				time.Sleep(10 * time.Second)
-				config.Stdlog.Println(uid, " - Oshot process 종료 완료")
+				config.Stdlog.Println(user_id, " - Oshot process 종료 완료")
 				return
 			default:
 
 				var count sql.NullInt64
 				tickSql := `
 				select
-					length(msgid) as cnt
+					count(1) as cnt
 				from
 					DHN_RESULT dr
 				where
 					dr.result = 'P'
 					and dr.send_group is null
 					and (dr.reserve_dt IS NULL OR to_timestamp(coalesce(dr.reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW())
-					and userid = '`+user_id+`'
+					and userid = $1
 				limit 1
 					`
-				cnterr := databasepool.DB.QueryRowContext(ctx, tickSql).Scan(&count)
+				cnterr := databasepool.DB.QueryRowContext(ctx, tickSql, user_id).Scan(&count)
 
 				if cnterr != nil && cnterr != sql.ErrNoRows {
 					config.Stdlog.Println("DHN_RESULT Table - select 오류 : " + cnterr.Error())
@@ -67,6 +61,7 @@ func OshotProcess(user_id string, ctx context.Context) {
 						if upError != nil {
 							config.Stdlog.Println(user_id , "Group No Update 오류", group_no)
 						} else {
+							procCnt++
 							go resProcess(ctx, group_no, user_id)
 						}
 					}
@@ -98,11 +93,11 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 
 	gudQuery := `
 	update DHN_RESULT dr
-	set	send_group = ?
+	set	send_group = $1
 	where result = 'P'
 	  and send_group is null
 	  and (dr.reserve_dt IS NULL OR to_timestamp(coalesce(dr.reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW())
-	  and userid = ?
+	  and userid = $2
 	LIMIT 500
 	`
 	_, err = tx.ExecContext(ctx, gudQuery, group_no, user_id)
@@ -117,9 +112,7 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 }
 
 func resProcess(ctx context.Context, group_no string, user_id string) {
-	//defer wg.Done()
 
-	procCnt++
 	var db = databasepool.DB
 	var stdlog = config.Stdlog
 
@@ -140,40 +133,6 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	osmmsStrs := []string{}
 	osmmsValues := []interface{}{}
 
-	// var resquery = `
-	// SELECT
-	// 	msgid, 
-	// 	code, 
-	// 	message, 
-	// 	message_type, 
-	// 	(case when sms_kind = 'S' then 
-	// 		substr(convert(REMOVE_WS(msg_sms) using euckr),1,100)
-	// 	 else 
-	// 	   convert(REMOVE_WS(msg_sms) using euckr)
-	//      end) as msg_sms, 
-	// 	phn, 
-	// 	remark1, 
-	// 	remark2,
-	// 	result, 
-	// 	convert(REMOVE_WS(sms_lms_tit) using euckr) as sms_lms_tit, 
-	// 	sms_kind, 
-	// 	sms_sender, 
-	// 	res_dt, 
-	// 	reserve_dt, 
-	// 	(select file1_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file1, 
-	// 	(select file2_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file2, 
-	// 	(select file3_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file3
-	// 	,(case when sms_kind = 'S' then length(convert(REMOVE_WS(msg_sms) using euckr)) else 100 end) as msg_len
-	// 	,userid
-	// 	,(select max(sms_len_check) from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as sms_len_check
-	// 	,(select coalesce(max(oshot), 'OShot') from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as oshot  
-	// FROM DHN_RESULT drr 
-	// WHERE send_group = ?
-	//   and result = 'P'
-    //   and userid = ?
-	// order by userid
-	// `
-
 	var resquery = `
 	SELECT
 	    msgid, 
@@ -181,15 +140,15 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	    message, 
 	    message_type, 
 	    CASE WHEN sms_kind = 'S' THEN 
-	        SUBSTRING(REMOVE_WS(msg_sms), 1, 100)
+	        SUBSTRING(trim(msg_sms), 1, 100)
 	    ELSE 
-	        REMOVE_WS(msg_sms)
+	        trim(msg_sms)
 	    END AS msg_sms, 
 	    phn, 
 	    remark1, 
 	    remark2,
 	    result, 
-	    REMOVE_WS(sms_lms_tit) AS sms_lms_tit, 
+	    trim(sms_lms_tit) AS sms_lms_tit, 
 	    sms_kind, 
 	    sms_sender, 
 	    res_dt, 
@@ -197,18 +156,18 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	    (SELECT file1_path FROM api_mms_images aa WHERE aa.user_id = drr.userid AND aa.mms_id = drr.p_invoice) AS mms_file1, 
 	    (SELECT file2_path FROM api_mms_images aa WHERE aa.user_id = drr.userid AND aa.mms_id = drr.p_invoice) AS mms_file2, 
 	    (SELECT file3_path FROM api_mms_images aa WHERE aa.user_id = drr.userid AND aa.mms_id = drr.p_invoice) AS mms_file3,
-	    CASE WHEN sms_kind = 'S' THEN LENGTH(REMOVE_WS(msg_sms)) ELSE 100 END AS msg_len,
+	    CASE WHEN sms_kind = 'S' THEN LENGTH(trim(msg_sms)) ELSE 100 END AS msg_len,
 	    userid,
 	    (SELECT MAX(sms_len_check) FROM DHN_CLIENT_LIST dcl WHERE dcl.user_id = drr.userid) AS sms_len_check,
-	    COALESCE((SELECT MAX(oshot) FROM DHN_CLIENT_LIST dcl WHERE dcl.user_id = drr.userid), 'OShot') AS oshot  
+	    COALESCE((SELECT lower(MAX(dest)) FROM DHN_CLIENT_LIST dcl WHERE dcl.user_id = drr.userid), 'oshot') AS oshot  
 	FROM DHN_RESULT drr 
-	WHERE send_group = '`+group_no+`'
+	WHERE send_group = $1
 	  AND result = 'P'
-	  AND userid = '`+user_id+`'
+	  AND userid = $2
 	ORDER BY userid
 	`
 
-	resrows, err := db.QueryContext(ctx, resquery)
+	resrows, err := db.QueryContext(ctx, resquery, group_no, user_id)
 
 	if err != nil {
 		stdlog.Println("Result Table 조회 중 오류 발생")

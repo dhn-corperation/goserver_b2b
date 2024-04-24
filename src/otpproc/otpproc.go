@@ -46,8 +46,6 @@ func OTPProcess(ctx context.Context) {
 		
 						if count > 0 {
 		
-							//wg.Add(1)
-		
 							var startNow = time.Now()
 							var group_no = fmt.Sprintf("%02d%02d%02d%02d%06d", startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), (startNow.Nanosecond()/1000))
 							

@@ -186,131 +186,146 @@ func resultProc() {
 	oshotUser := map[string]string{}
 	oshotCtxC := map[string]interface{}{}
 
-	if s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
-		oshotUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl  where dcl.use_flag = 'Y' and coalesce(dcl.dest, 'OSHOT') = 'OSHOT'")
-		isOshot := true
-		if error != nil {
-			config.Stdlog.Println("Oshot 유저 select 오류 ")
-			isOshot = false
-		}
-		defer oshotUserList.Close()
+	oshotUserList, error := databasepool.DB.Query(`
+		select distinct dcl.user_id
+		from DHN_CLIENT_LIST dcl
+		left join (
+			select a.user_id, max(a.dest) as dest
+			from dhn_client_list a
+			group by a.user_id
+		) a on dcl.user_id = a.user_id
+		where dcl.use_flag = 'Y'
+		and lower(a.dest) like 'oshot%'`
+	)
+	isOshot := true
+	if error != nil {
+		config.Stdlog.Println("Oshot 유저 select 오류 ")
+		isOshot = false
+	}
+	defer oshotUserList.Close()
 
-		if isOshot {
-			var user_id sql.NullString
+	if isOshot {
+		var user_id sql.NullString
 
-			for oshotUserList.Next() {
-				oshotUserList.Scan(&user_id)
-				ctx, cancel := context.WithCancel(context.Background())
-				ctx = context.WithValue(ctx, "user_id", user_id.String)
-				go oshotproc.OshotProcess(user_id.String, ctx)
+		for oshotUserList.Next() {
+			oshotUserList.Scan(&user_id)
+			ctx, cancel := context.WithCancel(context.Background())
+			ctx = context.WithValue(ctx, "user_id", user_id.String)
+			go oshotproc.OshotProcess(user_id.String, ctx)
 
-				oshotUser[user_id.String] = user_id.String
-				oshotCtxC[user_id.String] = cancel
+			oshotUser[user_id.String] = user_id.String
+			oshotCtxC[user_id.String] = cancel
 
-				allCtxC["OS"+user_id.String] = cancel
-				allService["OS"+user_id.String] = user_id.String
-
-			}
-
-			olctx, olcancel := context.WithCancel(context.Background())
-			go oshotproc.LMSProcess(olctx)
-			allCtxC["oshotlms"] = olcancel
-			allService["oshotlms"] = "Oshot LMS"
-
-			osctx, oscancel := context.WithCancel(context.Background())
-			go oshotproc.SMSProcess(osctx)
-			allCtxC["oshotsms"] = oscancel
-			allService["oshotsms"] = "Oshot SMS"
+			allCtxC["OS"+user_id.String] = cancel
+			allService["OS"+user_id.String] = user_id.String
 
 		}
+
+		olctx, olcancel := context.WithCancel(context.Background())
+		go oshotproc.LMSProcess(olctx)
+		allCtxC["oshotlms"] = olcancel
+		allService["oshotlms"] = "Oshot LMS"
+
+		osctx, oscancel := context.WithCancel(context.Background())
+		go oshotproc.SMSProcess(osctx)
+		allCtxC["oshotsms"] = oscancel
+		allService["oshotsms"] = "Oshot SMS"
 	}
 
 	nanoUser := map[string]string{}
 	nanoCtxC := map[string]interface{}{}
 
-	if s.EqualFold(config.Conf.NANO_MSG_FLAG, "YES") {
+	nanoUserList, error := databasepool.DB.Query(`
+		select distinct dcl.user_id
+		from DHN_CLIENT_LIST dcl
+		left join (
+			select a.user_id, max(a.dest) as dest
+			from dhn_client_list a
+			group by a.user_id
+		) a on dcl.user_id = a.user_id
+		where dcl.use_flag = 'Y'
+		and lower(a.dest) like 'nano%'`
+	)
+	isNano := true
+	if error != nil {
+		config.Stdlog.Println("Nano 유저 select 오류 ")
+		isNano = false
+	}
+	defer nanoUserList.Close()
 
-		nanoUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl  where dcl.use_flag   = 'Y' and coalesce(dcl.dest, 'OSHOT') = 'NANO'")
-		isNano := true
-		if error != nil {
-			config.Stdlog.Println("Nano 유저 select 오류 ")
-			isNano = false
+	if isNano {
+		var user_id sql.NullString
+
+		for nanoUserList.Next() {
+			nanoUserList.Scan(&user_id)
+
+			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "N") { // 기본
+				ctx, cancel := context.WithCancel(context.Background())
+				ctx = context.WithValue(ctx, "user_id", user_id.String)
+
+				go nanoproc.NanoProcess(user_id.String, ctx)
+
+				nanoCtxC[user_id.String] = cancel
+
+				allCtxC["NN"+user_id.String] = cancel
+				allService["NN"+user_id.String] = user_id.String
+			} else if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
+
+				ctxY, cancelY := context.WithCancel(context.Background())
+				ctxY = context.WithValue(ctxY, "user_id", user_id.String)
+
+				ctxN, cancelN := context.WithCancel(context.Background())
+				ctxN = context.WithValue(ctxN, "user_id", user_id.String)
+
+				go nanoproc.NanoProcess_Y(user_id.String, ctxY) // 010으로 시작하는 번호
+				go nanoproc.NanoProcess_N(user_id.String, ctxN) // 010이 아닌 번호
+
+				nanoCtxC[user_id.String+"_Y"] = cancelY
+				allCtxC["NN"+user_id.String+"_Y"] = cancelY
+				allService["NN"+user_id.String+"_Y"] = "NanoService Y"
+
+				nanoCtxC[user_id.String+"_N"] = cancelN
+				allCtxC["NN"+user_id.String+"_N"] = cancelN
+				allService["NN"+user_id.String+"_N"] = "NanoService N"
+			}
+
+			nanoUser[user_id.String] = user_id.String
+
 		}
-		defer nanoUserList.Close()
 
-		if isNano {
-			var user_id sql.NullString
+		nlctx, nlcancel := context.WithCancel(context.Background())
 
-			for nanoUserList.Next() {
-				nanoUserList.Scan(&user_id)
+		go nanoproc.NanoLMSProcess(nlctx)
 
-				if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "N") { // 기본
-					ctx, cancel := context.WithCancel(context.Background())
-					ctx = context.WithValue(ctx, "user_id", user_id.String)
+		allCtxC["nanolms"] = nlcancel
+		allService["nanolms"] = "Nano LMS"
 
-					go nanoproc.NanoProcess(user_id.String, ctx)
+		nsctx, nscancel := context.WithCancel(context.Background())
 
-					nanoCtxC[user_id.String] = cancel
+		go nanoproc.NanoSMSProcess(nsctx)
 
-					allCtxC["NN"+user_id.String] = cancel
-					allService["NN"+user_id.String] = user_id.String
-				} else if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
+		allCtxC["nanosms"] = nscancel
+		allService["nanosms"] = "Nano SMS"
 
-					ctxY, cancelY := context.WithCancel(context.Background())
-					ctxY = context.WithValue(ctxY, "user_id", user_id.String)
+		if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
 
-					ctxN, cancelN := context.WithCancel(context.Background())
-					ctxN = context.WithValue(ctxN, "user_id", user_id.String)
+			nlctxG, nlcancelG := context.WithCancel(context.Background())
 
-					go nanoproc.NanoProcess_Y(user_id.String, ctxY) // 010으로 시작하는 번호
-					go nanoproc.NanoProcess_N(user_id.String, ctxN) // 010이 아닌 번호
+			go nanoproc.NanoLMSProcess_G(nlctxG)
 
-					nanoCtxC[user_id.String+"_Y"] = cancelY
-					allCtxC["NN"+user_id.String+"_Y"] = cancelY
-					allService["NN"+user_id.String+"_Y"] = "NanoService Y"
+			allCtxC["nanolmsG"] = nlcancelG
+			allService["nanolmsG"] = "Nano LMS G"
 
-					nanoCtxC[user_id.String+"_N"] = cancelN
-					allCtxC["NN"+user_id.String+"_N"] = cancelN
-					allService["NN"+user_id.String+"_N"] = "NanoService N"
-				}
+			nsctxG, nscancelG := context.WithCancel(context.Background())
 
-				nanoUser[user_id.String] = user_id.String
+			go nanoproc.NanoSMSProcess_G(nsctxG)
 
-			}
+			allCtxC["nanosmsG"] = nscancelG
+			allService["nanosmsG"] = "Nano SMS G"
 
-			nlctx, nlcancel := context.WithCancel(context.Background())
-
-			go nanoproc.NanoLMSProcess(nlctx)
-
-			allCtxC["nanolms"] = nlcancel
-			allService["nanolms"] = "Nano LMS"
-
-			nsctx, nscancel := context.WithCancel(context.Background())
-
-			go nanoproc.NanoSMSProcess(nsctx)
-
-			allCtxC["nanosms"] = nscancel
-			allService["nanosms"] = "Nano SMS"
-
-			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
-
-				nlctxG, nlcancelG := context.WithCancel(context.Background())
-
-				go nanoproc.NanoLMSProcess_G(nlctxG)
-
-				allCtxC["nanolmsG"] = nlcancelG
-				allService["nanolmsG"] = "Nano LMS G"
-
-				nsctxG, nscancelG := context.WithCancel(context.Background())
-
-				go nanoproc.NanoSMSProcess_G(nsctxG)
-
-				allCtxC["nanosmsG"] = nscancelG
-				allService["nanosmsG"] = "Nano SMS G"
-
-			}
 		}
 	}
+
 
 	if s.EqualFold(config.Conf.OTP_MSG_FLAG, "YES") {
 		otpctx, otpcancel := context.WithCancel(context.Background())
