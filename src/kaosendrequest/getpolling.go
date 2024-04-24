@@ -142,7 +142,7 @@ func getPollingProcess(wg *sync.WaitGroup) {
 				return
 			}
 
-			resp, err := config.GoClient.Do(req)
+			_, err := config.GoClient.Do(req)
 			if err != nil {
 				// 에러가 발생한 경우 처리
 				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
