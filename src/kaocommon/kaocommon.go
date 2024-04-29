@@ -10,6 +10,7 @@ import(
 	"strconv"
 	"database/sql"
 	"reflect"
+	"unicode/utf8"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/text/encoding/korean"
