@@ -38,7 +38,7 @@ func SMSProcess(ctx context.Context) {
 
 	if err != nil {
 		errlog.Println(err.Error())
-		errlog.Fatal("DHN CLIENT LIST 조회 오류 ")
+		errlog.Fatal("webcsms.go / SMSProcess / DHN CLIENT LIST 조회 오류 ")
 	}
 	defer OshotTable.Close()
 
@@ -100,7 +100,7 @@ func smsProcess(wg *sync.WaitGroup, ostable string, nsFlag bool) {
 
 	groupRows, err := db.Query(groupQuery)
 	if err != nil {
-		errlog.Println("스마트미 SMS 조회 중 오류 발생")
+		errlog.Println("webcsms.go / smsProcess / 스마트미 SMS 조회 중 오류 발생")
 		errcode := err.Error()
 
 		if s.Index(errcode, "relation") > 0 {

@@ -12,12 +12,6 @@ import (
 	"regexp"
 	s "strings"
 	"time"
-	"unicode/utf8"
-
-	//"bytes"
-	//iconv "github.com/djimenez/iconv-go"
-	//"golang.org/x/text/encoding/korean"
-	//"golang.org/x/text/transform"
 	"context"
 )
 
@@ -388,25 +382,3 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	procCnt--
 }
 
-func stringSplit(str string, lencnt int) string {
-	b := []byte(str)
-	idx := 0
-	for i := 0; i < lencnt; i++ {
-		_, size := utf8.DecodeRune(b[idx:])
-		idx += size
-	}
-	return str[:idx]
-}
-
-func utf8TOeuckr(str string) string {
-	sText := []byte(str)
-	eText := make([]byte, hex.EncodedLen(len(sText)))
-	hex.Encode(eText, sText)
-
-	temp := string(eText)
-	temp = s.Replace(temp, "e2808b", "", -1)
-
-	bs, _ := hex.DecodeString(temp)
-
-	return string(bs)
-}

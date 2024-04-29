@@ -94,7 +94,7 @@ func LMSProcess(ctx context.Context) {
 
 	if err != nil {
 		errlog.Println(err.Error())
-		errlog.Fatal("DHN CLIENT LIST 조회 오류 ")
+		errlog.Fatal("webcmms.go / LMSProcess / DHN CLIENT LIST 조회 오류 ")
 	}
 	defer OshotTables.Close()
 
@@ -157,7 +157,7 @@ func mmsProcess(wg *sync.WaitGroup, ostable string, nsFlag bool) {
 	groupRows, err := db.Query(groupQuery)
 	if err != nil {
 		errcode := err.Error()
-		errlog.Println("스마트미 MMS 조회 중 오류 발생", groupQuery, errcode)
+		errlog.Println("webcmms.go / mmsProcess / 스마트미 MMS 조회 중 오류 발생", groupQuery, errcode)
 
 		if s.Index(errcode, "relation") > 0 {
 			db.Exec("Create Table IF NOT EXISTS " + MMSTable + "(LIKE "+ostable+"mms INCLUDING ALL)")

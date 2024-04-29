@@ -160,12 +160,14 @@ func CheckUser(c *gin.Context) CheckUserReturnField {
 			user_id,
 			send_limit
 		from
-			DHN_CLIENT_LIST
+			dhn_client_list
 		where
 			user_id = $1
 			and ip = $2
 			and use_flag = 'Y'
 	`
+	errlog.Println(userid)
+	errlog.Println(userip)
 	var userId, sendLimit sql.NullString
 	err := databasepool.DB.QueryRowContext(ctx, sqlstr, userid, userip).Scan(&userId, &sendLimit)
 	if err != nil { 
@@ -226,6 +228,7 @@ func StringSplit(str string, lencnt int) string {
 	return str[:idx]
 }
 
+//UTF-8 -> EUC-KR
 func Utf8TOeuckr(str string) (string, error) {
     // UTF-8 문자열을 EUC-KR로 변환
     encoder := korean.EUCKR.NewEncoder()

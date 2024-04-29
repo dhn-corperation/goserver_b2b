@@ -11,7 +11,6 @@ import (
 	"regexp"
 	s "strings"
 	"time"
-	"unicode/utf8"
 
 	"context"
 )
@@ -49,7 +48,7 @@ func OshotProcess(user_id string, ctx context.Context) {
 				cnterr := databasepool.DB.QueryRowContext(ctx, tickSql, user_id).Scan(&count)
 
 				if cnterr != nil && cnterr != sql.ErrNoRows {
-					config.Stdlog.Println("oshotproc.go / DHN_RESULT Table - select 오류 : " + cnterr.Error())
+					config.Stdlog.Println("oshotproc.go / OshotProcess / DHN_RESULT Table - select 오류 : " + cnterr.Error())
 				} else {
 					if count.Int64 > 0 {
 						var startNow = time.Now()
@@ -57,7 +56,7 @@ func OshotProcess(user_id string, ctx context.Context) {
 
 						upError := updateReqeust(ctx, group_no, user_id)
 						if upError != nil {
-							config.Stdlog.Println(user_id , "oshotproc.go / Group No Update 오류", group_no)
+							config.Stdlog.Println(user_id , "oshotproc.go / OshotProcess / Group No Update 오류", group_no)
 						} else {
 							config.Stdlog.Println(user_id, "oshotproc.go / 문자 발송 처리 시작 ( ", group_no, " )")
 							procCnt++
@@ -101,14 +100,14 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 	_, err = tx.ExecContext(ctx, gudQuery, group_no, user_id)
 
 	if err != nil {
-		config.Stdlog.Println("oshotproc.go / ", user_id, "- Group No Update - Select error : ( group_no : ", group_no, " / user_id : ", user_id, " ) : ", err)
+		config.Stdlog.Println("oshotproc.go / updateReqeust / ", user_id, "- Group No Update - Select error : ( group_no : ", group_no, " / user_id : ", user_id, " ) : ", err)
 		config.Stdlog.Println(gudQuery)
 		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		config.Stdlog.Println("oshotproc.go / ", user_id, "- Group No Update - Commit error : ( group_no : ", group_no, " / user_id : ", user_id, " ) : ", err)
+		config.Stdlog.Println("oshotproc.go / updateReqeust / ", user_id, "- Group No Update - Commit error : ( group_no : ", group_no, " / user_id : ", user_id, " ) : ", err)
 		config.Stdlog.Println(gudQuery)
 		return err
 	}
@@ -124,7 +123,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	defer func() {
 		if err := recover(); err != nil {
 			procCnt--
-			stdlog.Println(user_id, "- ", group_no, "recover() Oshot 처리 중 오류 발생 : ", err)
+			stdlog.Println("oshotproc.go / resProcess / ", user_id, "- ", group_no, "recover() Oshot 처리 중 오류 발생 : ", err)
 		}
 	}()
 
@@ -162,7 +161,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	resrows, err := db.QueryContext(ctx, resquery, group_no, user_id)
 
 	if err != nil {
-		stdlog.Println("Result Table 조회 중 오류 발생")
+		stdlog.Println("oshotproc.go / resProcess / Result Table 조회 중 오류 발생")
 		stdlog.Println(err)
 		stdlog.Println(resquery)
 		return
@@ -185,7 +184,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 		phnstr = phn.String
 
 		if tcnt == 0 {
-			stdlog.Println(user_id, "-", group_no, "문자발송 처리 시작 : ", " Process cnt : ", procCnt)
+			stdlog.Println("oshotproc.go / resProcess / ", user_id, "-", group_no, "문자발송 처리 시작 : ", " Process cnt : ", procCnt)
 			preOshot = oshot.String
 		}
 
@@ -256,19 +255,9 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	}
 
 	if smscnt > 0 || lmscnt > 0 {
-		stdlog.Println(user_id, "-", group_no, "문자 발송 처리 완료 ( ", tcnt, " ) : SMS -", smscnt, " , LMS -", lmscnt, "  >> Process cnt : ", procCnt)
+		stdlog.Println("oshotproc.go / resProcess / ", user_id, "-", group_no, "문자 발송 처리 완료 ( ", tcnt, " ) : SMS -", smscnt, " , LMS -", lmscnt, "  >> Process cnt : ", procCnt)
 	}
 	procCnt--
-}
-
-func stringSplit(str string, lencnt int) string {
-	b := []byte(str)
-	idx := 0
-	for i := 0; i < lencnt; i++ {
-		_, size := utf8.DecodeRune(b[idx:])
-		idx += size
-	}
-	return str[:idx]
 }
 
 func insertOshotReqData(msgValues []kaocommon.OshotReqColumn, tableName string) {
