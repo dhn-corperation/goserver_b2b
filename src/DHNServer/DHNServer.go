@@ -249,12 +249,12 @@ func resultProc() {
 		isNano = false
 	}
 	defer nanoUserList.Close()
+	config.Stdlog.Println(nanoUserList[0])
 
 	if isNano {
 		var user_id sql.NullString
 
 		for nanoUserList.Next() {
-			config.Stdlog.Println("안들어오잖아 ?")
 			nanoUserList.Scan(&user_id)
 
 			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "N") { // 기본
