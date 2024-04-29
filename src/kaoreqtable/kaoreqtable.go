@@ -34,7 +34,7 @@ type Reqtable struct {
 	Tmplid       string `json:"tmplid"`
 	Wide         string `json:"wide"`
 	Supplement   string `json:"supplement"`
-	Price        string `json:"price"`
+	Price        interface{} `json:"price"`
 	Currencytype string `json:"currencytype"`
 	Title        string `json:"title"`
 	Header       string `json:"header"`
