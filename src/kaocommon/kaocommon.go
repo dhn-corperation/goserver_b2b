@@ -143,6 +143,7 @@ func convertByte(src string) ([]byte, error) {
 
 //유저 및 아이피 확인
 func CheckUser(c *gin.Context) CheckUserReturnField {
+	errlog = config.Stdlog
 	ctx := c.Request.Context()
 	userid := c.Request.Header.Get("userid")
 	userip := c.ClientIP()
