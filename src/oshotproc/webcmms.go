@@ -160,10 +160,8 @@ func mmsProcess(wg *sync.WaitGroup, ostable string, nsFlag bool) {
 		errlog.Println("스마트미 MMS 조회 중 오류 발생", groupQuery, errcode)
 
 		if s.Index(errcode, "relation") > 0 {
-			db.Exec("Create Table IF NOT EXISTS " + MMSTable + "(LIKE oshotmms INCLUDING ALL)")
+			db.Exec("Create Table IF NOT EXISTS " + MMSTable + "(LIKE "+ostable+"mms INCLUDING ALL)")
 			errlog.Println(MMSTable + " 생성 !!")
-		} else {
-			//errlog.Fatal(groupQuery)
 		}
 
 		isProc = false
