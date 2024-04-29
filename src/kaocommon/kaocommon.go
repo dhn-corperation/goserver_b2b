@@ -17,8 +17,6 @@ import(
     "golang.org/x/text/transform"
 )
 
-var errlog = config.Stdlog
-
 func GetResAtColumn() []string {
 	atResColumn := []string{
 		"msgid",
@@ -79,6 +77,7 @@ func GetQuestionMark(column []string) string {
 
 //테이블 insert 처리
 func InsMsg(query string, insStrs []string, insValues []interface{}) ([]string, []interface{}){
+	errlog := config.Stdlog
 	stmt := fmt.Sprintf(query, s.Join(insStrs, ","))
 	errlog.Println("sql ", stmt)
 	_, err := databasepool.DB.Exec(stmt, insValues...)
@@ -94,7 +93,7 @@ func InsMsg(query string, insStrs []string, insValues []interface{}) ([]string, 
 
 //AES 복호화
 func AES256GSMDecrypt(secretKey []byte, ciphertext_ string, nonce_ string) string {
-
+	errlog := config.Stdlog
 	ciphertext, _ := convertByte(ciphertext_)
 	nonce, _ := convertByte(nonce_)
 
@@ -143,21 +142,16 @@ func convertByte(src string) ([]byte, error) {
 
 //유저 및 아이피 확인
 func CheckUser(c *gin.Context) CheckUserReturnField {
-	errlog = config.Stdlog
-	errlog.Println("1")
+	errlog := config.Stdlog
 	ctx := c.Request.Context()
 	userid := c.Request.Header.Get("userid")
-	errlog.Println(userid)
 	userip := c.ClientIP()
-	errlog.Println(userip)
-	errlog.Println("2")
 	res := CheckUserReturnField{
 		Validation: false,
 		Userid: userid,
 		Userip: userip,
 		Ctx: ctx,
 	}
-	errlog.Println("3")
 	// 허가된 userid 인지 테이블에서 확인
 	sqlstr := `
 		select 
