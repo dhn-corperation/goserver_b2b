@@ -79,7 +79,12 @@ func ReqReceive(c *gin.Context) {
 					ftValue.Msg_sms = msg[i].Msgsms
 				}
 				ftValue.Only_sms = msg[i].Onlysms
-				ftValue.Phn = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce)
+				if msg[i].Host {
+					ftValue.Phn = msg[i].Phn
+				} else {
+					ftValue.Phn = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce)
+				}
+				
 				if s.Contains(msg[i].Crypto, "Profile") && len(msg[i].Profile) > 0 {
 					ftValue.Profile = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce)
 				} else {
@@ -229,7 +234,11 @@ func ReqReceive(c *gin.Context) {
 					atValue.Msg_sms = msg[i].Msgsms
 				}
 				atValue.Only_sms = msg[i].Onlysms
-				atValue.Phn = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce)
+				if msg[i].Host {
+					atValue.Phn = msg[i].Phn
+				} else {
+					atValue.Phn = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce)
+				}
 				if s.Contains(msg[i].Crypto, "Profile") && len(msg[i].Profile) > 0 {
 					atValue.Profile = kaocommon.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce)
 				} else {

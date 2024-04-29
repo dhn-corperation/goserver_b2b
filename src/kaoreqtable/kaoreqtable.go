@@ -43,4 +43,5 @@ type Reqtable struct {
 	Att_coupon   string `json:"att_coupon"`
 	Attachments  string `json:"attachments"`
 	Crypto       string `json:"crypto"`
+	Host         bool   `json:"host"`
 }
