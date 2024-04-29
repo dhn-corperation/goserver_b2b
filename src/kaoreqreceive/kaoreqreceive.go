@@ -111,11 +111,11 @@ func ReqReceive(c *gin.Context) {
 				ftValue.Wide = msg[i].Wide
 				ftValue.Send_group = nil
 				ftValue.Supplement = msg[i].Supplement
-				price, err := msg[i].Price.(int)
-				if err != nil {
+				price, ok := msg[i].Price.(int)
+				if !ok {
 					price = 0
 				}
-				if len(price) > 0 {
+				if price > 0 {
 					price, _ = strconv.Atoi(price)
 					ftValue.Price = price
 				} else {
@@ -262,15 +262,15 @@ func ReqReceive(c *gin.Context) {
 				atValue.Wide = msg[i].Wide
 				atValue.Send_group = nil
 				atValue.Supplement = msg[i].Supplement
-				price, err := msg[i].Price.(int)
-				if err != nil {
+				price, ok := msg[i].Price.(int)
+				if !ok {
 					price = 0
 				}
-				if len(price) > 0 {
+				if price > 0 {
 					price, _ = strconv.Atoi(price)
-					ftValue.Price = price
+					atValue.Price = price
 				} else {
-					ftValue.Price = nil
+					atValue.Price = nil
 				}
 
 				atValue.Currency_type = msg[i].Currencytype
