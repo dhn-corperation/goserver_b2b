@@ -243,13 +243,18 @@ func resultProc() {
 		) a on dcl.user_id = a.user_id
 		where dcl.use_flag = 'Y'
 		and a.dest ilike 'nano%'`)
+
+	rowCount := 0
+	for nanoUserList.Next() {
+	    rowCount++
+	}
+
 	isNano := true
-	if error != nil {
+	if error != nil || rowCount == 0{
 		config.Stdlog.Println("Nano 유저 select 오류 ")
 		isNano = false
 	}
 	defer nanoUserList.Close()
-	config.Stdlog.Println(nanoUserList[0])
 
 	if isNano {
 		var user_id sql.NullString
