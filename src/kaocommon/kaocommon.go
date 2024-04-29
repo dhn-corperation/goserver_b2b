@@ -12,6 +12,8 @@ import(
 	"reflect"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/text/encoding/korean"
+    "golang.org/x/text/transform"
 )
 
 var errlog = config.Stdlog
@@ -210,4 +212,25 @@ func GetReqColumnPq(mtype interface{}) []string {
 		columns[i] = t.Field(i).Tag.Get("db")
 	}
 	return columns
+}
+
+//바이트 단위로 자르기
+func StringSplit(str string, lencnt int) string {
+	b := []byte(str)
+	idx := 0
+	for i := 0; i < lencnt; i++ {
+		_, size := utf8.DecodeRune(b[idx:])
+		idx += size
+	}
+	return str[:idx]
+}
+
+func Utf8TOeuckr(str string) (string, error) {
+    // UTF-8 문자열을 EUC-KR로 변환
+    encoder := korean.EUCKR.NewEncoder()
+    encodedBytes, err := transform.String(encoder, str)
+    if err != nil {
+        return "", err
+    }
+    return encodedBytes, nil
 }
