@@ -283,7 +283,7 @@ func insertOshotReqData(msgValues []kaocommon.OshotReqColumn, tableName string) 
 	var stmt *sql.Stmt
 	var stmtSql string
 
-	if s.Contains("sms") {
+	if s.Contains(tableName, "sms") {
 		stmtSql = "insert into "+tableName+"(Sender,Receiver,Msg,URL,cb_msg_id,userid ) values ($1, $2, $3, $4, $5, $6)"
 		stmt, err = tx.Prepare(stmtSql)
 		if err != nil {
@@ -297,7 +297,7 @@ func insertOshotReqData(msgValues []kaocommon.OshotReqColumn, tableName string) 
 				config.Stdlog.Println("oshotproc.go / insertOshotReqData / ", tableName," / stmt personal Exec ", err)
 			}
 		}
-	} else if s.Contains("mms") {
+	} else if s.Contains(tableName, "mms") {
 		stmtSql = "insert into "+tableName+"(MsgGroupID, Sender, Receiver, Subject, Msg, File_Path1, File_Path2, File_Path3, cb_msg_id, userid) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
 		stmt, err := tx.Prepare(stmtSql)
 		if err != nil {
@@ -318,14 +318,14 @@ func insertOshotReqData(msgValues []kaocommon.OshotReqColumn, tableName string) 
 	err = tx.Commit()
 
 	if err != nil {
-		if s.Contains("sms") {
+		if s.Contains(tableName, "sms") {
 			for _, data := range msgValues {
 				_, err = databasepool.DB.Exec(stmtSql, data.Sender, data.Receiver, data.Msg, "", data.CbMsgId, data.UserId)
 				if err != nil {
 					checkErr(err, data.CbMsgId, data.UserId, UserId)
 				}
 			}
-		} else if s.Contains("mms") {
+		} else if s.Contains(tableName, "mms") {
 			for _, data := range msgValues {
 				_, err = databasepool.DB.Exec(stmtSql, data.MsgGroupID, data.Sender, data.Receiver, data.Subject, data.Msg, data.FilePath1, data.FilePath2, data.FilePath3, data.CbMsgId, data.UserId)
 				if err != nil {
