@@ -40,7 +40,7 @@ func OshotProcess(user_id string, ctx context.Context) {
 				from
 					DHN_RESULT
 				where
-					dr.result = 'P'
+					result = 'P'
 					and send_group is null
 					and (reserve_dt IS NULL OR to_timestamp(coalesce(reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW())
 					and userid = $1
