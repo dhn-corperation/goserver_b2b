@@ -449,7 +449,7 @@ Command :
 			alimUser[uid] = uid
 
 			allCtxC["AL"+uid] = cancel
-			allService["AL"+uid] = "Alimtalk(api) "uid
+			allService["AL"+uid] = "Alimtalk(api) " + uid
 
 			c.String(200, uid+" 시작 신호 전달 완료")
 		}
