@@ -322,7 +322,7 @@ func insertOshotReqData(msgValues []kaocommon.OshotReqColumn, tableName string) 
 			for _, data := range msgValues {
 				_, err = databasepool.DB.Exec(stmtSql, data.Sender, data.Receiver, data.Msg, "", data.CbMsgId, data.UserId)
 				if err != nil {
-					checkErr(err, data.CbMsgId, data.UserId, UserId)
+					checkErr(err, data.CbMsgId, data.UserId, tableName)
 				}
 			}
 		} else if s.Contains(tableName, "mms") {
