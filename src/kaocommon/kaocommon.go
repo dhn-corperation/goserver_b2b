@@ -229,7 +229,7 @@ func StringSplit(str string, lencnt int) string {
 func Utf8TOeuckr(str string) (string, error) {
     // UTF-8 문자열을 EUC-KR로 변환
     encoder := korean.EUCKR.NewEncoder()
-    encodedBytes, err := transform.String(encoder, str)
+    encodedBytes, _, err := transform.String(encoder, str)
     if err != nil {
         return "", err
     }
