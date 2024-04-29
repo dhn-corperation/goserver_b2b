@@ -143,18 +143,20 @@ func convertByte(src string) ([]byte, error) {
 
 //유저 및 아이피 확인
 func CheckUser(c *gin.Context) CheckUserReturnField {
-	errlog = config.Stdlog
+	errlog.Println("1")
 	ctx := c.Request.Context()
 	userid := c.Request.Header.Get("userid")
+	errlog.Println(userid)
 	userip := c.ClientIP()
-
+	errlog.Println(userip)
+	errlog.Println("2")
 	res := CheckUserReturnField{
 		Validation: false,
 		Userid: userid,
 		Userip: userip,
 		Ctx: ctx,
 	}
-
+	errlog.Println("3")
 	// 허가된 userid 인지 테이블에서 확인
 	sqlstr := `
 		select 
@@ -167,8 +169,7 @@ func CheckUser(c *gin.Context) CheckUserReturnField {
 			and ip = $2
 			and use_flag = 'Y'
 	`
-	errlog.Println(userid)
-	errlog.Println(userip)
+
 	var userId, sendLimit sql.NullString
 	err := databasepool.DB.QueryRowContext(ctx, sqlstr, userid, userip).Scan(&userId, &sendLimit)
 	if err != nil { 
