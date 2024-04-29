@@ -200,7 +200,7 @@ func resultProc() {
 	}
 
 	isOshot := true
-	if error != nil || rowCount++{
+	if error != nil || rowCount == 0{
 		config.Stdlog.Println("Oshot 유저 select 오류 ")
 		isOshot = false
 	}
