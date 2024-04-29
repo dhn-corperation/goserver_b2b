@@ -244,7 +244,7 @@ func resultProc() {
 		where dcl.use_flag = 'Y'
 		and a.dest ilike 'nano%'`)
 	isNano := true
-	if error != nil {
+	if error != nil || len(nanoUserList) == 0 {
 		config.Stdlog.Println("Nano 유저 select 오류 ")
 		isNano = false
 	}
