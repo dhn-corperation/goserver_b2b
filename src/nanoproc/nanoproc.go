@@ -40,19 +40,18 @@ func NanoProcess(user_id string, ctx context.Context) {
 				config.Stdlog.Println(uid, " - Nano process 종료 완료")
 				return
 			default:
-
 				var count int
-				tickSql := `select
-	length(msgid) as cnt
-from
-	DHN_RESULT dr
-where
-	dr.result = 'P'
-	and dr.send_group is null
-	and ifnull(dr.reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
- 	and userid = '` + user_id + `'
-limit 1
-			`
+				tickSql := `
+				select
+					length(msgid) as cnt
+				from
+					DHN_RESULT
+				where
+					result = 'P'
+					and send_group is null
+					and (reserve_dt IS NULL OR to_timestamp(coalesce(reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW())
+				 	and userid = '` + user_id + `'
+				limit 1`
 				cnterr := databasepool.DB.QueryRow(tickSql).Scan(&count)
 
 				if cnterr != nil {
@@ -64,11 +63,11 @@ limit 1
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%02d%06d", startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), (startNow.Nanosecond() / 1000))
 
-						upError := updateReqeust(group_no, user_id)
+						upError := updateReqeust(ctx, group_no, user_id)
 						if upError != nil {
 							config.Stdlog.Println(user_id, "- Nano Group No Update 오류", group_no)
 						} else {
-							go resProcess(group_no, user_id)
+							go resProcess(ctx, group_no, user_id)
 						}
 					}
 				}
@@ -77,7 +76,7 @@ limit 1
 	}
 }
 
-func updateReqeust(group_no string, user_id string) error {
+func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 
 	tx, err := databasepool.DB.Begin()
 	if err != nil {
@@ -96,14 +95,15 @@ func updateReqeust(group_no string, user_id string) error {
 
 	config.Stdlog.Println(user_id, "- Nano Group No Update 시작", group_no)
 
-	gudQuery := `update	DHN_RESULT dr
-set	send_group = '` + group_no + `'
-where result = 'P'
-  and send_group is null
-  and ifnull(reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
-  and userid = '` + user_id + `'
-LIMIT 500
-	`
+	gudQuery := `
+	update	DHN_RESULT dr
+	set	send_group = '` + group_no + `'
+	where result = 'P'
+	  and send_group is null
+	  and ifnull(reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
+	  and userid = '` + user_id + `'
+	LIMIT 500`
+
 	_, err = tx.Query(gudQuery)
 
 	if err != nil {
@@ -115,7 +115,7 @@ LIMIT 500
 	return nil
 }
 
-func resProcess(group_no string, user_id string) {
+func resProcess(ctx context.Context, group_no string, user_id string) {
 	//defer wg.Done()
 
 	procCnt++
@@ -139,40 +139,41 @@ func resProcess(group_no string, user_id string) {
 	osmmsStrs := []string{}
 	osmmsValues := []interface{}{}
 
-	var resquery = `SELECT msgid, 
-	code, 
-	message, 
-	message_type, 
-	(case when sms_kind = 'S' then 
-		substr(convert(REMOVE_WS(msg_sms) using euckr),1,100)
-	 else 
-	   convert(REMOVE_WS(msg_sms) using euckr)
-     end) as msg_sms, 
-	phn, 
-	remark1, 
-	remark2,
-	result, 
-	convert(REMOVE_WS(sms_lms_tit) using euckr) as sms_lms_tit, 
-	sms_kind, 
-	sms_sender, 
-	res_dt, 
-	(case when reserve_dt = '00000000000000'  then 
-	        now()
-	      when reserve_dt is null  then 
-	        now()
-	      else
-	         STR_TO_DATE(reserve_dt, '%Y%m%d%H%i%S')
-     end) as  reserve_dt, 
-	(select file1_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file1, 
-	(select file2_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file2, 
-	(select file3_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file3
-	,(case when sms_kind = 'S' then length(convert(REMOVE_WS(msg_sms) using euckr)) else 100 end) as msg_len
-	,userid
-	,(select max(sms_len_check) from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as sms_len_check 
+	var resquery = `
+	SELECT msgid, 
+		code, 
+		message, 
+		message_type, 
+		(case when sms_kind = 'S' then 
+			substr(convert(REMOVE_WS(msg_sms) using euckr),1,100)
+		 else 
+		   convert(REMOVE_WS(msg_sms) using euckr)
+	     end) as msg_sms, 
+		phn, 
+		remark1, 
+		remark2,
+		result, 
+		convert(REMOVE_WS(sms_lms_tit) using euckr) as sms_lms_tit, 
+		sms_kind, 
+		sms_sender, 
+		res_dt, 
+		(case when reserve_dt = '00000000000000'  then 
+		        now()
+		      when reserve_dt is null  then 
+		        now()
+		      else
+		         STR_TO_DATE(reserve_dt, '%Y%m%d%H%i%S')
+	     end) as  reserve_dt, 
+		(select file1_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file1, 
+		(select file2_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file2, 
+		(select file3_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file3
+		,(case when sms_kind = 'S' then length(convert(REMOVE_WS(msg_sms) using euckr)) else 100 end) as msg_len
+		,userid
+		,(select max(sms_len_check) from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as sms_len_check 
 	FROM DHN_RESULT drr 
 	WHERE send_group = '` + group_no + `' 
-	  and result = 'P'
-      and userid = '` + user_id + `'
+	    and result = 'P'
+        and userid = '` + user_id + `'
 	order by userid
 	`
 

@@ -2,6 +2,7 @@ package kaocommon
 
 import (
 	"context"
+	"database/sql"
 )
 
 type AtReqColumn struct {
@@ -287,4 +288,18 @@ var ResultTempMigrationColumn = []string{
     "user_key",
     "response_method",
     "timeout",
+}
+
+type OshotReqColumn struct {
+	MsgGroupID string
+	Sender string
+	Receiver string
+	Subject string
+	Msg string
+	Url string
+	FilePath1 string
+	FilePath2 string
+	FilePath3 string
+	CbMsgId string
+	UserId string
 }

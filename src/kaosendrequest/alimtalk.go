@@ -37,9 +37,18 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 			    return
 			default:
 				var count sql.NullInt64
-				cnterr := databasepool.DB.QueryRowContext(ctx, "SELECT count(1) AS cnt FROM DHN_REQUEST_AT WHERE send_group IS NULL AND (reserve_dt IS NULL OR to_timestamp(coalesce(reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW()) AND userid='"+user_id+"'").Scan(&count)
+				tickSql := `
+				SELECT 
+					count(1) AS cnt 
+				FROM 
+					DHN_REQUEST_AT 
+				WHERE 
+					send_group IS NULL 
+					AND (reserve_dt IS NULL OR to_timestamp(coalesce(reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW()) 
+					AND userid=$1`
+				cnterr := databasepool.DB.QueryRowContext(ctx, tickSql, user_id).Scan(&count)
 				if cnterr != nil {
-					config.Stdlog.Println("DHN_REQUEST Table - select 오류 " + cnterr.Error())
+					config.Stdlog.Println("alimtalk.go / DHN_REQUEST Table - select 오류 " + cnterr.Error())
 				} else {
 					if count.Valid && count.Int64 > 0 {		
 						var startNow = time.Now()
@@ -47,13 +56,13 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 						updateRows, err := databasepool.DB.ExecContext(ctx, "update DHN_REQUEST_AT set send_group = '"+group_no+"' where id in (select id from dhn_request_at where send_group is null and (reserve_dt IS NULL OR to_timestamp(coalesce(reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW()) and userid = '"+user_id+"'  limit "+strconv.Itoa(config.Conf.SENDLIMIT)+")")
 				
 						if err != nil {
-							config.Stdlog.Println(user_id,"알림톡 send_group Update 오류 : ", err)
+							config.Stdlog.Println(user_id,"alimtalk.go / 알림톡 send_group Update 오류 : ", err)
 						}
 				
 						rowcnt, _ := updateRows.RowsAffected()
 				
 						if rowcnt > 0 {
-							config.Stdlog.Println(user_id, "알림톡 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ")
+							config.Stdlog.Println(user_id, "alimtalk.go / 알림톡 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ")
 							atprocCnt++
 							go atsendProcess(group_no, user_id)
 				

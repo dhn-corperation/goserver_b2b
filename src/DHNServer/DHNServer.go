@@ -7,21 +7,14 @@ import (
 	"os/signal"
 	"syscall"
 
-	_ "github.com/go-sql-driver/mysql"
-
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
 
-	//"kaoreqreceive"
-
-	//"kaocenter"
 	"mycs/src/kaosendrequest"
 	"mycs/src/nanoproc"
 	"mycs/src/oshotproc"
 	"mycs/src/otpproc"
 
-	//"strconv"
-	//"time"
 	s "strings"
 
 	"github.com/gin-gonic/gin"
@@ -29,7 +22,6 @@ import (
 
 	"context"
 	"sort"
-	//"reflect"
 )
 
 const (
@@ -129,6 +121,7 @@ func resultProc() {
 	allService := map[string]string{}
 	allCtxC := map[string]interface{}{}
 
+	//-----------------------------알림톡 실행 시작
 	alim_user_list, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST where alimtalk='Y'")
 	isAlim := true
 	if error != nil {
@@ -153,11 +146,13 @@ func resultProc() {
 			alimUser[user_id.String] = user_id.String
 
 			allCtxC["AL"+user_id.String] = cancel
-			allService["AL"+user_id.String] = user_id.String
+			allService["AL"+user_id.String] = "alimtalk " + user_id.String
 
 		}
 	}
+	//-----------------------------알림톡 실행 끝
 
+	//-----------------------------친구톡 실행 시작
 	ftctx, ftcancel := context.WithCancel(context.Background())
 
 	go kaosendrequest.FriendtalkProc(ftctx)
@@ -172,17 +167,19 @@ func resultProc() {
 		go kaosendrequest.PollingProc(ppctx)
 
 		allCtxC["pp"] = ppcancel
-		allService["pp"] = "PollingProc"
+		allService["pp"] = "polling_proc"
 
 		rpctx, rpcancel := context.WithCancel(context.Background())
 
 		go kaosendrequest.ResultProc(rpctx)
 
 		allCtxC["rp"] = rpcancel
-		allService["rp"] = "PollingRP"
+		allService["rp"] = "polling_result"
 
 	}
+	//-----------------------------친구톡 실행 끝
 
+	//-----------------------------oshot 실행 시작
 	oshotUser := map[string]string{}
 	oshotCtxC := map[string]interface{}{}
 
@@ -195,7 +192,7 @@ func resultProc() {
 			group by a.user_id
 		) a on dcl.user_id = a.user_id
 		where dcl.use_flag = 'Y'
-		and lower(a.dest) like 'oshot%'`)
+		and a.dest ilike 'oshot%'`)
 	isOshot := true
 	if error != nil {
 		config.Stdlog.Println("Oshot 유저 select 오류 ")
@@ -216,21 +213,23 @@ func resultProc() {
 			oshotCtxC[user_id.String] = cancel
 
 			allCtxC["OS"+user_id.String] = cancel
-			allService["OS"+user_id.String] = user_id.String
+			allService["OS"+user_id.String] = "oshot_proc " + user_id.String
 
 		}
 
 		olctx, olcancel := context.WithCancel(context.Background())
 		go oshotproc.LMSProcess(olctx)
 		allCtxC["oshotlms"] = olcancel
-		allService["oshotlms"] = "Oshot LMS"
+		allService["oshotlms"] = "oshot_result_LMS"
 
 		osctx, oscancel := context.WithCancel(context.Background())
 		go oshotproc.SMSProcess(osctx)
 		allCtxC["oshotsms"] = oscancel
-		allService["oshotsms"] = "Oshot SMS"
+		allService["oshotsms"] = "oshot_result_SMS"
 	}
+	//-----------------------------oshot 실행 끝
 
+	//-----------------------------nano 실행 시작
 	nanoUser := map[string]string{}
 	nanoCtxC := map[string]interface{}{}
 
@@ -243,7 +242,7 @@ func resultProc() {
 			group by a.user_id
 		) a on dcl.user_id = a.user_id
 		where dcl.use_flag = 'Y'
-		and lower(a.dest) like 'nano%'`)
+		and a.dest ilike 'nano%'`)
 	isNano := true
 	if error != nil {
 		config.Stdlog.Println("Nano 유저 select 오류 ")
@@ -264,9 +263,8 @@ func resultProc() {
 				go nanoproc.NanoProcess(user_id.String, ctx)
 
 				nanoCtxC[user_id.String] = cancel
-
 				allCtxC["NN"+user_id.String] = cancel
-				allService["NN"+user_id.String] = user_id.String
+				allService["NN"+user_id.String] = "nano_proc " + user_id.String
 			} else if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
 
 				ctxY, cancelY := context.WithCancel(context.Background())
@@ -280,11 +278,11 @@ func resultProc() {
 
 				nanoCtxC[user_id.String+"_Y"] = cancelY
 				allCtxC["NN"+user_id.String+"_Y"] = cancelY
-				allService["NN"+user_id.String+"_Y"] = "NanoService Y"
+				allService["NN"+user_id.String+"_Y"] = "nano_proc_Y " + user_id.String
 
 				nanoCtxC[user_id.String+"_N"] = cancelN
 				allCtxC["NN"+user_id.String+"_N"] = cancelN
-				allService["NN"+user_id.String+"_N"] = "NanoService N"
+				allService["NN"+user_id.String+"_N"] = "nano_proc_N " + user_id.String
 			}
 
 			nanoUser[user_id.String] = user_id.String
@@ -296,14 +294,14 @@ func resultProc() {
 		go nanoproc.NanoLMSProcess(nlctx)
 
 		allCtxC["nanolms"] = nlcancel
-		allService["nanolms"] = "Nano LMS"
+		allService["nanolms"] = "nano_result_LMS"
 
 		nsctx, nscancel := context.WithCancel(context.Background())
 
 		go nanoproc.NanoSMSProcess(nsctx)
 
 		allCtxC["nanosms"] = nscancel
-		allService["nanosms"] = "Nano SMS"
+		allService["nanosms"] = "nano_result_SMS"
 
 		if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
 
@@ -312,35 +310,37 @@ func resultProc() {
 			go nanoproc.NanoLMSProcess_G(nlctxG)
 
 			allCtxC["nanolmsG"] = nlcancelG
-			allService["nanolmsG"] = "Nano LMS G"
+			allService["nanolmsG"] = "nano_result_LMS_G"
 
 			nsctxG, nscancelG := context.WithCancel(context.Background())
 
 			go nanoproc.NanoSMSProcess_G(nsctxG)
 
 			allCtxC["nanosmsG"] = nscancelG
-			allService["nanosmsG"] = "Nano SMS G"
+			allService["nanosmsG"] = "nano_result_SMS_G"
 
 		}
 	}
+	//-----------------------------nano 실행 끝
 
-
+	//-----------------------------opt 실행(oshot발송) 시작
 	if s.EqualFold(config.Conf.OTP_MSG_FLAG, "YES") {
 		otpctx, otpcancel := context.WithCancel(context.Background())
 		go otpproc.OTPProcess(otpctx)
 		allCtxC["otpproc"] = otpcancel
-		allService["otpproc"] = "OTP Proc"
+		allService["otpproc"] = "OTP_proc"
 
 		otplctx, otplcancel := context.WithCancel(context.Background())
 		go otpproc.OTPLMSProcess(otplctx)
 		allCtxC["otplms"] = otplcancel
-		allService["otplms"] = "OTP LMS"
+		allService["otplms"] = "OTP_result_LMS"
 
 		otpsctx, otpscancel := context.WithCancel(context.Background())
 		go otpproc.OTPSMSProcess(otpsctx)
 		allCtxC["otpsms"] = otpscancel
-		allService["otpsms"] = "OTP SMS"
+		allService["otpsms"] = "OTP_result_SMS"
 	}
+	//-----------------------------opt 실행(oshot발송) 끝
 
 	r := gin.New()
 	r.Use(gin.Recovery())
@@ -360,8 +360,7 @@ Command :
 /nlist           -> dhn Nano process run.
 
 /all             -> DHNServer process list
-/allstop         -> DHNServer process stop
-`
+/allstop         -> DHNServer process stop`
 
 	r.GET("/", func(c *gin.Context) {
 		//time.Sleep(30 * time.Second)
@@ -401,7 +400,7 @@ Command :
 			oshotUser[uid] = uid
 
 			allCtxC["OS"+uid] = cancel
-			allService["OS"+uid] = uid
+			allService["OS"+uid] = "Oshot(api) " + uid
 
 			c.String(200, uid+" 시작 신호 전달 완료")
 		}
@@ -450,7 +449,7 @@ Command :
 			alimUser[uid] = uid
 
 			allCtxC["AL"+uid] = cancel
-			allService["AL"+uid] = uid
+			allService["AL"+uid] = "Alimtalk(api) "uid
 
 			c.String(200, uid+" 시작 신호 전달 완료")
 		}
@@ -513,7 +512,7 @@ Command :
 				nanoCtxC[uid] = cancel
 
 				allCtxC["NN"+uid] = cancel
-				allService["NN"+uid] = uid
+				allService["NN"+uid] = "NanoService " + uid
 			} else if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
 
 				ctxY, cancelY := context.WithCancel(context.Background())
@@ -527,11 +526,11 @@ Command :
 
 				nanoCtxC[uid+"_Y"] = cancelY
 				allCtxC["NN"+uid+"_Y"] = cancelY
-				allService["NN"+uid+"_Y"] = "NanoService Y"
+				allService["NN"+uid+"_Y"] = "NanoService_Y(api) " + uid
 
 				nanoCtxC[uid+"_N"] = cancelN
 				allCtxC["NN"+uid+"_N"] = cancelN
-				allService["NN"+uid+"_N"] = "NanoService N"
+				allService["NN"+uid+"_N"] = "NanoService_N(api) " + uid
 			}
 
 			c.String(200, uid+" 시작 신호 전달 완료")
@@ -549,8 +548,8 @@ Command :
 	r.GET("/all", func(c *gin.Context) {
 		var key string
 		skeys := make([]string, 0, len(allService))
-		for k := range allService {
-			skeys = append(skeys, k)
+		for _, v := range allService {
+			skeys = append(skeys, v)
 		}
 		sort.Strings(skeys)
 		for _, k := range skeys {

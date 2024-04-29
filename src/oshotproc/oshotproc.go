@@ -13,7 +13,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	//"bytes"
 	"context"
 )
 
@@ -40,18 +39,17 @@ func OshotProcess(user_id string, ctx context.Context) {
 				select
 					count(1) as cnt
 				from
-					DHN_RESULT dr
+					DHN_RESULT
 				where
 					dr.result = 'P'
-					and dr.send_group is null
-					and (dr.reserve_dt IS NULL OR to_timestamp(coalesce(dr.reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW())
+					and send_group is null
+					and (reserve_dt IS NULL OR to_timestamp(coalesce(reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW())
 					and userid = $1
-				limit 1
-					`
+				limit 1`
 				cnterr := databasepool.DB.QueryRowContext(ctx, tickSql, user_id).Scan(&count)
 
 				if cnterr != nil && cnterr != sql.ErrNoRows {
-					config.Stdlog.Println("DHN_RESULT Table - select 오류 : " + cnterr.Error())
+					config.Stdlog.Println("oshotproc.go / DHN_RESULT Table - select 오류 : " + cnterr.Error())
 				} else {
 					if count.Int64 > 0 {
 						var startNow = time.Now()
@@ -59,8 +57,9 @@ func OshotProcess(user_id string, ctx context.Context) {
 
 						upError := updateReqeust(ctx, group_no, user_id)
 						if upError != nil {
-							config.Stdlog.Println(user_id , "Group No Update 오류", group_no)
+							config.Stdlog.Println(user_id , "oshotproc.go / Group No Update 오류", group_no)
 						} else {
+							config.Stdlog.Println(user_id, "oshotproc.go / 문자 발송 처리 시작 ( ", group_no, " )")
 							procCnt++
 							go resProcess(ctx, group_no, user_id)
 						}
@@ -88,8 +87,7 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 		return err
 	}()
 
-
-	config.Stdlog.Println(user_id, "- 스마트미 Group No Update 시작", group_no)
+	config.Stdlog.Println("oshotproc.go / ", user_id, "- 스마트미 Group No Update 시작", group_no)
 
 	gudQuery := `
 	update DHN_RESULT dr
@@ -103,7 +101,14 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 	_, err = tx.ExecContext(ctx, gudQuery, group_no, user_id)
 
 	if err != nil {
-		config.Stdlog.Println(user_id, "- Group NO Update - Select error : ( group_no : " + group_no + " / user_id : "+user_id+" ) : " + err.Error())
+		config.Stdlog.Println("oshotproc.go / ", user_id, "- Group No Update - Select error : ( group_no : ", group_no, " / user_id : ", user_id, " ) : ", err)
+		config.Stdlog.Println(gudQuery)
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		config.Stdlog.Println("oshotproc.go / ", user_id, "- Group No Update - Commit error : ( group_no : ", group_no, " / user_id : ", user_id, " ) : ", err)
 		config.Stdlog.Println(gudQuery)
 		return err
 	}
@@ -119,11 +124,12 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	defer func() {
 		if err := recover(); err != nil {
 			procCnt--
-			stdlog.Println(user_id, "- ", group_no, "Oshot 처리 중 오류 발생 : ", err)
+			stdlog.Println(user_id, "- ", group_no, "recover() Oshot 처리 중 오류 발생 : ", err)
 		}
 	}()
 
-	var msgid, code, message, message_type, msg_sms, phn, remark1, remark2, result, sms_lms_tit, sms_kind, sms_sender, res_dt, reserve_dt, mms_file1, mms_file2, mms_file3, userid, sms_len_check, oshot sql.NullString
+	// var msgid, code, message, message_type, msg_sms, phn, remark1, remark2, result, sms_lms_tit, sms_kind, sms_sender, res_dt, reserve_dt, mms_file1, mms_file2, mms_file3, userid, sms_len_check, oshot sql.NullString
+	var msgid, msg_sms, phn, sms_lms_tit, sms_kind, sms_sender, mms_file1, mms_file2, mms_file3, userid, sms_len_check, oshot sql.NullString
 	var msgLen sql.NullInt64
 	var phnstr string
 
@@ -135,31 +141,23 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 
 	var resquery = `
 	SELECT
-	    msgid, 
-	    code, 
-	    message, 
-	    message_type, 
+	    msgid,
 	    CASE WHEN sms_kind = 'S' THEN 
 	        SUBSTRING(trim(msg_sms), 1, 100)
 	    ELSE 
 	        trim(msg_sms)
 	    END AS msg_sms, 
-	    phn, 
-	    remark1, 
-	    remark2,
-	    result, 
+	    phn,
 	    trim(sms_lms_tit) AS sms_lms_tit, 
 	    sms_kind, 
-	    sms_sender, 
-	    res_dt, 
-	    reserve_dt, 
+	    sms_sender,
 	    (SELECT file1_path FROM api_mms_images aa WHERE aa.user_id = drr.userid AND aa.mms_id = drr.p_invoice) AS mms_file1, 
 	    (SELECT file2_path FROM api_mms_images aa WHERE aa.user_id = drr.userid AND aa.mms_id = drr.p_invoice) AS mms_file2, 
 	    (SELECT file3_path FROM api_mms_images aa WHERE aa.user_id = drr.userid AND aa.mms_id = drr.p_invoice) AS mms_file3,
 	    CASE WHEN sms_kind = 'S' THEN LENGTH(trim(msg_sms)) ELSE 100 END AS msg_len,
 	    userid,
 	    (SELECT MAX(sms_len_check) FROM DHN_CLIENT_LIST dcl WHERE dcl.user_id = drr.userid) AS sms_len_check,
-	    COALESCE((SELECT lower(MAX(dest)) FROM DHN_CLIENT_LIST dcl WHERE dcl.user_id = drr.userid), 'oshot') AS oshot  
+	    (SELECT lower(MAX(dest)) FROM DHN_CLIENT_LIST dcl WHERE dcl.user_id = drr.userid) AS oshot  
 	FROM DHN_RESULT drr 
 	WHERE send_group = $1
 	  AND result = 'P'
@@ -173,11 +171,13 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 		stdlog.Println("Result Table 조회 중 오류 발생")
 		stdlog.Println(err)
 		stdlog.Println(resquery)
+		return
 	}
 	defer resrows.Close()
 
-	scnt := 0
-	fcnt := 0
+	smsValues := []kaocommon.OshotReqColumn{}
+	mmsValues := []kaocommon.OshotReqColumn{}
+
 	smscnt := 0
 	lmscnt := 0
 	tcnt := 0
@@ -185,7 +185,8 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	preOshot := ""
 
 	for resrows.Next() {
-		resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check, &oshot)
+		// resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check, &oshot)
+		resrows.Scan(&msgid, &msg_sms, &phn, &sms_lms_tit, &sms_kind, &sms_sender, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check, &oshot)
 
 		phnstr = phn.String
 
@@ -196,60 +197,14 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 
 		tcnt++
 
-		if len(ossmsStrs) > 500 || (preOshot != oshot.String && len(ossmsStrs) > 0) {
-			stmt := fmt.Sprintf("insert into "+preOshot+"SMS(Sender,Receiver,Msg,URL,ReserveDT,TimeoutDT,SendResult,mst_id,cb_msg_id,userid ) values %s", s.Join(ossmsStrs, ","))
-			_, err := db.ExecContext(ctx, stmt, ossmsValues...)
-
-			if err != nil {
-				//stdlog.Println("스마트미 SMS Table Insert 처리 중 오류 발생 " + err.Error())
-				for i := 0; i < len(ossmsValues); i = i + 9 {
-					eQuery := fmt.Sprintf("insert into "+preOshot+"SMS(Sender,Receiver,Msg,URL,ReserveDT,TimeoutDT,SendResult,mst_id,cb_msg_id,userid ) "+
-						"values('%v','%v','%v','%v',null,null,'%v',null,'%v','%v')", ossmsValues[i], ossmsValues[i+1], ossmsValues[i+2], ossmsValues[i+3], ossmsValues[i+5], ossmsValues[i+7], ossmsValues[i+8])
-					_, err := db.ExecContext(ctx, eQuery)
-					if err != nil {
-						msgKey := fmt.Sprintf("%v", ossmsValues[i+7])
-						useridt := fmt.Sprintf("%v", ossmsValues[i+8])
-						stdlog.Println(user_id, "- 스마트미 SMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
-						errcodemsg := err.Error()
-						if s.Index(errcodemsg, "1366") > 0 {
-							db.ExecContext(ctx, "update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = TO_CHAR(now(), '%Y-%m-%d %H:%i:%S') where userid = ? and  msgid = ?", useridt, msgKey)
-						}
-					}
-				}
-				//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = TO_CHAR(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
-			} else {
-				stdlog.Println(user_id, "- 스마트미 SMS Table Insert 처리 : ", len(ossmsStrs), " - ", preOshot)
-			}
-			ossmsStrs = nil
-			ossmsValues = nil
+		if len(smsValues) > 500 || preOshot != oshot.String {
+			insertOshotReqData(smsValues, preOshot+"sms")
+			smsValues = []kaocommon.OshotReqColumn{}
 		}
 
-		if len(osmmsStrs) > 500 || (preOshot != oshot.String && len(osmmsStrs) > 0) {
-			stmt := fmt.Sprintf("insert into "+preOshot+"MMS(MsgGroupID,Sender,Receiver,Subject,Msg,ReserveDT,TimeoutDT,SendResult,File_Path1,File_Path2,File_Path3,mst_id,cb_msg_id,userid ) values %s", s.Join(osmmsStrs, ","))
-			_, err := db.Exec(stmt, osmmsValues...)
-
-			if err != nil {
-				//stdlog.Println("스마트미 SMS Table Insert 처리 중 오류 발생 " + err.Error())
-				for i := 0; i < len(osmmsValues); i = i + 13 {
-					eQuery := fmt.Sprintf("insert into "+preOshot+"MMS(MsgGroupID,Sender,Receiver,Subject,Msg,ReserveDT,TimeoutDT,SendResult,File_Path1,File_Path2,File_Path3,mst_id,cb_msg_id,userid ) "+
-						"values('%v','%v','%v','%v','%v',null,null,'%v','%v','%v','%v',null,'%v','%v')", osmmsValues[i], osmmsValues[i+1], osmmsValues[i+2], osmmsValues[i+3], osmmsValues[i+4], osmmsValues[i+6], osmmsValues[i+7], osmmsValues[i+8], osmmsValues[i+9], osmmsValues[i+11], osmmsValues[i+12])
-					_, err := db.Exec(eQuery)
-					if err != nil {
-						msgKey := fmt.Sprintf("%v", osmmsValues[i+11])
-						useridt := fmt.Sprintf("%v", osmmsValues[i+12])
-						stdlog.Println(user_id, "- 스마트미 LMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
-						errcodemsg := err.Error()
-						if s.Index(errcodemsg, "1366") > 0 {
-							db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = TO_CHAR(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and msgid = '" + msgKey + "'")
-						}
-					}
-				}
-				//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = TO_CHAR(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
-			} else {
-				stdlog.Println(user_id, "- 스마트미 MMS Table Insert 처리 : ", len(osmmsStrs), " - ", preOshot)
-			}
-			osmmsStrs = nil
-			osmmsValues = nil
+		if len(mmsValues) > 500 || preOshot != oshot.String {
+			insertOshotReqData(mmsValues, preOshot+"sms")
+			mmsValues = []kaocommon.OshotReqColumn{}
 		}
 
 		// 알림톡 발송 성공 혹은 문자 발송이 아니면
@@ -262,57 +217,32 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 			}
 
 			if s.EqualFold(sms_kind.String, "S") {
-				//smsmsg := utf8TOeuckr(stringSplit(msg_sms.String, 100))
 				if msgLen.Int64 <= 90 || s.EqualFold(sms_len_check.String, "N") {
-					//smsmsg := utf8TOeuckr(stringSplit(msg_sms.String, 100))
-					ossmsStrs = append(ossmsStrs, "(?,?,?,?,?,null,?,?,?,?)")
-					ossmsValues = append(ossmsValues, sms_sender.String)
-					ossmsValues = append(ossmsValues, phnstr)
-					ossmsValues = append(ossmsValues, msg_sms.String)
-					ossmsValues = append(ossmsValues, "")
-					if s.EqualFold(reserve_dt.String, "00000000000000") {
-						ossmsValues = append(ossmsValues, sql.NullString{})
-					} else {
-						ossmsValues = append(ossmsValues, sql.NullString{})
-					}
-					ossmsValues = append(ossmsValues, "0")
-					ossmsValues = append(ossmsValues, sql.NullString{})
-					ossmsValues = append(ossmsValues, msgid.String)
-					ossmsValues = append(ossmsValues, userid.String)
+					smsValues = append(smsValues, kaocommon.OshotReqColumn{
+						Sender : sms_sender.String,
+						Receiver : phnstr,
+						Msg : msg_sms.String,
+						Url : "",
+						CbMsgId : msgid.String,
+						UserId : userid.String,
+					})
 					smscnt++
 				} else {
 					db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code = '7003', dr.message = '메세지 길이 오류', dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + userid.String + "' and msgid = '" + msgid.String + "'")
 				}
 			} else if s.EqualFold(sms_kind.String, "L") || s.EqualFold(sms_kind.String, "M") {
-				//stdlog.Println(msg_sms.String)
-				//lmsmsg := utf8TOeuckr(msg_sms.String)
-				//lmsmsg := msg_sms.String
-				//stdlog.Println(lmsmsg)
-				//lmstmsg := utf8TOeuckr(sms_lms_tit.String)
-				osmmsStrs = append(osmmsStrs, "(?,?,?,?,?,?,null,?,?,?,?,?,?,?)")
-				/*if len(mms_file1.String) > 0 {
-					osmmsValues = append(osmmsValues, remark2.String)
-				} else {
-					osmmsValues = append(osmmsValues, remark1.String)
-				}
-				*/
-				osmmsValues = append(osmmsValues, group_no)
-				osmmsValues = append(osmmsValues, sms_sender.String)
-				osmmsValues = append(osmmsValues, phnstr)
-				osmmsValues = append(osmmsValues, sms_lms_tit.String)
-				osmmsValues = append(osmmsValues, msg_sms.String)
-				if s.EqualFold(reserve_dt.String, "00000000000000") {
-					osmmsValues = append(osmmsValues, sql.NullString{})
-				} else {
-					osmmsValues = append(osmmsValues, sql.NullString{})
-				}
-				osmmsValues = append(osmmsValues, "0")
-				osmmsValues = append(osmmsValues, mms_file1.String)
-				osmmsValues = append(osmmsValues, mms_file2.String)
-				osmmsValues = append(osmmsValues, mms_file3.String)
-				osmmsValues = append(osmmsValues, sql.NullString{})
-				osmmsValues = append(osmmsValues, msgid.String)
-				osmmsValues = append(osmmsValues, userid.String)
+				mmsValues = append(smsValues, kaocommon.OshotReqColumn{
+					MsgGroupID : group_no,
+					Sender : sms_sender.String,
+					Receiver : phnstr,
+					Subject : sms_lms_tit.String,
+					Msg : msg_sms.String,
+					FilePath1 : mms_file1.String,
+					FilePath2 : mms_file2.String,
+					FilePath3 : mms_file3.String,
+					CbMsgId : msgid.String,
+					UserId : userid.String,
+				})
 				lmscnt++
 			}
 
@@ -323,62 +253,16 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 
 	}
 
-	if len(ossmsStrs) > 0 {
-		stmt := fmt.Sprintf("insert into "+preOshot+"SMS(Sender,Receiver,Msg,URL,ReserveDT,TimeoutDT,SendResult,mst_id,cb_msg_id,userid) values %s", s.Join(ossmsStrs, ","))
-		_, err := db.Exec(stmt, ossmsValues...)
-
-		if err != nil {
-			//stdlog.Println(user_id, "- 스마트미 SMS Table Insert 처리 중 오류 발생 " + err.Error())
-			for i := 0; i < len(ossmsValues); i = i + 9 {
-				eQuery := fmt.Sprintf("insert into "+preOshot+"SMS(Sender,Receiver,Msg,URL,ReserveDT,TimeoutDT,SendResult,mst_id,cb_msg_id,userid ) "+
-					"values('%v','%v','%v','%v','%v',null,'%v','%v','%v','%v')", ossmsValues[i], ossmsValues[i+1], ossmsValues[i+2], ossmsValues[i+3], ossmsValues[i+4], ossmsValues[i+5], ossmsValues[i+6], ossmsValues[i+7], ossmsValues[i+8])
-				_, err := db.Exec(eQuery)
-				if err != nil {
-					msgKey := fmt.Sprintf("%v", ossmsValues[i+7])
-					useridt := fmt.Sprintf("%v", ossmsValues[i+8])
-					stdlog.Println(user_id, "- 스마트미 SMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
-					errcodemsg := err.Error()
-					if s.Index(errcodemsg, "1366") > 0 {
-						db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and msgid = '" + msgKey + "'")
-					}
-				}
-			}
-			//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = date_format(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
-		} else {
-			stdlog.Println(user_id, "- 스마트미 SMS Table Insert 처리 : ", len(ossmsStrs), " - ", preOshot)
-		}
-
+	if len(smsValues) > 0 {
+		insertOshotReqData(smsValues, preOshot+"sms")
 	}
 
-	if len(osmmsStrs) > 0 {
-		stmt := fmt.Sprintf("insert into "+preOshot+"MMS(MsgGroupID,Sender,Receiver,Subject,Msg,ReserveDT,TimeoutDT,SendResult,File_Path1,File_Path2,File_Path3,mst_id,cb_msg_id,userid ) values %s", s.Join(osmmsStrs, ","))
-		_, err := db.Exec(stmt, osmmsValues...)
-
-		if err != nil {
-			//stdlog.Println("스마트미 SMS Table Insert 처리 중 오류 발생 " + err.Error())
-			for i := 0; i < len(osmmsValues); i = i + 13 {
-				eQuery := fmt.Sprintf("insert into "+preOshot+"MMS(MsgGroupID,Sender,Receiver,Subject,Msg,ReserveDT,TimeoutDT,SendResult,File_Path1,File_Path2,File_Path3,mst_id,cb_msg_id,userid ) "+
-					"values('%v','%v','%v','%v','%v',null,null,'%v','%v','%v','%v',null,'%v','%v')", osmmsValues[i], osmmsValues[i+1], osmmsValues[i+2], osmmsValues[i+3], osmmsValues[i+4], osmmsValues[i+6], osmmsValues[i+7], osmmsValues[i+8], osmmsValues[i+9], osmmsValues[i+11], osmmsValues[i+12])
-				_, err := db.Exec(eQuery)
-				if err != nil {
-					msgKey := fmt.Sprintf("%v", osmmsValues[i+11])
-					useridt := fmt.Sprintf("%v", osmmsValues[i+12])
-					stdlog.Println(user_id, "- 스마트미 LMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
-					errcodemsg := err.Error()
-					if s.Index(errcodemsg, "1366") > 0 {
-						db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and msgid = '" + msgKey + "'")
-					}
-				}
-			}
-			//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = date_format(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
-		} else {
-			stdlog.Println(user_id, "- 스마트미 MMS Table Insert 처리 : ", len(osmmsStrs), " - ", preOshot)
-		}
-
+	if len(mmsValues) > 0 {
+		insertOshotReqData(mmsValues, preOshot+"sms")
 	}
 
 	if scnt > 0 || smscnt > 0 || lmscnt > 0 || fcnt > 0 {
-		stdlog.Println(user_id, "-", group_no, "문자 발송 처리 완료 ( ", tcnt, " ) : 성공 -", scnt, " , SMS -", smscnt, " , LMS -", lmscnt, ", 실패 - ", fcnt, "  >> Process cnt : ", procCnt)
+		stdlog.Println(user_id, "-", group_no, "문자 발송 처리 완료 ( ", tcnt, " ) : SMS -", smscnt, " , LMS -", lmscnt, "  >> Process cnt : ", procCnt)
 	}
 	procCnt--
 }
@@ -393,15 +277,77 @@ func stringSplit(str string, lencnt int) string {
 	return str[:idx]
 }
 
-func utf8TOeuckr(str string) string {
-	sText := []byte(str)
-	eText := make([]byte, hex.EncodedLen(len(sText)))
-	hex.Encode(eText, sText)
+func insertOshotReqData(msgValues []kaocommon.OshotReqColumn, tableName string) {
+	tx, err := databasepool.DB.Begin()
+	if err != nil {
+		config.Stdlog.Println("oshotproc.go / insertOshotReqData / ", tableName, " / 트랜젝션 초기화 실패 ", err)
+	}
+	defer tx.Rollback()
 
-	temp := string(eText)
-	temp = s.Replace(temp, "e2808b", "", -1)
+	tableName = tableName.ToLower(tableName)
 
-	bs, _ := hex.DecodeString(temp)
+	var stmt *sql.Stmt
+	var stmtSql string
 
-	return string(bs)
+	if tableName.Contains("sms") {
+		stmtSql = "insert into "+tableName+"(Sender,Receiver,Msg,URL,cb_msg_id,userid ) values ($1, $2, $3, $4, $5, $6)"
+		stmt, err = tx.Prepare(stmtSql)
+		if err != nil {
+			config.Stdlog.Println("oshotproc.go / insertOshotReqData / ", tableName, "/ stmt 초기화 실패 ", err)
+			return
+		}
+
+		for _, data := range msgValues {
+			_, err = stmt.Exec(data.Sender, data.Receiver, data.Msg, "", data.CbMsgId, data.UserId)
+			if err != nil {
+				config.Stdlog.Println("oshotproc.go / insertOshotReqData / ", tableName," / stmt personal Exec ", err)
+			}
+		}
+	} else if tableName.Contains("mms") {
+		stmtSql = "insert into "+tableName+"(MsgGroupID, Sender, Receiver, Subject, Msg, File_Path1, File_Path2, File_Path3, cb_msg_id, userid) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
+		stmt, err := tx.Prepare(stmtSql)
+		if err != nil {
+			config.Stdlog.Println("oshotproc.go / insertOshotReqData / ", tableName, "/ stmt 초기화 실패 ", err)
+			return
+		}
+
+		for _, data := range msgValues {
+			_, err = stmt.Exec(data.MsgGroupID, data.Sender, data.Receiver, data.Subject, data.Msg, data.FilePath1, data.FilePath2, data.FilePath3, data.CbMsgId, data.UserId)
+			if err != nil {
+				config.Stdlog.Println("oshotproc.go / insertOshotReqData / ", tableName," / stmt personal Exec ", err)
+			}
+		}
+	}
+	
+	
+	stmt.Close()
+	err = tx.Commit()
+
+	if err != nil {
+		func checkErr(err error, cbMsgId string, userId string, tableName string){
+			config.Stdlog.Println("oshotproc.go / insertOshotReqData / ", tableName, " / stmt commit ", err)
+			config.Stdlog.Println(userId, "- 스마트미 ", tableName, " Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", cbMsgId)
+			errcodemsg := err.Error()
+			if s.Index(errcodemsg, "1366") > 0 {
+				db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = TO_CHAR(now(), 'YYYY-MM-DD H:i:s') where userid = $1 and msgid = $2", userId, cbMsgId)
+			}
+		}
+		if tableName.Contains("sms") {
+			for _, data := range msgValues {
+				_, err = databasepool.DB.Exec(stmtSql, data.Sender, data.Receiver, data.Msg, "", data.CbMsgId, data.UserId)
+				if err != nil {
+					checkErr(err, data.CbMsgId, data.Userid, UserId)
+				}
+			}
+		} else if tableName.Contains("mms") {
+			for _, data := range msgValues {
+				_, err = databasepool.DB.Exec(stmtSql, data.MsgGroupID, data.Sender, data.Receiver, data.Subject, data.Msg, data.FilePath1, data.FilePath2, data.FilePath3, data.CbMsgId, data.UserId)
+				if err != nil {
+					checkErr(err, data.CbMsgId, data.UserId, tableName)
+				}
+			}
+		}
+	} else {
+		config.Stdlog.Println(msgValues[0].UserId, "- 스마트미 MMS Table Insert 처리 : ", len(msgValues), " - ", tableName)
+	}
 }
