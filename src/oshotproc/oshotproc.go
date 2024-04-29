@@ -6,6 +6,7 @@ import (
 
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
+	"mycs/src/kaocommon"
 
 	"encoding/hex"
 	"regexp"
@@ -133,12 +134,6 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	var msgLen sql.NullInt64
 	var phnstr string
 
-	ossmsStrs := []string{}
-	ossmsValues := []interface{}{}
-
-	osmmsStrs := []string{}
-	osmmsValues := []interface{}{}
-
 	var resquery = `
 	SELECT
 	    msgid,
@@ -261,7 +256,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 		insertOshotReqData(mmsValues, preOshot+"sms")
 	}
 
-	if scnt > 0 || smscnt > 0 || lmscnt > 0 || fcnt > 0 {
+	if smscnt > 0 || lmscnt > 0 {
 		stdlog.Println(user_id, "-", group_no, "문자 발송 처리 완료 ( ", tcnt, " ) : SMS -", smscnt, " , LMS -", lmscnt, "  >> Process cnt : ", procCnt)
 	}
 	procCnt--
