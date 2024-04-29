@@ -244,7 +244,7 @@ func resultProc() {
 		where dcl.use_flag = 'Y'
 		and a.dest ilike 'nano%'`)
 	isNano := true
-	if error != nil || len(nanoUserList) == 0 {
+	if error != nil {
 		config.Stdlog.Println("Nano 유저 select 오류 ")
 		isNano = false
 	}
@@ -254,6 +254,7 @@ func resultProc() {
 		var user_id sql.NullString
 
 		for nanoUserList.Next() {
+			config.Stdlog.Println("안들어오잖아 ?")
 			nanoUserList.Scan(&user_id)
 
 			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "N") { // 기본
