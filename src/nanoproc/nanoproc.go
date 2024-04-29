@@ -8,7 +8,6 @@ import (
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
 
-	"encoding/hex"
 	"regexp"
 	s "strings"
 	"time"
