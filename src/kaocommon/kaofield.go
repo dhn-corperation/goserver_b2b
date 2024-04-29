@@ -2,7 +2,6 @@ package kaocommon
 
 import (
 	"context"
-	"database/sql"
 )
 
 type AtReqColumn struct {
