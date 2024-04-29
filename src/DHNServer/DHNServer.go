@@ -193,8 +193,14 @@ func resultProc() {
 		) a on dcl.user_id = a.user_id
 		where dcl.use_flag = 'Y'
 		and a.dest ilike 'oshot%'`)
+
+	rowCount := 0
+	for oshotUserList.Next() {
+	    rowCount++
+	}
+
 	isOshot := true
-	if error != nil {
+	if error != nil || rowCount++{
 		config.Stdlog.Println("Oshot 유저 select 오류 ")
 		isOshot = false
 	}
@@ -244,7 +250,7 @@ func resultProc() {
 		where dcl.use_flag = 'Y'
 		and a.dest ilike 'nano%'`)
 
-	rowCount := 0
+	rowCount = 0
 	for nanoUserList.Next() {
 	    rowCount++
 	}
