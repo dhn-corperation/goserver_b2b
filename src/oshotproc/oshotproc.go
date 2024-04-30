@@ -27,9 +27,9 @@ func OshotProcess(user_id string, ctx context.Context) {
 			select {
 			case <-ctx.Done():
 
-				config.Stdlog.Println(user_id, " - Oshot process가 10초 후에 종료 됨.")
+				config.Stdlog.Println(user_id, " - Oshot request process가 10초 후에 종료 됨.")
 				time.Sleep(10 * time.Second)
-				config.Stdlog.Println(user_id, " - Oshot process 종료 완료")
+				config.Stdlog.Println(user_id, " - Oshot request process 종료 완료")
 				return
 			default:
 

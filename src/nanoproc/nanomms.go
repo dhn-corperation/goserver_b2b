@@ -26,7 +26,7 @@ func NanoLMSProcess(ctx context.Context, gFlag bool) {
 		tail = "_G"
 	}
 
-	var OshotQuery = `
+	var nanoQuery = `
 	select 
 		distinct dest
 	from
@@ -35,10 +35,10 @@ func NanoLMSProcess(ctx context.Context, gFlag bool) {
 		use_flag = 'Y'
 		and dest ilike 'nano%'`
 
-	NanoTable, err := db.Query(OshotQuery)
+	NanoTable, err := db.Query(nanoQuery)
 
 	if err != nil {
-		errlog.Fatal("DHN CLIENT LIST 조회 오류 ")
+		errlog.Fatal("nanomms.go / NanoLMSProcess / DHN CLIENT LIST 조회 오류 ")
 	}
 	defer NanoTable.Close()
 
@@ -52,9 +52,9 @@ func NanoLMSProcess(ctx context.Context, gFlag bool) {
 			select {
 				case <- ctx.Done():
 			
-			    config.Stdlog.Println("Nano LMS", tail, " process가 20초 후에 종료 됨.")
+			    config.Stdlog.Println("Nano LMS", tail, " result process가 20초 후에 종료 됨.")
 			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println("Nano LMS", tail, " process 종료 완료")
+			    config.Stdlog.Println("Nano LMS", tail, " result process 종료 완료")
 			    return
 			default:	
 			

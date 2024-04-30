@@ -28,9 +28,9 @@ func NanoProcess(user_id string, ctx context.Context) {
 			case <-ctx.Done():
 
 				uid := ctx.Value("user_id")
-				config.Stdlog.Println(uid, " - Nano process가 10초 후에 종료 됨.")
+				config.Stdlog.Println(uid, " - Nano request process가 10초 후에 종료 됨.")
 				time.Sleep(10 * time.Second)
-				config.Stdlog.Println(uid, " - Nano process 종료 완료")
+				config.Stdlog.Println(uid, " - Nano request process 종료 완료")
 				return
 			default:
 				var count int

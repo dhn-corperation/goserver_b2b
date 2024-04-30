@@ -312,7 +312,7 @@ func resultProc() {
 
 		nsctx, nscancel := context.WithCancel(context.Background())
 
-		go nanoproc.NanoSMSProcess(nsctx)
+		go nanoproc.NanoSMSProcess(nsctx, false)
 
 		allCtxC["nanosms"] = nscancel
 		allService["nanosms"] = "nano_result_SMS"
@@ -328,7 +328,7 @@ func resultProc() {
 
 			nsctxG, nscancelG := context.WithCancel(context.Background())
 
-			go nanoproc.NanoSMSProcess_G(nsctxG)
+			go nanoproc.NanoSMSProcess(nsctxG, true)
 
 			allCtxC["nanosmsG"] = nscancelG
 			allService["nanosmsG"] = "nano_result_SMS_G"

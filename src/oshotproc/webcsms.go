@@ -51,9 +51,9 @@ func SMSProcess(ctx context.Context) {
 			select {
 				case <- ctx.Done():
 			
-			    config.Stdlog.Println("Oshot SMS process가 20초 후에 종료 됨.")
+			    config.Stdlog.Println("Oshot SMS result process가 20초 후에 종료 됨.")
 			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println("Oshot SMS process 종료 완료")
+			    config.Stdlog.Println("Oshot SMS result process 종료 완료")
 			    return
 			default:	
 			

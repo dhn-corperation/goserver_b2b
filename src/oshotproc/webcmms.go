@@ -107,9 +107,9 @@ func LMSProcess(ctx context.Context) {
 			select {
 				case <- ctx.Done():
 			
-			    config.Stdlog.Println("Oshot MMS process가 20초 후에 종료 됨.")
+			    config.Stdlog.Println("Oshot MMS result process가 20초 후에 종료 됨.")
 			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println("Oshot MMS process 종료 완료")
+			    config.Stdlog.Println("Oshot MMS result process 종료 완료")
 			    return
 			default:	
 			
