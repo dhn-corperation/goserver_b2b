@@ -122,10 +122,22 @@ func resultProc() {
 	allCtxC := map[string]interface{}{}
 
 	//-----------------------------알림톡 실행 시작
-	alim_user_list, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST where alimtalk='Y'")
+	alim_user_list, error := databasepool.DB.Query(`
+		select distinct user_id 
+		from DHN_CLIENT_LIST 
+		where alimtalk='Y'`)
+
+	rowCount := 0
+	for oshotUserList.Next() {
+	    rowCount++
+	}
+
 	isAlim := true
 	if error != nil {
 		config.Stdlog.Println("알림톡 유저 select 오류 ")
+		isAlim = false
+	} else if  rowCount == 0 {
+		config.Stdlog.Println("알림톡 발송 업체 없음")
 		isAlim = false
 	}
 	defer alim_user_list.Close()
@@ -194,13 +206,8 @@ func resultProc() {
 		where dcl.use_flag = 'Y'
 		and a.dest ilike 'oshot%'`)
 
-	rowCount := 0
-	for oshotUserList.Next() {
-	    rowCount++
-	}
-
 	isOshot := true
-	if error != nil || rowCount == 0{
+	if error != nil{
 		config.Stdlog.Println("Oshot 유저 select 오류 ")
 		isOshot = false
 	}
@@ -250,13 +257,8 @@ func resultProc() {
 		where dcl.use_flag = 'Y'
 		and a.dest ilike 'nano%'`)
 
-	rowCount = 0
-	for nanoUserList.Next() {
-	    rowCount++
-	}
-
 	isNano := true
-	if error != nil || rowCount == 0{
+	if error != nil {
 		config.Stdlog.Println("Nano 유저 select 오류 ")
 		isNano = false
 	}
@@ -303,7 +305,7 @@ func resultProc() {
 
 		nlctx, nlcancel := context.WithCancel(context.Background())
 
-		go nanoproc.NanoLMSProcess(nlctx)
+		go nanoproc.NanoLMSProcess(nlctx, false)
 
 		allCtxC["nanolms"] = nlcancel
 		allService["nanolms"] = "nano_result_LMS"
@@ -319,7 +321,7 @@ func resultProc() {
 
 			nlctxG, nlcancelG := context.WithCancel(context.Background())
 
-			go nanoproc.NanoLMSProcess_G(nlctxG)
+			go nanoproc.NanoLMSProcess(nlctxG, true)
 
 			allCtxC["nanolmsG"] = nlcancelG
 			allService["nanolmsG"] = "nano_result_LMS_G"

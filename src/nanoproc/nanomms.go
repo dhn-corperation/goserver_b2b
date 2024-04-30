@@ -6,9 +6,6 @@ import (
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
 
-	//"strconv"
-
-	//	"log"
 	s "strings"
 	"sync"
 	"time"
@@ -17,49 +14,60 @@ import (
 	"context"
 )
 
-func NanoLMSProcess(ctx context.Context) {
+func NanoLMSProcess(ctx context.Context, gFlag bool) {
 	var wg sync.WaitGroup
 
 	var db = databasepool.DB
 	var errlog = config.Stdlog
-	var oshotTable [][]string
-	var otable sql.NullString
+	var nanoTable [][]string
+	var ntable sql.NullString
+	tail := ""
+	if gFlag {
+		tail = "_G"
+	}
 
-	var OshotQuery = "select distinct ifnull(a.oshot, '') as table_name from DHN_CLIENT_LIST a where a.use_flag = 'Y' and ifnull(a.dest,'OSHOT') = 'NANO'"
+	var OshotQuery = `
+	select 
+		distinct dest
+	from
+		DHN_CLIENT_LIST
+	where
+		use_flag = 'Y'
+		and dest ilike 'nano%'`
 
-	OshotTable, err := db.Query(OshotQuery)
+	NanoTable, err := db.Query(OshotQuery)
 
 	if err != nil {
 		errlog.Fatal("DHN CLIENT LIST 조회 오류 ")
 	}
-	defer OshotTable.Close()
+	defer NanoTable.Close()
 
-	for OshotTable.Next() {
-		OshotTable.Scan(&otable)
-		oshotTable = append(oshotTable, []string{otable.String})
+	for NanoTable.Next() {
+		NanoTable.Scan(&ntable)
+		nanoTable = append(nanoTable, []string{ntable.String})
 	}
-	errlog.Println("Nano MMS length : ", len(oshotTable))
+	errlog.Println("Nano MMS", tail, " length : ", len(nanoTable))
 	for {
 	
 			select {
 				case <- ctx.Done():
 			
-			    config.Stdlog.Println("Nano LMS process가 20초 후에 종료 됨.")
+			    config.Stdlog.Println("Nano LMS", tail, " process가 20초 후에 종료 됨.")
 			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println("Nano LMS process 종료 완료")
+			    config.Stdlog.Println("Nano LMS", tail, " process 종료 완료")
 			    return
 			default:	
 			
-				for _, tableName := range oshotTable {
+				for _, tableName := range nanoTable {
 					var t = time.Now()
 		
 					if t.Day() < 3 {
 						wg.Add(1)
-						go pre_mmsProcess(&wg, tableName[0])
+						go mmsProcess(&wg, tableName[0], true, tail)
 					}
 		
 					wg.Add(1)
-					go mmsProcess(&wg, tableName[0])
+					go mmsProcess(&wg, tableName[0], false, tail)
 				}
 				wg.Wait()
 			}
@@ -67,7 +75,7 @@ func NanoLMSProcess(ctx context.Context) {
 
 }
 
-func mmsProcess(wg *sync.WaitGroup, tablename string) {
+func mmsProcess(wg *sync.WaitGroup, tablename string, nsFlag bool, tail string) {
 
 	defer wg.Done()
 	var db = databasepool.DB
@@ -75,25 +83,26 @@ func mmsProcess(wg *sync.WaitGroup, tablename string) {
 
 	var isProc = true
 	var t = time.Now()
+	if nsFlag {
+		t = t.Add(time.Hour * -96)
+	}
 	var monthStr = fmt.Sprintf("%d%02d", t.Year(), t.Month())
 
-	var MMSTable = "MMS_LOG_" + monthStr
+	var MMSTable = "MMS"+tail+"_LOG_" + monthStr
 
 	//발송 6시간 지난 메세지는 응답과 상관 없이 성공 처리 함.
 
-	var groupQuery = "select etc9 as cb_msg_id, rslt as SendResult, File_Path1,sentdate, msgkey as MsgID, telcoinfo as telecom, etc10 as userid  from " + MMSTable + " a where a.status = '3' and a.ETC8 = 'Y' "
+	var groupQuery = "select etc9 as cb_msg_id, rslt as SendResult, sentdate, msgkey as MsgID, telcoinfo as telecom, etc10 as userid  from " + MMSTable + " a where a.status = '3' and a.ETC8 = 'Y' "
 
 	groupRows, err := db.Query(groupQuery)
 	if err != nil {
 		//errlog.Println("Nano MMS 조회 중 오류 발생", groupQuery)
 		errcode := err.Error()
-		errlog.Println("Nano MMS 조회 중 오류 발생", groupQuery, errcode)
+		errlog.Println("Nano MMS", tail, " 조회 중 오류 발생", groupQuery, errcode)
 
-		if s.Index(errcode, "1146") > 0 {
-			db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like MMS_LOG")
-			errlog.Println(MMSTable + " 생성 !!")
-		} else {
-			//errlog.Fatal(groupQuery)
+		if s.Index(errcode, "relation") > 0 {
+			db.Exec("Create Table IF NOT EXISTS " + MMSTable + "(LIKE mms_log INCLUDING ALL)")
+			errlog.Println("nano "+ MMSTable + " 생성 !!")
 		}
 
 		isProc = false
@@ -104,19 +113,12 @@ func mmsProcess(wg *sync.WaitGroup, tablename string) {
 	if isProc {
 
 		for groupRows.Next() {
-			var cb_msg_id, sendresult, file_path1, senddt, msgid, telecom, userid sql.NullString
+			var cb_msg_id, sendresult, senddt, msgid, telecom, userid sql.NullString
 
-			groupRows.Scan(&cb_msg_id, &sendresult, &file_path1, &senddt, &msgid, &telecom, &userid)
+			groupRows.Scan(&cb_msg_id, &sendresult, &senddt, &msgid, &telecom, &userid)
 
 			tr_net := telecom.String
  
-			/*
-				var msg_type = "LMS"
-
-				if len(file_path1.String) > 1 {
-					msg_type = "MMS"
-				}
-			*/
 			resultCode := NanoCode(sendresult.String)
 
 			if !s.EqualFold(resultCode, "7006") {
@@ -128,61 +130,6 @@ func mmsProcess(wg *sync.WaitGroup, tablename string) {
 				db.Exec("update DHN_RESULT dr set dr.message_type = 'PH', dr.result = 'Y', dr.code = '" + errcode + "', dr.message = concat(dr.message, '," + val + "'), dr.remark1 = '" + telecom.String + "', dr.remark2 = '" + senddt.String + "' where userid='" + userid.String + "' and msgid = '" + cb_msg_id.String + "'")
 			} else {
 				db.Exec("update DHN_RESULT dr set dr.message_type = 'PH', dr.result = 'Y', dr.code = '0000', dr.message = '', dr.remark1 = '" + tr_net + "', dr.remark2 = '" + senddt.String + "' where userid='" + userid.String + "' and  msgid = '" + cb_msg_id.String + "'")
-			}
-
-			db.Exec("update " + MMSTable + " set etc8 = 'N' where msgkey = '" + msgid.String + "'")
-		}
-	}
-
-}
-
-func pre_mmsProcess(wg *sync.WaitGroup, tablename string) {
-
-	defer wg.Done()
-	var db = databasepool.DB
-
-	var isProc = true
-	var t = time.Now().Add(time.Hour * -96)
-	var monthStr = fmt.Sprintf("%d%02d", t.Year(), t.Month())
-
-	var MMSTable = "MMS_LOG_" + monthStr
-
-	//발송 6시간 지난 메세지는 응답과 상관 없이 성공 처리 함.
-
-	var groupQuery = "select etc9 as cb_msg_id, rslt as SendResult, File_Path1,sentdate, msgkey as MsgID, telcoinfo as telecom, etc10 as userid  from " + MMSTable + " a where a.status = '3' and a.ETC8 = 'Y' "
-
-	groupRows, err := db.Query(groupQuery)
-	if err != nil {
-		isProc = false
-		return
-	}
-	defer groupRows.Close()
-
-	if isProc {
-
-		for groupRows.Next() {
-			var cb_msg_id, sendresult, file_path1, senddt, msgid, telecom, userid sql.NullString
-
-			groupRows.Scan(&cb_msg_id, &sendresult, &file_path1, &senddt, &msgid, &telecom, &userid)
-
-			/*
-				var msg_type = "LMS"
-
-				if len(file_path1.String) > 1 {
-					msg_type = "MMS"
-				}
-			*/
-			resultCode := NanoCode(sendresult.String)
-
-			if !s.EqualFold(resultCode, "7006") {
-				var errcode = resultCode
-
-				val := CodeMessage(resultCode)
-				
-
-				db.Exec("update DHN_RESULT dr set dr.message_type = 'PH', dr.result = 'Y', dr.code = '" + errcode + "', dr.message = concat(dr.message, '," + val + "'), dr.remark1 = '" + telecom.String + "', dr.remark2 = '" + senddt.String + "' where userid='" + userid.String + "' and  msgid = '" + cb_msg_id.String + "'")
-			} else {
-				db.Exec("update DHN_RESULT dr set dr.message_type = 'PH', dr.result = 'Y', dr.code = '0000', dr.message = '', dr.remark1 = '" + telecom.String + "', dr.remark2 = '" + senddt.String + "' where  userid='" + userid.String + "' and msgid = '" + cb_msg_id.String + "'")
 			}
 
 			db.Exec("update " + MMSTable + " set etc8 = 'N' where msgkey = '" + msgid.String + "'")

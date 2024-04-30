@@ -105,7 +105,7 @@ func smsProcess(wg *sync.WaitGroup, ostable string, nsFlag bool) {
 
 		if s.Index(errcode, "relation") > 0 {
 			db.Exec("Create Table IF NOT EXISTS " + SMSTable + "(LIKE "+ostable+"sms INCLUDING ALL)")
-			errlog.Println(SMSTable + " 생성 !!")
+			errlog.Println("oshot "+SMSTable + " 생성 !!")
 
 		}
 

@@ -161,7 +161,7 @@ func mmsProcess(wg *sync.WaitGroup, ostable string, nsFlag bool) {
 
 		if s.Index(errcode, "relation") > 0 {
 			db.Exec("Create Table IF NOT EXISTS " + MMSTable + "(LIKE "+ostable+"mms INCLUDING ALL)")
-			errlog.Println(MMSTable + " 생성 !!")
+			errlog.Println("oshot " + MMSTable + " 생성 !!")
 		}
 
 		isProc = false
