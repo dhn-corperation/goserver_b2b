@@ -127,17 +127,9 @@ func resultProc() {
 		from DHN_CLIENT_LIST 
 		where alimtalk='Y'`)
 
-	rowCount := 0
-	for oshotUserList.Next() {
-	    rowCount++
-	}
-
 	isAlim := true
 	if error != nil {
 		config.Stdlog.Println("알림톡 유저 select 오류 ")
-		isAlim = false
-	} else if  rowCount == 0 {
-		config.Stdlog.Println("알림톡 발송 업체 없음")
 		isAlim = false
 	}
 	defer alim_user_list.Close()
