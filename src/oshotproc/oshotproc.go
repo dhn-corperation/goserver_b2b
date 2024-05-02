@@ -67,6 +67,7 @@ func OshotProcess(user_id string, ctx context.Context) {
 						if upError != nil {
 							config.Stdlog.Println(user_id , "Group No Update 오류", group_no)
 						} else {
+							config.Stdlog.Println("6")
 							go resProcess(ctx, group_no, user_id)
 						}
 					}
@@ -119,7 +120,7 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 
 func resProcess(ctx context.Context, group_no string, user_id string) {
 	//defer wg.Done()
-
+	config.Stdlog.Println("1")
 	procCnt++
 	var db = databasepool.DB
 	var stdlog = config.Stdlog
@@ -134,7 +135,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	var msgid, code, message, message_type, msg_sms, phn, remark1, remark2, result, sms_lms_tit, sms_kind, sms_sender, res_dt, reserve_dt, mms_file1, mms_file2, mms_file3, userid, sms_len_check, oshot sql.NullString
 	var msgLen sql.NullInt64
 	var phnstr string
-
+	config.Stdlog.Println("2")
 	ossmsStrs := []string{}
 	ossmsValues := []interface{}{}
 
@@ -174,7 +175,10 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
       and userid = ?
 	order by userid
 	`
-
+	config.Stdlog.Println("3")
+	config.Stdlog.Println(group_no)
+	config.Stdlog.Println(user_id)
+	config.Stdlog.Println(resquery)
 	resrows, err := db.QueryContext(ctx, resquery, group_no, user_id)
 
 	if err != nil {
@@ -193,6 +197,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	preOshot := ""
 
 	for resrows.Next() {
+		config.Stdlog.Println("4")
 		resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check, &oshot)
 
 		phnstr = phn.String
@@ -388,6 +393,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	if scnt > 0 || smscnt > 0 || lmscnt > 0 || fcnt > 0 {
 		stdlog.Println(user_id, "-", group_no, "문자 발송 처리 완료 ( ", tcnt, " ) : 성공 -", scnt, " , SMS -", smscnt, " , LMS -", lmscnt, ", 실패 - ", fcnt, "  >> Process cnt : ", procCnt)
 	}
+	config.Stdlog.Println("5")
 	procCnt--
 }
 
