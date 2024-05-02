@@ -81,6 +81,7 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 
 	tx, err := databasepool.DB.Begin()
 	if err != nil {
+		onfig.Stdlog.Println(err)
 		return err
 	}
 
