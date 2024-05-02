@@ -188,8 +188,9 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	tcnt := 0
 	reg, err := regexp.Compile("[^0-9]+")
 	preOshot := ""
-
+	stdlog.Println("-5")
 	for resrows.Next() {
+		stdlog.Println("-4")
 		resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check, &oshot)
 
 		phnstr = phn.String
@@ -200,7 +201,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 		}
 
 		tcnt++
-
+		stdlog.Println("-3")
 		if len(ossmsStrs) > 500 || (preOshot != oshot.String && len(ossmsStrs) > 0) {
 			stmt := fmt.Sprintf("insert into "+preOshot+"SMS(Sender,Receiver,Msg,URL,ReserveDT,TimeoutDT,SendResult,mst_id,cb_msg_id,userid ) values %s", s.Join(ossmsStrs, ","))
 			_, err := db.ExecContext(ctx, stmt, ossmsValues...)
@@ -256,11 +257,11 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 			osmmsStrs = nil
 			osmmsValues = nil
 		}
-
+		stdlog.Println("-2")
 		// 알림톡 발송 성공 혹은 문자 발송이 아니면
 		// API_RESULT 성공 처리 함.
 		if len(msg_sms.String) > 0 && len(sms_sender.String) > 0 { // msg_sms 가 와 sms_sender 에 값이 있으면 Oshot 발송 함.
-
+			stdlog.Println("-1")
 			phnstr = reg.ReplaceAllString(phnstr, "")
 			if s.HasPrefix(phnstr, "82") {
 				phnstr = "0" + phnstr[2:len(phnstr)]
