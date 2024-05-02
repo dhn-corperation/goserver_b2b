@@ -18,7 +18,7 @@ import (
 var procCnt int
 
 func OshotProcess(user_id string, ctx context.Context) {
-	config.Stdlog.Println(user_id, " Oshot Process 시작 됨.")
+	config.Stdlog.Println(user_id, " Oshot request Process 시작 됨.")
 	procCnt = 0
 	for {
 
@@ -32,7 +32,6 @@ func OshotProcess(user_id string, ctx context.Context) {
 				config.Stdlog.Println(user_id, " - Oshot request process 종료 완료")
 				return
 			default:
-
 				var count sql.NullInt64
 				tickSql := `
 				select
@@ -56,9 +55,9 @@ func OshotProcess(user_id string, ctx context.Context) {
 
 						upError := updateReqeust(ctx, group_no, user_id)
 						if upError != nil {
-							config.Stdlog.Println(user_id , "oshotproc.go / OshotProcess / Group No Update 오류", group_no)
+							config.Stdlog.Println(user_id , " oshotproc.go / OshotProcess / Group No Update 오류", group_no)
 						} else {
-							config.Stdlog.Println(user_id, "oshotproc.go / 문자 발송 처리 시작 ( ", group_no, " )")
+							config.Stdlog.Println(user_id, " oshotproc.go / OshotProcess / 문자 발송 처리 시작 ( ", group_no, " )")
 							procCnt++
 							go resProcess(ctx, group_no, user_id)
 						}

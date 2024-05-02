@@ -17,8 +17,7 @@ import (
 var procCnt int
 
 func NanoProcess(user_id string, ctx context.Context) {
-	//var wg sync.WaitGroup
-	config.Stdlog.Println(user_id, " Nano Process 시작 됨.")
+	config.Stdlog.Println(user_id, " Nano request Process 시작 됨.")
 	procCnt = 0
 
 	for {
@@ -26,29 +25,27 @@ func NanoProcess(user_id string, ctx context.Context) {
 
 			select {
 			case <-ctx.Done():
-
-				uid := ctx.Value("user_id")
-				config.Stdlog.Println(uid, " - Nano request process가 10초 후에 종료 됨.")
+				config.Stdlog.Println(user_id, " - Nano request process가 10초 후에 종료 됨.")
 				time.Sleep(10 * time.Second)
-				config.Stdlog.Println(uid, " - Nano request process 종료 완료")
+				config.Stdlog.Println(user_id, " - Nano request process 종료 완료")
 				return
 			default:
-				var count int
+				var count sql.NullInt64
 				tickSql := `
 				select
-					length(msgid) as cnt
+					count(1) as cnt
 				from
 					DHN_RESULT
 				where
 					result = 'P'
 					and send_group is null
 					and (reserve_dt IS NULL OR to_timestamp(coalesce(reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW())
-				 	and userid = '` + user_id + `'
+				 	and userid = $1
 				limit 1`
-				cnterr := databasepool.DB.QueryRow(tickSql).Scan(&count)
+				cnterr := databasepool.DB.QueryRowContext(ctx, tickSql, user_id).Scan(&count)
 
-				if cnterr != nil {
-					//config.Stdlog.Println("DHN_RESULT Table - select 오류 : " + cnterr.Error())
+				if cnterr != nil && cnterr != sql.ErrNoRows {
+					config.Stdlog.Println("nanoproc.go / NanoProcess / DHN_RESULT Table - select 오류 : " + cnterr.Error())
 				} else {
 
 					if count > 0 {
@@ -58,8 +55,10 @@ func NanoProcess(user_id string, ctx context.Context) {
 
 						upError := updateReqeust(ctx, group_no, user_id)
 						if upError != nil {
-							config.Stdlog.Println(user_id, "- Nano Group No Update 오류", group_no)
+							config.Stdlog.Println(user_id, " nanoproc.go / NanoProcess / Nano Group No Update 오류", group_no)
 						} else {
+							config.Stdlog.Println(user_id, " nanoproc.go / NanoProcess / 문자 발송 처리 시작 ( ", group_no, " )")
+							procCnt++
 							go resProcess(ctx, group_no, user_id)
 						}
 					}
