@@ -254,10 +254,8 @@ func atsendProcess(group_no string, user_id string) {
 		resChan := <-resultChan
 		result := resChan.Result
 		if resChan.Statuscode == 200 {
-			config.Stdlog.Println("1")
 			var kakaoResp kakao.KakaoResponse
 			json.Unmarshal(resChan.BodyData, &kakaoResp)
-			config.Stdlog.Println("2")
 
 			var resdt = time.Now()
 			var resdtstr = fmt.Sprintf("%4d-%02d-%02d %02d:%02d:%02d", resdt.Year(), resdt.Month(), resdt.Day(), resdt.Hour(), resdt.Minute(), resdt.Second())
@@ -269,7 +267,6 @@ func atsendProcess(group_no string, user_id string) {
 				resCode = "0000"
 				resMessage = ""
 			} 
-			config.Stdlog.Println("3")
 			
 			resinsStrs = append(resinsStrs, "("+atQmarkStr+")")
 			resinsValues = append(resinsValues, result["msgid"])
@@ -344,7 +341,6 @@ func atsendProcess(group_no string, user_id string) {
 			resinsValues = append(resinsValues, result["price"])
 			resinsValues = append(resinsValues, result["currency_type"])
 			resinsValues = append(resinsValues, result["title"])
-			config.Stdlog.Println("3")
 
 			//Center에서도 사용하고 있는 함수이므로 공용 라이브러리 생성이 필요함
 			if len(resinsStrs) >= 500 {
@@ -362,7 +358,6 @@ func atsendProcess(group_no string, user_id string) {
 	if len(resinsStrs) > 0 {
 		resinsStrs, resinsValues = cm.InsMsg(resinsquery, resinsStrs, resinsValues)
 	}
-	config.Stdlog.Println("4")
 
 	//알림톡 발송 후 DHN_REQUEST_AT 테이블의 데이터는 제거한다.
 	db.Exec("delete from DHN_REQUEST_AT where send_group = '" + group_no + "'")
@@ -384,9 +379,7 @@ func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- resultStr, alimtalk kakao
 	if err != nil {
 		config.Stdlog.Println("알림톡 메시지 서버 호출 오류 : ", err)
 	} else {
-		config.Stdlog.Println(resp.StatusCode())
 		temp.Statuscode = resp.StatusCode()
-		config.Stdlog.Println(resp.Body())
 		temp.BodyData = resp.Body()
 	}
 	c <- temp

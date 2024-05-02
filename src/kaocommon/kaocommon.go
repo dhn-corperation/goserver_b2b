@@ -11,7 +11,7 @@ import(
 	"database/sql"
 )
 
-var errlog = config.Stdlog
+var errlog
 
 func init(){
 	
@@ -182,6 +182,7 @@ func GetQuestionMark(column []string) string {
 
 //테이블 insert 처리
 func InsMsg(query string, insStrs []string, insValues []interface{}) ([]string, []interface{}){
+	errlog = config.Stdlog
 	stmt := fmt.Sprintf(query, s.Join(insStrs, ","))
 	_, err := databasepool.DB.Exec(stmt, insValues...)
 
@@ -193,6 +194,7 @@ func InsMsg(query string, insStrs []string, insValues []interface{}) ([]string, 
 }
 
 func InsMsgTemp(query string, insStrs []string, insValues []interface{}, tempFlag bool, tempQuery string) ([]string, []interface{}){
+	errlog = config.Stdlog
 	stmt := fmt.Sprintf(query, s.Join(insStrs, ","))
 	_, err := databasepool.DB.Exec(stmt, insValues...)
 
@@ -213,7 +215,7 @@ func InsMsgTemp(query string, insStrs []string, insValues []interface{}, tempFla
 
 //AES 복호화
 func AES256GSMDecrypt(secretKey []byte, ciphertext_ string, nonce_ string) string {
-
+	errlog = config.Stdlog
 	ciphertext, _ := convertByte(ciphertext_)
 	nonce, _ := convertByte(nonce_)
 
