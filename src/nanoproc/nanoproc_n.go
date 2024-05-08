@@ -158,8 +158,10 @@ func resProcess_N(group_no string, user_id string) {
 						res_dt, 
 						(case when reserve_dt = '00000000000000'  then 
 								now()
-							when reserve_dt is null  then 
+							when reserve_dt is null  then
 								now()
+							when length(trim(reserve_dt)) < 4  then 
+	        					now()
 							else
 								STR_TO_DATE(reserve_dt, '%Y%m%d%H%i%S')
 						end) as  reserve_dt, 

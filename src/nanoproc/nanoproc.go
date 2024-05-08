@@ -167,12 +167,15 @@ func resProcess(ctx context.Context, group_no string, user_id string, tail int) 
 		convert(REMOVE_WS(sms_lms_tit) using euckr) as sms_lms_tit, 
 		sms_kind, 
 		sms_sender,
-		(case when reserve_dt = '00000000000000'  then 
+		(case
+			when reserve_dt = '00000000000000'  then 
 		        now()
-		      when reserve_dt is null  then 
+		    when reserve_dt is null  then 
 		        now()
-		      else
-		         STR_TO_DATE(reserve_dt, '%Y%m%d%H%i%S')
+		    when length(trim(reserve_dt)) < 4  then 
+	        	now()
+		    else
+		        STR_TO_DATE(reserve_dt, '%Y%m%d%H%i%S')
 	     end) as  reserve_dt, 
 		(select file1_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file1, 
 		(select file2_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file2, 
