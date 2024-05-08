@@ -106,7 +106,7 @@ LIMIT 500
 	`
 	_, err = tx.Query(gudQuery)
 	if err != nil {
-		config.Stdlog.Println(user_id, "-", "Group NO Update - Select error : ( " + group_no + " ) : " + err.Error())
+		config.Stdlog.Println(user_id, "-", "Group NO Update - Select error : ( "+group_no+" ) : "+err.Error())
 		config.Stdlog.Println(gudQuery)
 		return err
 	}
@@ -158,6 +158,8 @@ func resProcess(group_no string, user_id string) {
 	(case when reserve_dt = '00000000000000'  then 
 	        now()
 	      when reserve_dt is null  then 
+	        now()
+		  when length(trim(reserve_dt)) < 4  then 
 	        now()
 	      else
 	         STR_TO_DATE(reserve_dt, '%Y%m%d%H%i%S')
