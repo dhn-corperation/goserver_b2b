@@ -309,23 +309,23 @@ func resultProc() {
 		allCtxC["nanosms"] = nscancel
 		allService["nanosms"] = "nano_result_SMS"
 
-		if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
+		// if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
 
-			nlctxG, nlcancelG := context.WithCancel(context.Background())
+		nlctxG, nlcancelG := context.WithCancel(context.Background())
 
-			go nanoproc.NanoLMSProcess(nlctxG, true)
+		go nanoproc.NanoLMSProcess(nlctxG, true)
 
-			allCtxC["nanolmsG"] = nlcancelG
-			allService["nanolmsG"] = "nano_result_LMS_G"
+		allCtxC["nanolmsG"] = nlcancelG
+		allService["nanolmsG"] = "nano_result_LMS_G"
 
-			nsctxG, nscancelG := context.WithCancel(context.Background())
+		nsctxG, nscancelG := context.WithCancel(context.Background())
 
-			go nanoproc.NanoSMSProcess(nsctxG, true)
+		go nanoproc.NanoSMSProcess(nsctxG, true)
 
-			allCtxC["nanosmsG"] = nscancelG
-			allService["nanosmsG"] = "nano_result_SMS_G"
+		allCtxC["nanosmsG"] = nscancelG
+		allService["nanosmsG"] = "nano_result_SMS_G"
 
-		}
+		// }
 	}
 	//-----------------------------nano 실행 끝
 

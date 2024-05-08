@@ -16,7 +16,7 @@ import (
 
 var procCnt int
 
-func NanoProcess(user_id string, ctx context.Context) {
+func NanoProcess(user_id string, ctx context.Context, gFlag int) {
 	config.Stdlog.Println(user_id, " Nano request Process 시작 됨.")
 	procCnt = 0
 
@@ -40,8 +40,19 @@ func NanoProcess(user_id string, ctx context.Context) {
 					result = 'P'
 					and send_group is null
 					and (reserve_dt IS NULL OR to_timestamp(coalesce(reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW())
-				 	and userid = $1
-				limit 1`
+				 	and userid = $1 `
+				subQuery := ""
+				tail := ""
+				switch gFlag {
+				case 2:	// 전화번호 010 일때만
+					subQuery = " and sms_sender like '010%' "
+					tail = "_G"
+				case 3: // 전화번호 010 아닌 것들
+					subQuery = " and and sms_sender not like '010%' "
+					tail = "_G"
+				}
+				tickSql = tickSql + subQuery + ` limit 1`
+
 				cnterr := databasepool.DB.QueryRowContext(ctx, tickSql, user_id).Scan(&count)
 
 				if cnterr != nil && cnterr != sql.ErrNoRows {
@@ -53,13 +64,13 @@ func NanoProcess(user_id string, ctx context.Context) {
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%02d%06d", startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), (startNow.Nanosecond() / 1000))
 
-						upError := updateReqeust(ctx, group_no, user_id)
+						upError := updateReqeust(ctx, group_no, user_id, subQuery)
 						if upError != nil {
 							config.Stdlog.Println(user_id, " nanoproc.go / NanoProcess / Nano Group No Update 오류", group_no)
 						} else {
 							config.Stdlog.Println(user_id, " nanoproc.go / NanoProcess / 문자 발송 처리 시작 ( ", group_no, " )")
 							procCnt++
-							go resProcess(ctx, group_no, user_id)
+							go resProcess(ctx, group_no, user_id, tail)
 						}
 					}
 				}
@@ -68,7 +79,7 @@ func NanoProcess(user_id string, ctx context.Context) {
 	}
 }
 
-func updateReqeust(ctx context.Context, group_no string, user_id string) error {
+func updateReqeust(ctx context.Context, group_no string, user_id string, subQuery string) error {
 
 	tx, err := databasepool.DB.Begin()
 	if err != nil {
@@ -76,7 +87,6 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 	}
 
 	defer func() error {
-		//config.Stdlog.Println("Group No Update End", group_no)
 		if err != nil {
 			tx.Rollback()
 			return err
@@ -88,18 +98,29 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 	config.Stdlog.Println(user_id, "- Nano Group No Update 시작", group_no)
 
 	gudQuery := `
-	update	DHN_RESULT dr
-	set	send_group = '` + group_no + `'
-	where result = 'P'
-	  and send_group is null
-	  and ifnull(reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
-	  and userid = '` + user_id + `'
-	LIMIT 500`
+	update
+		DHN_RESULT dr
+	set
+		send_group = $1
+	where
+		result = 'P'
+	  	and send_group is null
+	  	and (dr.reserve_dt IS NULL OR to_timestamp(coalesce(dr.reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW())
+	  	and userid = $2 `
 
-	_, err = tx.Query(gudQuery)
+	gudQuery = gudQuery + subQuery + ` LIMIT 500`
+
+	_, err = tx.ExecContext(ctx, gudQuery, group_no, user_id)
 
 	if err != nil {
-		config.Stdlog.Println(user_id, "-", "Group NO Update - Select error : ( " + group_no + " ) : " + err.Error())
+		config.Stdlog.Println("nanoproc.go / updateReqeust / ", user_id, "- Group NO Update - Select error : ( group_no : ", group_no, " / user_id : ", user_id, " ) error : ", err)
+		config.Stdlog.Println(gudQuery)
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		config.Stdlog.Println("nanoproc.go / updateReqeust / ", user_id, "- Group No Update - Commit error : ( group_no : ", group_no, " / user_id : ", user_id, " ) error : ", err)
 		config.Stdlog.Println(gudQuery)
 		return err
 	}
@@ -107,7 +128,7 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 	return nil
 }
 
-func resProcess(ctx context.Context, group_no string, user_id string) {
+func resProcess(ctx context.Context, group_no string, user_id string, tail int) {
 	//defer wg.Done()
 
 	procCnt++
@@ -117,11 +138,11 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	defer func() {
 		if err := recover(); err != nil {
 			procCnt--
-			stdlog.Println(user_id, "-", group_no, " Nano 문자 처리 중 오류 발생 : ", err)
+			stdlog.Println("nanoproc.go / resProcess / ", user_id, "-", group_no, " recover() Nano 문자 처리 중 오류 발생 : ", err)
 		}
 	}()
 
-	var msgid, code, message, message_type, msg_sms, phn, remark1, remark2, result, sms_lms_tit, sms_kind, sms_sender, res_dt, reserve_dt, mms_file1, mms_file2, mms_file3, userid, sms_len_check sql.NullString
+	var msgid, msg_sms, phn, sms_lms_tit, sms_kind, sms_sender, reserve_dt, mms_file1, mms_file2, mms_file3, userid, sms_len_check sql.NullString
 	var msgLen sql.NullInt64
 	var phnstr string
 
@@ -131,24 +152,21 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	osmmsStrs := []string{}
 	osmmsValues := []interface{}{}
 
+
+	//TODO : REMOVE_WS 프로시저를 제작 할 필요성이 있음. oshotproc.go 도 마찬가지로 변경이 필요함
+
 	var resquery = `
-	SELECT msgid, 
-		code, 
-		message, 
-		message_type, 
+	SELECT 
+		msgid,
 		(case when sms_kind = 'S' then 
 			substr(convert(REMOVE_WS(msg_sms) using euckr),1,100)
 		 else 
 		   convert(REMOVE_WS(msg_sms) using euckr)
 	     end) as msg_sms, 
-		phn, 
-		remark1, 
-		remark2,
-		result, 
+		phn,
 		convert(REMOVE_WS(sms_lms_tit) using euckr) as sms_lms_tit, 
 		sms_kind, 
-		sms_sender, 
-		res_dt, 
+		sms_sender,
 		(case when reserve_dt = '00000000000000'  then 
 		        now()
 		      when reserve_dt is null  then 
@@ -163,13 +181,11 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 		,userid
 		,(select max(sms_len_check) from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as sms_len_check 
 	FROM DHN_RESULT drr 
-	WHERE send_group = '` + group_no + `' 
+	WHERE send_group = $1
 	    and result = 'P'
-        and userid = '` + user_id + `'
-	order by userid
-	`
+        and userid = $2`
 
-	resrows, err := db.Query(resquery)
+	resrows, err := db.QueryContext(ctx, resquery, group_no, user_id)
 
 	if err != nil {
 		stdlog.Println("Result Table 조회 중 오류 발생")
@@ -186,7 +202,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	preOshot := ""
 
 	for resrows.Next() {
-		resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check)
+		resrows.Scan(&msgid, &msg_sms, &phn, &sms_lms_tit, &sms_kind, &sms_sender, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check)
 
 		phnstr = phn.String
 

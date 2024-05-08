@@ -88,25 +88,28 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 	config.Stdlog.Println("oshotproc.go / ", user_id, "- 스마트미 Group No Update 시작", group_no)
 
 	gudQuery := `
-	update DHN_RESULT dr
-	set	send_group = $1
-	where result = 'P'
-	  and send_group is null
-	  and (dr.reserve_dt IS NULL OR to_timestamp(coalesce(dr.reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW())
-	  and userid = $2
+	update
+		DHN_RESULT dr
+	set
+		send_group = $1
+	where 
+		result = 'P'
+	  	and send_group is null
+	  	and (dr.reserve_dt IS NULL OR to_timestamp(coalesce(dr.reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW())
+	  	and userid = $2
 	LIMIT 500
 	`
 	_, err = tx.ExecContext(ctx, gudQuery, group_no, user_id)
 
 	if err != nil {
-		config.Stdlog.Println("oshotproc.go / updateReqeust / ", user_id, "- Group No Update - Select error : ( group_no : ", group_no, " / user_id : ", user_id, " ) : ", err)
+		config.Stdlog.Println("oshotproc.go / updateReqeust / ", user_id, "- Group No Update - Select error : ( group_no : ", group_no, " / user_id : ", user_id, " ) error : ", err)
 		config.Stdlog.Println(gudQuery)
 		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		config.Stdlog.Println("oshotproc.go / updateReqeust / ", user_id, "- Group No Update - Commit error : ( group_no : ", group_no, " / user_id : ", user_id, " ) : ", err)
+		config.Stdlog.Println("oshotproc.go / updateReqeust / ", user_id, "- Group No Update - Commit error : ( group_no : ", group_no, " / user_id : ", user_id, " ) error : ", err)
 		config.Stdlog.Println(gudQuery)
 		return err
 	}
@@ -122,7 +125,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	defer func() {
 		if err := recover(); err != nil {
 			procCnt--
-			stdlog.Println("oshotproc.go / resProcess / ", user_id, "- ", group_no, "recover() Oshot 처리 중 오류 발생 : ", err)
+			stdlog.Println("oshotproc.go / resProcess / ", user_id, "- ", group_no, " recover() Oshot 처리 중 오류 발생 : ", err)
 		}
 	}()
 
@@ -135,27 +138,25 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	SELECT
 	    msgid,
 	    CASE WHEN sms_kind = 'S' THEN 
-	        SUBSTRING(trim(msg_sms), 1, 100)
+	        SUBSTRING(REMOVE_WS(msg_sms), 1, 100)
 	    ELSE 
-	        trim(msg_sms)
+	        REMOVE_WS(msg_sms)
 	    END AS msg_sms, 
 	    phn,
-	    trim(sms_lms_tit) AS sms_lms_tit, 
+	    REMOVE_WS(sms_lms_tit) AS sms_lms_tit, 
 	    sms_kind, 
 	    sms_sender,
 	    (SELECT file1_path FROM api_mms_images aa WHERE aa.user_id = drr.userid AND aa.mms_id = drr.p_invoice) AS mms_file1, 
 	    (SELECT file2_path FROM api_mms_images aa WHERE aa.user_id = drr.userid AND aa.mms_id = drr.p_invoice) AS mms_file2, 
 	    (SELECT file3_path FROM api_mms_images aa WHERE aa.user_id = drr.userid AND aa.mms_id = drr.p_invoice) AS mms_file3,
-	    CASE WHEN sms_kind = 'S' THEN LENGTH(trim(msg_sms)) ELSE 100 END AS msg_len,
+	    CASE WHEN sms_kind = 'S' THEN LENGTH(REMOVE_WS(msg_sms)) ELSE 100 END AS msg_len,
 	    userid,
 	    (SELECT MAX(sms_len_check) FROM DHN_CLIENT_LIST dcl WHERE dcl.user_id = drr.userid) AS sms_len_check,
 	    (SELECT lower(MAX(dest)) FROM DHN_CLIENT_LIST dcl WHERE dcl.user_id = drr.userid) AS oshot  
 	FROM DHN_RESULT drr 
 	WHERE send_group = $1
 	  AND result = 'P'
-	  AND userid = $2
-	ORDER BY userid
-	`
+	  AND userid = $2`
 
 	resrows, err := db.QueryContext(ctx, resquery, group_no, user_id)
 
