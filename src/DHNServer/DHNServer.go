@@ -514,12 +514,36 @@ Command :
 			c.String(200, uid+"이미 실행 중입니다.")
 		} else {
 			nanoUser[uid] = uid
+			var ci sql.NullString
+
+			err := databasepool.DB.QueryRow(`
+			select
+				distinct b.ic
+			from DHN_CLIENT_LIST dcl
+			left join (
+				select a.user_id, max(a.dest) as dest
+				from dhn_client_list a
+				group by a.user_id
+			) a on dcl.user_id = a.user_id
+			left join (
+				select a.user_id, max(a.identification_code) as ic
+				from dhn_client_list a
+				group by a.user_id
+			) b on dcl.user_id = b.user_id
+			where dcl.use_flag = 'Y'
+			and a.dest ilike 'nano%'
+			and dcl.user_id = '`+uid+`'`).Scan(&ci)
+			if err != nil && err != sql.ErrNoRows {
+				config.Stdlog.Println("API : /nrun - select 오류 및 row 없음 : " + cnterr.Error())
+				c.String(200, uid+" 오류 및 row 없음")
+				return
+			} 
 
 			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "N") { // 기본
 				ctx, cancel := context.WithCancel(context.Background())
 				ctx = context.WithValue(ctx, "user_id", uid)
 
-				go nanoproc.NanoProcess(uid, ctx)
+				go nanoproc.NanoProcess(uid, ci.String, ctx, 1)
 
 				nanoCtxC[uid] = cancel
 
@@ -533,8 +557,8 @@ Command :
 				ctxN, cancelN := context.WithCancel(context.Background())
 				ctxN = context.WithValue(ctxN, "user_id", uid)
 
-				go nanoproc.NanoProcess_Y(uid, ctxY) // 010으로 시작하는 번호
-				go nanoproc.NanoProcess_N(uid, ctxN) // 010이 아닌 번호
+				go nanoproc.NanoProcess(uid, ci.String, ctxY, 2) // 010으로 시작하는 번호
+				go nanoproc.NanoProcess(uid, ci.String, ctxN, 3) // 010이 아닌 번호
 
 				nanoCtxC[uid+"_Y"] = cancelY
 				allCtxC["NN"+uid+"_Y"] = cancelY
