@@ -227,7 +227,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, tail strin
 			if s.EqualFold(sms_kind.String, "S") {
 
 				if msgLen.Int64 <= 90 || s.EqualFold(sms_len_check.String, "N") {
-					smsValues = append(smsValues, kaocommon.NanoSMSReqColumn{
+					smsValues = append(smsValues, kaocommon.NanoReqColumn{
 						CALLBACK : sms_sender.String,
 						PHONE : phnstr,
 						MSG : msg_sms.String,
@@ -259,7 +259,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, tail strin
 					filecnt = filecnt + 1
 				}
 
-				mmsValues = append(mmsValues, kaocommon.NanoMMSReqColumn{
+				mmsValues = append(mmsValues, kaocommon.NanoReqColumn{
 					CALLBACK : sms_sender.String,
 					PHONE : phnstr,
 					SUBJECT : sms_lms_tit.String,
