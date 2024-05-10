@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 
-	//"sync"
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
 
@@ -16,7 +15,7 @@ import (
 
 var procCnt int
 
-func NanoProcess(user_id string, ctx context.Context, gFlag int) {
+func NanoProcess(user_id string, ci string, ctx context.Context, gFlag int) {
 	config.Stdlog.Println(user_id, " Nano request Process 시작 됨.")
 	procCnt = 0
 
@@ -48,7 +47,7 @@ func NanoProcess(user_id string, ctx context.Context, gFlag int) {
 					subQuery = " and sms_sender like '010%' "
 					tail = "_G"
 				case 3: // 전화번호 010 아닌 것들
-					subQuery = " and and sms_sender not like '010%' "
+					subQuery = " and sms_sender not like '010%' "
 					tail = "_G"
 				}
 				tickSql = tickSql + subQuery + ` limit 1`
@@ -70,7 +69,7 @@ func NanoProcess(user_id string, ctx context.Context, gFlag int) {
 						} else {
 							config.Stdlog.Println(user_id, " nanoproc.go / NanoProcess / 문자 발송 처리 시작 ( ", group_no, " )")
 							procCnt++
-							go resProcess(ctx, group_no, user_id, tail)
+							go resProcess(ctx, group_no, user_id, tail, ci)
 						}
 					}
 				}
@@ -128,9 +127,7 @@ func updateReqeust(ctx context.Context, group_no string, user_id string, subQuer
 	return nil
 }
 
-func resProcess(ctx context.Context, group_no string, user_id string, tail int) {
-	//defer wg.Done()
-
+func resProcess(ctx context.Context, group_no string, user_id string, tail string, ci string) {
 	procCnt++
 	var db = databasepool.DB
 	var stdlog = config.Stdlog
@@ -151,9 +148,6 @@ func resProcess(ctx context.Context, group_no string, user_id string, tail int) 
 
 	osmmsStrs := []string{}
 	osmmsValues := []interface{}{}
-
-
-	//TODO : REMOVE_WS 프로시저를 제작 할 필요성이 있음. oshotproc.go 도 마찬가지로 변경이 필요함
 
 	var resquery = `
 	SELECT 
@@ -191,18 +185,21 @@ func resProcess(ctx context.Context, group_no string, user_id string, tail int) 
 	resrows, err := db.QueryContext(ctx, resquery, group_no, user_id)
 
 	if err != nil {
-		stdlog.Println("Result Table 조회 중 오류 발생")
+		stdlog.Println("nanoproc.go / resProcess / Result Table 조회 중 오류 발생")
 		stdlog.Println(err)
 		stdlog.Println(resquery)
 	}
 	defer resrows.Close()
+
+	smsValues := []kaocommon.NanoReqColumn{}
+	mmsValues := []kaocommon.NanoReqColumn{}
+
 	scnt := 0
 	fcnt := 0
 	smscnt := 0
 	lmscnt := 0
 	tcnt := 0
 	reg, err := regexp.Compile("[^0-9]+")
-	preOshot := ""
 
 	for resrows.Next() {
 		resrows.Scan(&msgid, &msg_sms, &phn, &sms_lms_tit, &sms_kind, &sms_sender, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check)
@@ -210,70 +207,22 @@ func resProcess(ctx context.Context, group_no string, user_id string, tail int) 
 		phnstr = phn.String
 
 		if tcnt == 0 {
-			stdlog.Println(user_id, "-", group_no, "문자발송 처리 시작 : ", " Process cnt : ", procCnt)
+			stdlog.Println("nanoproc.go / resProcess / ", user_id, "-", group_no, "문자발송 처리 시작 : ", " Process cnt : ", procCnt)
 		}
 
 		tcnt++
 
-		if len(ossmsStrs) > 500 {
-			stmt := fmt.Sprintf("insert into SMS_MSG(TR_CALLBACK,TR_PHONE,TR_MSG,TR_SENDDATE,TR_SENDSTAT,TR_MSGTYPE,TR_ETC9,TR_ETC10,TR_IDENTIFICATION_CODE,TR_ETC8) values %s", s.Join(ossmsStrs, ","))
-			_, err := db.Exec(stmt, ossmsValues...)
-
-			if err != nil {
-				//stdlog.Println("Nano SMS Table Insert 처리 중 오류 발생 " + err.Error())
-				for i := 0; i < len(ossmsValues); i = i + 8 {
-					eQuery := fmt.Sprintf("insert into SMS_MSG(TR_CALLBACK,TR_PHONE,TR_MSG,TR_SENDDATE,TR_SENDSTAT,TR_MSGTYPE,TR_ETC9,TR_ETC10,TR_IDENTIFICATION_CODE,TR_ETC8) "+
-						"values('%v','%v','%v','%v', '%v', '%v','%v', '%v', 'Y')", ossmsValues[i], ossmsValues[i+1], ossmsValues[i+2], ossmsValues[i+3], ossmsValues[i+4], ossmsValues[i+5], ossmsValues[i+6], ossmsValues[i+7], ossmsValues[i+8])
-					_, err := db.Exec(eQuery)
-					if err != nil {
-						msgKey := fmt.Sprintf("%v", ossmsValues[i+6])
-						useridt := fmt.Sprintf("%v", ossmsValues[i+7])
-						stdlog.Println(user_id, "- Nano SMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
-						errcodemsg := err.Error()
-						if s.Index(errcodemsg, "1366") > 0 {
-							db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and  msgid = '" + msgKey + "'")
-						}
-					}
-				}
-				//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = date_format(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
-			} else {
-				stdlog.Println(user_id, "- Nano SMS Table Insert 처리 : ", len(ossmsStrs), " - ", preOshot)
-			}
-			ossmsStrs = nil
-			ossmsValues = nil
+		if len(smsValues) > 500 {
+			insertNanoReqData(smsValues, "sms_msg" + tail)
+			smsValues = []kaocommon.NanoReqColumn{}
 		}
 
-		if len(osmmsStrs) > 500 {
-			stmt := fmt.Sprintf("insert into MMS_MSG(CALLBACK,PHONE,SUBJECT,MSG,REQDATE,STATUS,FILE_CNT,FILE_PATH1,FILE_PATH2,FILE_PATH3,ETC9,ETC10,IDENTIFICATION_CODE,ETC8) values %s", s.Join(osmmsStrs, ","))
-			_, err := db.Exec(stmt, osmmsValues...)
-
-			if err != nil {
-				//stdlog.Println("Nano SMS Table Insert 처리 중 오류 발생 " + err.Error())
-				for i := 0; i < len(osmmsValues); i = i + 12 {
-					eQuery := fmt.Sprintf("insert into MMS_MSG(CALLBACK,PHONE,SUBJECT,MSG,REQDATE,STATUS,FILE_CNT,FILE_PATH1,FILE_PATH2,FILE_PATH3,ETC9,ETC10,IDENTIFICATION_CODE,ETC8) "+
-						"values('%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','Y')", osmmsValues[i], osmmsValues[i+1], osmmsValues[i+2], osmmsValues[i+3], osmmsValues[i+4], osmmsValues[i+5], osmmsValues[i+6], osmmsValues[i+7], osmmsValues[i+8], osmmsValues[i+9], osmmsValues[i+10], osmmsValues[i+11], osmmsValues[i+12])
-					_, err := db.Exec(eQuery)
-					if err != nil {
-						msgKey := fmt.Sprintf("%v", osmmsValues[i+10])
-						useridt := fmt.Sprintf("%v", osmmsValues[i+11])
-						stdlog.Println(user_id, "- Nano LMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
-						errcodemsg := err.Error()
-						if s.Index(errcodemsg, "1366") > 0 {
-							db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and msgid = '" + msgKey + "'")
-						}
-					}
-				}
-				//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = date_format(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
-			} else {
-				stdlog.Println(user_id, "- Nano MMS Table Insert 처리 : ", len(osmmsStrs), " - ", preOshot)
-			}
-			osmmsStrs = nil
-			osmmsValues = nil
+		if len(mmsValues) > 500 {
+			insertNanoReqData(mmsValues, "mms_msg" + tail)
+			mmsValues = []kaocommon.NanoReqColumn{}
 		}
 
-		// 알림톡 발송 성공 혹은 문자 발송이 아니면
-		// API_RESULT 성공 처리 함.
-		if len(msg_sms.String) > 0 && len(sms_sender.String) > 0 { // msg_sms 가 와 sms_sender 에 값이 있으면 Oshot 발송 함.
+		if len(msg_sms.String) > 0 && len(sms_sender.String) > 0 { // msg_sms 와 sms_sender 에 값이 있으면 nano 발송 함.
 
 			phnstr = reg.ReplaceAllString(phnstr, "")
 			if s.HasPrefix(phnstr, "82") {
@@ -283,17 +232,18 @@ func resProcess(ctx context.Context, group_no string, user_id string, tail int) 
 			if s.EqualFold(sms_kind.String, "S") {
 
 				if msgLen.Int64 <= 90 || s.EqualFold(sms_len_check.String, "N") {
-
-					ossmsStrs = append(ossmsStrs, "(?,?,?,?,?,?,?,?,?,'Y')")
-					ossmsValues = append(ossmsValues, sms_sender.String)
-					ossmsValues = append(ossmsValues, phnstr)
-					ossmsValues = append(ossmsValues, msg_sms.String)
-					ossmsValues = append(ossmsValues, reserve_dt.String)
-					ossmsValues = append(ossmsValues, "0")
-					ossmsValues = append(ossmsValues, "0")
-					ossmsValues = append(ossmsValues, msgid.String)
-					ossmsValues = append(ossmsValues, userid.String)
-					ossmsValues = append(ossmsValues, config.Conf.NANO_IDENTI_CODE)
+					smsValues = append(smsValues, kaocommon.NanoSMSReqColumn{
+						CALLBACK : sms_sender.String,
+						PHONE : phnstr,
+						MSG : msg_sms.String,
+						TR_SENDDATE : reserve_dt.String,
+						TR_SENDSTAT : "0",
+						TR_MSGTYPE : "0",
+						ETC9 : msgid.String,
+						ETC10 : userid.String,
+						IDENTIFICATION_CODE : ci,
+						ETC8 : "Y",
+					})
 					smscnt++
 				} else {
 					db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code = '7003', dr.message = '메세지 길이 오류', dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + userid.String + "' and msgid = '" + msgid.String + "'")
@@ -314,22 +264,22 @@ func resProcess(ctx context.Context, group_no string, user_id string, tail int) 
 					filecnt = filecnt + 1
 				}
 
-				osmmsStrs = append(osmmsStrs, "( ?,?,?,?,?,?,?,?,?,?,?,?,?,'Y')")
-
-				osmmsValues = append(osmmsValues, sms_sender.String)
-				osmmsValues = append(osmmsValues, phnstr)
-				osmmsValues = append(osmmsValues, sms_lms_tit.String)
-				osmmsValues = append(osmmsValues, msg_sms.String)
-				osmmsValues = append(osmmsValues, reserve_dt.String)
-				osmmsValues = append(osmmsValues, "0")
-				osmmsValues = append(osmmsValues, filecnt)
-				osmmsValues = append(osmmsValues, mms_file1.String)
-				osmmsValues = append(osmmsValues, mms_file2.String)
-				osmmsValues = append(osmmsValues, mms_file3.String)
-
-				osmmsValues = append(osmmsValues, msgid.String)
-				osmmsValues = append(osmmsValues, userid.String)
-				osmmsValues = append(osmmsValues, config.Conf.NANO_IDENTI_CODE)
+				mmsValues = append(mmsValues, kaocommon.NanoMMSReqColumn{
+					CALLBACK : sms_sender.String,
+					PHONE : phnstr,
+					SUBJECT : sms_lms_tit.String,
+					MSG : msg_sms.String,
+					REQDATE : reserve_dt.String,
+					STATUS : "0",
+					FILE_CNT : filecnt,
+					FILE_PATH1 : mms_file1.String,
+					FILE_PATH2 : mms_file2.String,
+					FILE_PATH3 : mms_file3.String,
+					ETC9 : msgid.String,
+					ETC10 : userid.String,
+					IDENTIFICATION_CODE : ci,
+					ETC8 : "Y",
+				})
 				lmscnt++
 			}
 
@@ -339,63 +289,123 @@ func resProcess(ctx context.Context, group_no string, user_id string, tail int) 
 
 	}
 
-	if len(ossmsStrs) > 0 {
-		stmt := fmt.Sprintf("insert into SMS_MSG(TR_CALLBACK,TR_PHONE,TR_MSG,TR_SENDDATE,TR_SENDSTAT,TR_MSGTYPE,TR_ETC9,TR_ETC10,TR_IDENTIFICATION_CODE,TR_ETC8) values %s", s.Join(ossmsStrs, ","))
-		_, err := db.Exec(stmt, ossmsValues...)
+	if len(smsValues) > 0 {
+		insertNanoReqData(smsValues, "sms_msg" + tail)
+	}
 
-		if err != nil {
-			//stdlog.Println("Nano SMS Table Insert 처리 중 오류 발생 " + err.Error())
-			for i := 0; i < len(ossmsValues); i = i + 8 {
-				eQuery := fmt.Sprintf("insert into SMS_MSG(TR_CALLBACK,TR_PHONE,TR_MSG,TR_SENDDATE,TR_SENDSTAT,TR_MSGTYPE,TR_ETC9,TR_ETC10,TR_IDENTIFICATION_CODE,TR_ETC8) "+
-					"values('%v','%v','%v','%v', '%v', '%v','%v', '%v', 'Y')", ossmsValues[i], ossmsValues[i+1], ossmsValues[i+2], ossmsValues[i+3], ossmsValues[i+4], ossmsValues[i+5], ossmsValues[i+6], ossmsValues[i+7], ossmsValues[i+8])
-				_, err := db.Exec(eQuery)
-				if err != nil {
-					msgKey := fmt.Sprintf("%v", ossmsValues[i+6])
-					useridt := fmt.Sprintf("%v", ossmsValues[i+7])
-					stdlog.Println(user_id, "- Nano SMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
-					errcodemsg := err.Error()
-					if s.Index(errcodemsg, "1366") > 0 {
-						db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and  msgid = '" + msgKey + "'")
-					}
-				}
-			}
-			//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = date_format(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
-		} else {
-			stdlog.Println(user_id, "- Nano SMS Table Insert 처리 : ", len(ossmsStrs), " - ", preOshot)
-		}
+	if len(mmsValues) > 0 {
+		insertNanoReqData(mmsValues, "mms_msg" + tail)
 
 	}
 
-	if len(osmmsStrs) > 0 {
-		stmt := fmt.Sprintf("insert into MMS_MSG(CALLBACK,PHONE,SUBJECT,MSG,REQDATE,STATUS,FILE_CNT,FILE_PATH1,FILE_PATH2,FILE_PATH3,ETC9,ETC10,IDENTIFICATION_CODE,ETC8) values %s", s.Join(osmmsStrs, ","))
-		_, err := db.Exec(stmt, osmmsValues...)
-
-		if err != nil {
-			//stdlog.Println("Nano SMS Table Insert 처리 중 오류 발생 " + err.Error())
-			for i := 0; i < len(osmmsValues); i = i + 12 {
-				eQuery := fmt.Sprintf("insert into MMS_MSG(CALLBACK,PHONE,SUBJECT,MSG,REQDATE,STATUS,FILE_CNT,FILE_PATH1,FILE_PATH2,FILE_PATH3,ETC9,ETC10,IDENTIFICATION_CODE,ETC8) "+
-					"values('%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','Y')", osmmsValues[i], osmmsValues[i+1], osmmsValues[i+2], osmmsValues[i+3], osmmsValues[i+4], osmmsValues[i+5], osmmsValues[i+6], osmmsValues[i+7], osmmsValues[i+8], osmmsValues[i+9], osmmsValues[i+10], osmmsValues[i+11], osmmsValues[i+12])
-				_, err := db.Exec(eQuery)
-				if err != nil {
-					msgKey := fmt.Sprintf("%v", osmmsValues[i+10])
-					useridt := fmt.Sprintf("%v", osmmsValues[i+11])
-					stdlog.Println(user_id, "- Nano LMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
-					errcodemsg := err.Error()
-					if s.Index(errcodemsg, "1366") > 0 {
-						db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and msgid = '" + msgKey + "'")
-					}
-				}
-			}
-			//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = date_format(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
-		} else {
-			stdlog.Println(user_id, "- Nano MMS Table Insert 처리 : ", len(osmmsStrs), " - ", preOshot)
-		}
-
-	}
-
-	if scnt > 0 || smscnt > 0 || lmscnt > 0 || fcnt > 0 {
-		stdlog.Println(user_id, "-", group_no, "문자 발송 처리 완료 ( ", tcnt, " ) : 성공 -", scnt, " , SMS -", smscnt, " , LMS -", lmscnt, "실패 - ", fcnt, "  >> Process cnt : ", procCnt)
+	if smscnt > 0 || lmscnt > 0 {
+		stdlog.Println("nanoproc.go / resProcess / ", user_id, "-", group_no, "문자 발송 처리 완료 ( ", tcnt, " ) : SMS -", smscnt, " , LMS -", lmscnt, "  >> Process cnt : ", procCnt)
 	}
 	procCnt--
 }
+
+func insertNanoReqData(msgValues []kaocommon.NanoReqColumn, tableName string) {
+	tx, err := databasepool.DB.Begin()
+	if err != nil {
+		config.Stdlog.Println("nanoproc.go / insertNanoReqData / ", tableName, " / 트랜젝션 초기화 실패 ", err)
+	}
+	defer tx.Rollback()
+
+	tableName = s.ToLower(tableName)
+
+	var stmt *sql.Stmt
+	var stmtSql string
+
+	if s.Contains(tableName, "sms") {
+		stmtSql = "insert into "+tableName+"(tr_callback,tr_phone,tr_msg,tr_senddate,tr_sendstat,tr_msgtype,tr_etc9,tr_etc10,tr_identification_code,tr_etc8) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
+		stmt, err = tx.Prepare(stmtSql)
+		if err != nil {
+			config.Stdlog.Println("nanoproc.go / insertNanoReqData / ", tableName, "/ stmt 초기화 실패 ", err)
+			return
+		}
+
+		for _, data := range msgValues {
+			_, err = stmt.Exec(data.CALLBACK, data.PHONE, data.MSG, data.TR_SENDDATE, data.TR_SENDSTAT, data.TR_MSGTYPE, data.ETC9, data.ETC10, data.IDENTIFICATION_CODE, data.ETC8)
+			if err != nil {
+				config.Stdlog.Println("nanoproc.go / insertNanoReqData / ", tableName," / stmt personal Exec ", err)
+			}
+		}
+	} else if s.Contains(tableName, "mms") {
+		stmtSql = "insert into "+tableName+"(callback,phone,subject,msg,reqdate,status,file_cnt,file_path1,file_path2,file_path3,etc9,etc10,identification_code,etc8) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)"
+		stmt, err := tx.Prepare(stmtSql)
+		if err != nil {
+			config.Stdlog.Println("nanoproc.go / insertNanoReqData / ", tableName, "/ stmt 초기화 실패 ", err)
+			return
+		}
+
+		for _, data := range msgValues {
+			_, err = stmt.Exec(data.CALLBACK, data.PHONE, data.SUBJECT, data.MSG, data.REQDATE, data.STATUS, data.FILE_CNT, data.FILE_PATH1, data.FILE_PATH2, data.FILE_PATH3, data.ETC9, data.ETC10, data.IDENTIFICATION_CODE, data.ETC8)
+			if err != nil {
+				config.Stdlog.Println("nanoproc.go / insertNanoReqData / ", tableName," / stmt personal Exec ", err)
+			}
+		}
+	}
+	
+	
+	stmt.Close()
+	err = tx.Commit()
+
+	if err != nil {
+		if s.Contains(tableName, "sms") {
+			for _, data := range msgValues {
+				_, err = databasepool.DB.Exec(stmtSql, data.CALLBACK, data.PHONE, data.MSG, data.TR_SENDDATE, data.TR_SENDSTAT, data.TR_MSGTYPE, data.ETC9, data.ETC10, data.IDENTIFICATION_CODE, data.ETC8)
+				if err != nil {
+					checkErr(err, data.ETC9, data.ETC10, tableName)
+				}
+			}
+		} else if s.Contains(tableName, "mms") {
+			for _, data := range msgValues {
+				_, err = databasepool.DB.Exec(stmtSql, data.CALLBACK, data.PHONE, data.SUBJECT, data.MSG, data.REQDATE, data.STATUS, data.FILE_CNT, data.FILE_PATH1, data.FILE_PATH2, data.FILE_PATH3, data.ETC9, data.ETC10, data.IDENTIFICATION_CODE, data.ETC8)
+				if err != nil {
+					checkErr(err, data.ETC9, data.ETC10, tableName)
+				}
+			}
+		}
+	} else {
+		config.Stdlog.Println(msgValues[0].ETC10, "- 나노 MMS Table Insert 처리 : ", len(msgValues), " - ", tableName)
+	}
+}
+
+func checkErr(err error, cbMsgId string, userId string, tableName string){
+	config.Stdlog.Println("nanoproc.go / insertNanoReqData / ", tableName, " / stmt commit ", err)
+	config.Stdlog.Println(userId, "- 나노 ", tableName, " Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", cbMsgId)
+	errcodemsg := err.Error()
+	if s.Index(errcodemsg, "invalid byte sequence") > 0 {
+		databasepool.DB.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = TO_CHAR(now(), 'YYYY-MM-DD H:i:s') where userid = $1 and msgid = $2", userId, cbMsgId)
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

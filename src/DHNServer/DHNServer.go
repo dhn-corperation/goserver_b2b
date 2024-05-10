@@ -239,13 +239,18 @@ func resultProc() {
 	nanoCtxC := map[string]interface{}{}
 
 	nanoUserList, error := databasepool.DB.Query(`
-		select distinct dcl.user_id
+		select distinct dcl.user_id, b.ic
 		from DHN_CLIENT_LIST dcl
 		left join (
 			select a.user_id, max(a.dest) as dest
 			from dhn_client_list a
 			group by a.user_id
 		) a on dcl.user_id = a.user_id
+		left join (
+			select a.user_id, max(a.identification_code) as ic
+			from dhn_client_list a
+			group by a.user_id
+		) b on dcl.user_id = b.user_id
 		where dcl.use_flag = 'Y'
 		and a.dest ilike 'nano%'`)
 
@@ -258,15 +263,16 @@ func resultProc() {
 
 	if isNano {
 		var user_id sql.NullString
+		var ci sql.NullString
 
 		for nanoUserList.Next() {
-			nanoUserList.Scan(&user_id)
+			nanoUserList.Scan(&user_id, &ci)
 
 			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "N") { // 기본
 				ctx, cancel := context.WithCancel(context.Background())
 				ctx = context.WithValue(ctx, "user_id", user_id.String)
 
-				go nanoproc.NanoProcess(user_id.String, ctx)
+				go nanoproc.NanoProcess(user_id.String, ci.String, ctx, 1)
 
 				nanoCtxC[user_id.String] = cancel
 				allCtxC["NN"+user_id.String] = cancel
@@ -279,8 +285,8 @@ func resultProc() {
 				ctxN, cancelN := context.WithCancel(context.Background())
 				ctxN = context.WithValue(ctxN, "user_id", user_id.String)
 
-				go nanoproc.NanoProcess_Y(user_id.String, ctxY) // 010으로 시작하는 번호
-				go nanoproc.NanoProcess_N(user_id.String, ctxN) // 010이 아닌 번호
+				go nanoproc.NanoProcess(user_id.String, ci.String, ctxY, 2) // 010으로 시작하는 번호
+				go nanoproc.NanoProcess(user_id.String, ci.String, ctxN, 3) // 010이 아닌 번호
 
 				nanoCtxC[user_id.String+"_Y"] = cancelY
 				allCtxC["NN"+user_id.String+"_Y"] = cancelY

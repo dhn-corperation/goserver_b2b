@@ -302,3 +302,36 @@ type OshotReqColumn struct {
 	CbMsgId string
 	UserId string
 }
+
+type NanoReqColumn struct {
+	CALLBACK string
+	PHONE string
+	SUBJECT string
+	MSG string
+	REQDATE string
+	TR_SENDDATE string
+	TR_SENDSTAT string
+	TR_MSGTYPE string
+	STATUS string
+	FILE_CNT string
+	FILE_PATH1 string
+	FILE_PATH2 string
+	FILE_PATH3 string
+	ETC9 string
+	ETC10 string
+	IDENTIFICATION_CODE string
+	ETC8 string
+}
+
+type NanoSMSReqColumn struct {
+	TR_CALLBACK string
+	TR_PHONE string
+	TR_MSG string
+	TR_SENDDATE string
+	TR_SENDSTAT string
+	TR_MSGTYPE string
+	TR_ETC9 string
+	TR_ETC10 string
+	TR_IDENTIFICATION_CODE string
+	TR_ETC8 string
+}

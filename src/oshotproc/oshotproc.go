@@ -331,7 +331,7 @@ func checkErr(err error, cbMsgId string, userId string, tableName string){
 	config.Stdlog.Println("oshotproc.go / insertOshotReqData / ", tableName, " / stmt commit ", err)
 	config.Stdlog.Println(userId, "- 스마트미 ", tableName, " Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", cbMsgId)
 	errcodemsg := err.Error()
-	if s.Index(errcodemsg, "1366") > 0 {
+	if s.Index(errcodemsg, "invalid byte sequence") > 0 {
 		databasepool.DB.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = TO_CHAR(now(), 'YYYY-MM-DD H:i:s') where userid = $1 and msgid = $2", userId, cbMsgId)
 	}
 }

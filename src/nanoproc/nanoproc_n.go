@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 
-	//"sync"
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
 
@@ -12,10 +11,6 @@ import (
 	s "strings"
 	"time"
 
-	//"bytes"
-	//iconv "github.com/djimenez/iconv-go"
-	//"golang.org/x/text/encoding/korean"
-	//"golang.org/x/text/transform"
 	"context"
 )
 
