@@ -6,6 +6,7 @@ import (
 
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
+	"mycs/src/kaocommon"
 
 	"regexp"
 	s "strings"
@@ -58,7 +59,7 @@ func NanoProcess(user_id string, ci string, ctx context.Context, gFlag int) {
 					config.Stdlog.Println("nanoproc.go / NanoProcess / DHN_RESULT Table - select 오류 : " + cnterr.Error())
 				} else {
 
-					if count > 0 {
+					if count.Int64 > 0 {
 
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%02d%06d", startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), (startNow.Nanosecond() / 1000))
@@ -142,12 +143,6 @@ func resProcess(ctx context.Context, group_no string, user_id string, tail strin
 	var msgid, msg_sms, phn, sms_lms_tit, sms_kind, sms_sender, reserve_dt, mms_file1, mms_file2, mms_file3, userid, sms_len_check sql.NullString
 	var msgLen sql.NullInt64
 	var phnstr string
-
-	ossmsStrs := []string{}
-	ossmsValues := []interface{}{}
-
-	osmmsStrs := []string{}
-	osmmsValues := []interface{}{}
 
 	var resquery = `
 	SELECT 
