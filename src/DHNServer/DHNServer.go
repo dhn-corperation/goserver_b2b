@@ -534,7 +534,7 @@ Command :
 			and a.dest ilike 'nano%'
 			and dcl.user_id = '`+uid+`'`).Scan(&ci)
 			if err != nil && err != sql.ErrNoRows {
-				config.Stdlog.Println("API : /nrun - select 오류 및 row 없음 : " + cnterr.Error())
+				config.Stdlog.Println("API : /nrun - select 오류 및 row 없음 : " + err.Error())
 				c.String(200, uid+" 오류 및 row 없음")
 				return
 			} 
