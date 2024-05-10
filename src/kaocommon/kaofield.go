@@ -313,7 +313,7 @@ type NanoReqColumn struct {
 	TR_SENDSTAT string
 	TR_MSGTYPE string
 	STATUS string
-	FILE_CNT string
+	FILE_CNT int
 	FILE_PATH1 string
 	FILE_PATH2 string
 	FILE_PATH3 string

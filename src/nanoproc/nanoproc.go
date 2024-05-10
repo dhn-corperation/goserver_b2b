@@ -189,8 +189,6 @@ func resProcess(ctx context.Context, group_no string, user_id string, tail strin
 	smsValues := []kaocommon.NanoReqColumn{}
 	mmsValues := []kaocommon.NanoReqColumn{}
 
-	scnt := 0
-	fcnt := 0
 	smscnt := 0
 	lmscnt := 0
 	tcnt := 0
