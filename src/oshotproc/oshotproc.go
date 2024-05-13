@@ -254,8 +254,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 			osmmsStrs = nil
 			osmmsValues = nil
 		}
-		stdlog.Println(msg_sms.String)
-		stdlog.Println(sms_sender.String)
+		
 		// 알림톡 발송 성공 혹은 문자 발송이 아니면
 		// API_RESULT 성공 처리 함.
 		if len(msg_sms.String) > 0 && len(sms_sender.String) > 0 { // msg_sms 가 와 sms_sender 에 값이 있으면 Oshot 발송 함.
@@ -263,7 +262,6 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 			if s.HasPrefix(phnstr, "82") {
 				phnstr = "0" + phnstr[2:len(phnstr)]
 			}
-			stdlog.Println("1")
 			if s.EqualFold(sms_kind.String, "S") {
 				//smsmsg := utf8TOeuckr(stringSplit(msg_sms.String, 100))
 				if msgLen.Int64 <= 90 || s.EqualFold(sms_len_check.String, "N") {
