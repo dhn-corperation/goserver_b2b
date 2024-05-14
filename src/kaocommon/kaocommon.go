@@ -254,6 +254,8 @@ func InitConverter(){
 
 	var ohc, ds sql.NullString	
 
+	config.StrSpecialMap = make(map[string]string)
+	
 	for res.Next() {
 		dss := ""
 		res.Scan(&ohc, &ds)
