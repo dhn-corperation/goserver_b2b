@@ -253,7 +253,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	}
 
 	if len(mmsValues) > 0 {
-		insertOshotReqData(mmsValues, preOshot+"sms")
+		insertOshotReqData(mmsValues, preOshot+"mms")
 	}
 
 	if smscnt > 0 || lmscnt > 0 {
