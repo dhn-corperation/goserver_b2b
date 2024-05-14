@@ -342,9 +342,9 @@ func insertNanoReqData(msgValues []kaocommon.NanoReqColumn, tableName string) {
 		}
 	}
 	
-	stmt.Close()
+	defer stmt.Close()
 	err = tx.Commit()
-	config.Stdlog.Println(err)
+	
 	if err != nil {
 		if s.Contains(tableName, "sms") {
 			for _, data := range msgValues {
