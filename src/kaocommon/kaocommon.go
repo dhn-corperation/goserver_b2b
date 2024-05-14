@@ -11,6 +11,7 @@ import(
 	"database/sql"
 	"reflect"
 	"unicode/utf8"
+	"encoding/hex"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/text/encoding/korean"
@@ -234,4 +235,39 @@ func Utf8TOeuckr(str string) (string, error) {
         return "", err
     }
     return encodedBytes, nil
+}
+
+func InitConverter(){
+	db := databasepool.DB
+	res, err := db.Query(`
+		select *
+		from special_character
+		where enabled = 'Y'
+	`)
+
+	if err != nil {
+		config.Stdlog.Println("kaocommon.go / InitConverter / special_character Table 조회 중 오류 발생")
+		return
+	}
+
+	defer res.Close()
+
+	var ohc, ds sql.NullString	
+
+	for res.Next() {
+		dss := ""
+		res.Scan(&ohc, &ds)
+		if ds.Valid {
+			dss = ds.String
+		}
+		config.StrSpecialMap[ohc.String] = dss
+	}
+}
+
+func RemoveSpecialChar(str string) (string, error) {
+	for k, v := range config.StrSpecialMap {
+		dohc, _ := hex.DecodeString(k)
+		str = s.ReplaceAll(str, string(dohc), v)
+	}
+	return Utf8TOeuckr(str)
 }

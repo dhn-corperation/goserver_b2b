@@ -47,6 +47,7 @@ var GoClient *http.Client = &http.Client{
 		TLSHandshakeTimeout: 10 * time.Second,
 	},
 }
+var StrSpecialMap map[string]string
 
 func InitConfig() {
 	realpath, _ := os.Executable()
