@@ -89,16 +89,18 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 
 	gudQuery := `
 	update
-		DHN_RESULT dr
+		dhn_result dr
 	set
 		send_group = $1
-	where 
-		result = 'P'
+	where (msgid, userid) in (
+		select msgid, userid
+		from dhn_result dr
+		where result = 'P'
 	  	and send_group is null
 	  	and (dr.reserve_dt IS NULL OR to_timestamp(coalesce(dr.reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW())
 	  	and userid = $2
-	LIMIT 500
-	`
+	  	limit 500
+	)`
 	_, err = tx.ExecContext(ctx, gudQuery, group_no, user_id)
 
 	if err != nil {

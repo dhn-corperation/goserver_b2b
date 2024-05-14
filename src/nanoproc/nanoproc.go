@@ -102,11 +102,15 @@ func updateReqeust(ctx context.Context, group_no string, user_id string, subQuer
 		DHN_RESULT dr
 	set
 		send_group = $1
-	where
-		result = 'P'
+	where (msgid, userid) in (
+		select msgid, userid
+		from dhn_result dr
+		where result = 'P'
 	  	and send_group is null
 	  	and (dr.reserve_dt IS NULL OR to_timestamp(coalesce(dr.reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW())
-	  	and userid = $2 `
+	  	and userid = $2
+	  	limit 500
+	)`
 
 	gudQuery = gudQuery + subQuery + ` LIMIT 500`
 
