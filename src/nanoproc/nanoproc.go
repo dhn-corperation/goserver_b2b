@@ -321,6 +321,7 @@ func insertNanoReqData(msgValues []kaocommon.NanoReqColumn, tableName string) {
 		}
 
 		for _, data := range msgValues {
+			config.Stdlog.Println(data.MSG)
 			_, err = stmt.Exec(data.CALLBACK, data.PHONE, data.MSG, data.TR_SENDDATE, data.TR_SENDSTAT, data.TR_MSGTYPE, data.ETC9, data.ETC10, data.IDENTIFICATION_CODE, data.ETC8)
 			if err != nil {
 				config.Stdlog.Println("nanoproc.go / insertNanoReqData / ", tableName," / stmt personal Exec ", err)
