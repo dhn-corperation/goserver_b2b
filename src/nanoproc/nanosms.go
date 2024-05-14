@@ -96,7 +96,7 @@ func smsProcess(wg *sync.WaitGroup, tablename string, nsFlag bool, tail string) 
 
 	groupRows, err := db.Query(groupQuery)
 	if err != nil {
-		errlog.Println("Nano SMS" , tail, " 조회 중 오류 발생")
+		errlog.Println("Nano SMS" , tail, " 조회 중 오류 발생", groupQuery, errcode)
 		errcode := err.Error()
 
 		if s.Index(errcode, "relation") > 0 {
