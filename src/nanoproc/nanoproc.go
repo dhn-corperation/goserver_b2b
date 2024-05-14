@@ -163,7 +163,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, tail strin
 		    when length(trim(reserve_dt)) < 4  then 
 	        	now()
 		    else
-		        STR_TO_DATE(reserve_dt, '%Y%m%d%H%i%S')
+		        to_timestamp(reserve_dt, 'YYYYMMDDHH24MISS')
 	     end) as  reserve_dt, 
 		(select file1_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file1, 
 		(select file2_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file2, 
