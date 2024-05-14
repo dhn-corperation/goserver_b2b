@@ -255,7 +255,7 @@ func InitConverter(){
 	var ohc, ds sql.NullString	
 
 	config.StrSpecialMap = make(map[string]string)
-	
+
 	for res.Next() {
 		dss := ""
 		res.Scan(&ohc, &ds)
@@ -271,5 +271,5 @@ func RemoveSpecialChar(str string) (string, error) {
 		dohc, _ := hex.DecodeString(k)
 		str = s.ReplaceAll(str, string(dohc), v)
 	}
-	return Utf8TOeuckr(str)
+	return str
 }
