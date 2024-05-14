@@ -266,7 +266,7 @@ func InitConverter(){
 	}
 }
 
-func RemoveSpecialChar(str string) (string, error) {
+func RemoveSpecialChar(str string) string {
 	for k, v := range config.StrSpecialMap {
 		dohc, _ := hex.DecodeString(k)
 		str = s.ReplaceAll(str, string(dohc), v)

@@ -205,7 +205,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 				phnstr = "0" + phnstr[2:len(phnstr)]
 			}
 
-			ms, _ := kaocommon.RemoveSpecialChar(msg_sms.String)
+			ms := kaocommon.RemoveSpecialChar(msg_sms.String)
 			ml := len(ms)
 
 			if s.EqualFold(sms_kind.String, "S") {
@@ -225,7 +225,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 				}
 			} else if s.EqualFold(sms_kind.String, "L") || s.EqualFold(sms_kind.String, "M") {
 				ml = 100
-				slt, _ := kaocommon.RemoveSpecialChar(sms_lms_tit.String)
+				slt := kaocommon.RemoveSpecialChar(sms_lms_tit.String)
 				mmsValues = append(smsValues, kaocommon.OshotReqColumn{
 					MsgGroupID : group_no,
 					Sender : sms_sender.String,

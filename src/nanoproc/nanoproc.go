@@ -220,7 +220,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, tail strin
 				phnstr = "0" + phnstr[2:len(phnstr)]
 			}
 
-			ms, _ := kaocommon.RemoveSpecialChar(msg_sms.String)
+			ms := kaocommon.RemoveSpecialChar(msg_sms.String)
 			ml := len(ms)
 
 			if s.EqualFold(sms_kind.String, "S") {
@@ -258,7 +258,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, tail strin
 					filecnt = filecnt + 1
 				}
 
-				slt, _ := kaocommon.RemoveSpecialChar(sms_lms_tit.String)
+				slt := kaocommon.RemoveSpecialChar(sms_lms_tit.String)
 
 				mmsValues = append(mmsValues, kaocommon.NanoReqColumn{
 					CALLBACK : sms_sender.String,
