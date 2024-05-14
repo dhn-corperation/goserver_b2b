@@ -327,7 +327,6 @@ func insertNanoReqData(msgValues []kaocommon.NanoReqColumn, tableName string) {
 			}
 		}
 	} else if s.Contains(tableName, "mms") {
-		config.Stdlog.Println("0")
 		stmtSql = "insert into "+tableName+"(callback,phone,subject,msg,reqdate,status,file_cnt,file_path1,file_path2,file_path3,etc9,etc10,identification_code,etc8) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)"
 		stmt, err := tx.Prepare(stmtSql)
 		if err != nil {
@@ -336,7 +335,20 @@ func insertNanoReqData(msgValues []kaocommon.NanoReqColumn, tableName string) {
 		}
 
 		for _, data := range msgValues {
-			config.Stdlog.Println("1")
+			config.Stdlog.Println(data.CALLBACK)
+			config.Stdlog.Println(data.PHONE)
+			config.Stdlog.Println(data.SUBJECT)
+			config.Stdlog.Println(data.MSG)
+			config.Stdlog.Println(data.REQDATE)
+			config.Stdlog.Println(data.STATUS)
+			config.Stdlog.Println(data.FILE_CNT)
+			config.Stdlog.Println(data.FILE_PATH1)
+			config.Stdlog.Println(data.FILE_PATH2)
+			config.Stdlog.Println(data.FILE_PATH3)
+			config.Stdlog.Println(data.ETC9)
+			config.Stdlog.Println(data.ETC10)
+			config.Stdlog.Println(data.IDENTIFICATION_CODE)
+			config.Stdlog.Println(data.ETC8)
 			_, err = stmt.Exec(data.CALLBACK, data.PHONE, data.SUBJECT, data.MSG, data.REQDATE, data.STATUS, data.FILE_CNT, data.FILE_PATH1, data.FILE_PATH2, data.FILE_PATH3, data.ETC9, data.ETC10, data.IDENTIFICATION_CODE, data.ETC8)
 			if err != nil {
 				config.Stdlog.Println("nanoproc.go / insertNanoReqData / ", tableName," / stmt personal Exec ", err)
@@ -344,10 +356,8 @@ func insertNanoReqData(msgValues []kaocommon.NanoReqColumn, tableName string) {
 		}
 	}
 	
-	config.Stdlog.Println("2")
 	stmt.Close()
 	err = tx.Commit()
-	config.Stdlog.Println("3")
 	if err != nil {
 		if s.Contains(tableName, "sms") {
 			for _, data := range msgValues {
