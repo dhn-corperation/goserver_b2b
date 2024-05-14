@@ -9,6 +9,7 @@ import (
 
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
+	"mycs/src/kaocommon"
 
 	"mycs/src/kaosendrequest"
 	"mycs/src/nanoproc"
@@ -81,6 +82,8 @@ func main() {
 	config.InitConfig()
 
 	databasepool.InitDatabase()
+
+	kaocommon.InitConverter()
 
 	var rLimit syscall.Rlimit
 

@@ -131,25 +131,19 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 
 	// var msgid, code, message, message_type, msg_sms, phn, remark1, remark2, result, sms_lms_tit, sms_kind, sms_sender, res_dt, reserve_dt, mms_file1, mms_file2, mms_file3, userid, sms_len_check, oshot sql.NullString
 	var msgid, msg_sms, phn, sms_lms_tit, sms_kind, sms_sender, mms_file1, mms_file2, mms_file3, userid, sms_len_check, oshot sql.NullString
-	var msgLen sql.NullInt64
 	var phnstr string
 
 	var resquery = `
 	SELECT
 	    msgid,
-	    CASE WHEN sms_kind = 'S' THEN 
-	        SUBSTRING(REMOVE_WS(msg_sms), 1, 100)
-	    ELSE 
-	        REMOVE_WS(msg_sms)
-	    END AS msg_sms, 
+	    msg_sms, 
 	    phn,
-	    REMOVE_WS(sms_lms_tit) AS sms_lms_tit, 
+	    sms_lms_tit, 
 	    sms_kind, 
 	    sms_sender,
 	    (SELECT file1_path FROM api_mms_images aa WHERE aa.user_id = drr.userid AND aa.mms_id = drr.p_invoice) AS mms_file1, 
 	    (SELECT file2_path FROM api_mms_images aa WHERE aa.user_id = drr.userid AND aa.mms_id = drr.p_invoice) AS mms_file2, 
 	    (SELECT file3_path FROM api_mms_images aa WHERE aa.user_id = drr.userid AND aa.mms_id = drr.p_invoice) AS mms_file3,
-	    CASE WHEN sms_kind = 'S' THEN LENGTH(REMOVE_WS(msg_sms)) ELSE 100 END AS msg_len,
 	    userid,
 	    (SELECT MAX(sms_len_check) FROM DHN_CLIENT_LIST dcl WHERE dcl.user_id = drr.userid) AS sms_len_check,
 	    (SELECT lower(MAX(dest)) FROM DHN_CLIENT_LIST dcl WHERE dcl.user_id = drr.userid) AS oshot  
@@ -179,7 +173,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 
 	for resrows.Next() {
 		// resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check, &oshot)
-		resrows.Scan(&msgid, &msg_sms, &phn, &sms_lms_tit, &sms_kind, &sms_sender, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check, &oshot)
+		resrows.Scan(&msgid, &msg_sms, &phn, &sms_lms_tit, &sms_kind, &sms_sender, &mms_file1, &mms_file2, &mms_file3, &userid, &sms_len_check, &oshot)
 
 		phnstr = phn.String
 
@@ -209,12 +203,16 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 				phnstr = "0" + phnstr[2:len(phnstr)]
 			}
 
+			ms, _ := kaocommon.RemoveSpecialChar(msg_sms.String)
+			ml := len(ms)
+
 			if s.EqualFold(sms_kind.String, "S") {
-				if msgLen.Int64 <= 90 || s.EqualFold(sms_len_check.String, "N") {
+				ms = ms[1:100]
+				if ml <= 90 || s.EqualFold(sms_len_check.String, "N") {
 					smsValues = append(smsValues, kaocommon.OshotReqColumn{
 						Sender : sms_sender.String,
 						Receiver : phnstr,
-						Msg : msg_sms.String,
+						Msg :  ms,
 						Url : "",
 						CbMsgId : msgid.String,
 						UserId : userid.String,
@@ -224,12 +222,14 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 					db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code = '7003', dr.message = '메세지 길이 오류', dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + userid.String + "' and msgid = '" + msgid.String + "'")
 				}
 			} else if s.EqualFold(sms_kind.String, "L") || s.EqualFold(sms_kind.String, "M") {
+				ml = 100
+				slt, _ := kaocommon.RemoveSpecialChar(sms_lms_tit.String)
 				mmsValues = append(smsValues, kaocommon.OshotReqColumn{
 					MsgGroupID : group_no,
 					Sender : sms_sender.String,
 					Receiver : phnstr,
-					Subject : sms_lms_tit.String,
-					Msg : msg_sms.String,
+					Subject : slt,
+					Msg : ms,
 					FilePath1 : mms_file1.String,
 					FilePath2 : mms_file2.String,
 					FilePath3 : mms_file3.String,
