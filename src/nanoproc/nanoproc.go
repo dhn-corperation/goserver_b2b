@@ -355,6 +355,7 @@ func insertNanoReqData(msgValues []kaocommon.NanoReqColumn, tableName string) {
 				}
 			}
 		} else if s.Contains(tableName, "mms") {
+			config.Stdlog.Println("1")
 			for _, data := range msgValues {
 				_, err = databasepool.DB.Exec(stmtSql, data.CALLBACK, data.PHONE, data.SUBJECT, data.MSG, data.REQDATE, data.STATUS, data.FILE_CNT, data.FILE_PATH1, data.FILE_PATH2, data.FILE_PATH3, data.ETC9, data.ETC10, data.IDENTIFICATION_CODE, data.ETC8)
 				if err != nil {
@@ -368,6 +369,7 @@ func insertNanoReqData(msgValues []kaocommon.NanoReqColumn, tableName string) {
 }
 
 func checkErr(err error, cbMsgId string, userId string, tableName string){
+	config.Stdlog.Println("2")
 	config.Stdlog.Println("nanoproc.go / insertNanoReqData / ", tableName, " / stmt commit ", err)
 	config.Stdlog.Println(userId, "- 나노 ", tableName, " Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", cbMsgId)
 	errcodemsg := err.Error()
