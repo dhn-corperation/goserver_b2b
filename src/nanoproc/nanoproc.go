@@ -112,7 +112,7 @@ func updateReqeust(ctx context.Context, group_no string, user_id string, subQuer
 	  	limit 500
 	)`
 
-	gudQuery = gudQuery + subQuery + ` LIMIT 500`
+	gudQuery = gudQuery + subQuery
 
 	_, err = tx.ExecContext(ctx, gudQuery, group_no, user_id)
 
