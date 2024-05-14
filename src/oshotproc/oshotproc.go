@@ -305,7 +305,7 @@ func insertOshotReqData(msgValues []kaocommon.OshotReqColumn, tableName string) 
 	}
 	
 	
-	stmt.Close()
+	defer stmt.Close()
 	err = tx.Commit()
 
 	if err != nil {

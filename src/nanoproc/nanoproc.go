@@ -137,12 +137,12 @@ func resProcess(ctx context.Context, group_no string, user_id string, tail strin
 	var db = databasepool.DB
 	var stdlog = config.Stdlog
 
-	// defer func() {
-	// 	if err := recover(); err != nil {
-	// 		procCnt--
-	// 		stdlog.Println("nanoproc.go / resProcess / ", user_id, "-", group_no, " recover() Nano 문자 처리 중 오류 발생 : ", err)
-	// 	}
-	// }()
+	defer func() {
+		if err := recover(); err != nil {
+			procCnt--
+			stdlog.Println("nanoproc.go / resProcess / ", user_id, "-", group_no, " recover() Nano 문자 처리 중 오류 발생 : ", err)
+		}
+	}()
 
 	var msgid, msg_sms, phn, sms_lms_tit, sms_kind, sms_sender, reserve_dt, mms_file1, mms_file2, mms_file3, userid, sms_len_check sql.NullString
 	var phnstr string
