@@ -137,12 +137,12 @@ func resProcess(ctx context.Context, group_no string, user_id string, tail strin
 	var db = databasepool.DB
 	var stdlog = config.Stdlog
 
-	defer func() {
-		if err := recover(); err != nil {
-			procCnt--
-			stdlog.Println("nanoproc.go / resProcess / ", user_id, "-", group_no, " recover() Nano 문자 처리 중 오류 발생 : ", err)
-		}
-	}()
+	// defer func() {
+	// 	if err := recover(); err != nil {
+	// 		procCnt--
+	// 		stdlog.Println("nanoproc.go / resProcess / ", user_id, "-", group_no, " recover() Nano 문자 처리 중 오류 발생 : ", err)
+	// 	}
+	// }()
 
 	var msgid, msg_sms, phn, sms_lms_tit, sms_kind, sms_sender, reserve_dt, mms_file1, mms_file2, mms_file3, userid, sms_len_check sql.NullString
 	var phnstr string
@@ -335,20 +335,6 @@ func insertNanoReqData(msgValues []kaocommon.NanoReqColumn, tableName string) {
 		}
 
 		for _, data := range msgValues {
-			config.Stdlog.Println(data.CALLBACK)
-			config.Stdlog.Println(data.PHONE)
-			config.Stdlog.Println(data.SUBJECT)
-			config.Stdlog.Println(data.MSG)
-			config.Stdlog.Println(data.REQDATE)
-			config.Stdlog.Println(data.STATUS)
-			config.Stdlog.Println(data.FILE_CNT)
-			config.Stdlog.Println(data.FILE_PATH1)
-			config.Stdlog.Println(data.FILE_PATH2)
-			config.Stdlog.Println(data.FILE_PATH3)
-			config.Stdlog.Println(data.ETC9)
-			config.Stdlog.Println(data.ETC10)
-			config.Stdlog.Println(data.IDENTIFICATION_CODE)
-			config.Stdlog.Println(data.ETC8)
 			_, err = stmt.Exec(data.CALLBACK, data.PHONE, data.SUBJECT, data.MSG, data.REQDATE, data.STATUS, data.FILE_CNT, data.FILE_PATH1, data.FILE_PATH2, data.FILE_PATH3, data.ETC9, data.ETC10, data.IDENTIFICATION_CODE, data.ETC8)
 			if err != nil {
 				config.Stdlog.Println("nanoproc.go / insertNanoReqData / ", tableName," / stmt personal Exec ", err)
@@ -358,6 +344,7 @@ func insertNanoReqData(msgValues []kaocommon.NanoReqColumn, tableName string) {
 	
 	stmt.Close()
 	err = tx.Commit()
+	
 	if err != nil {
 		if s.Contains(tableName, "sms") {
 			for _, data := range msgValues {
