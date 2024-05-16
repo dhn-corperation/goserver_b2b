@@ -342,7 +342,6 @@ func insertNanoReqData(msgValues []kaocommon.NanoReqColumn, tableName string) {
 		}
 	}
 	
-	defer stmt.Close()
 	err = tx.Commit()
 	
 	if err != nil {
