@@ -281,7 +281,7 @@ func resultProc() {
 				allCtxC["NN"+user_id.String] = cancel
 				allService["NN"+user_id.String] = "nano_proc " + user_id.String
 			} else if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "YES") { // 콜비서
-
+				config.Stdlog.Println("여기 들어오긴 들어오냐 ?")
 				ctxY, cancelY := context.WithCancel(context.Background())
 				ctxY = context.WithValue(ctxY, "user_id", user_id.String)
 
