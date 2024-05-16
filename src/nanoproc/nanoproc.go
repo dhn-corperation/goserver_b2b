@@ -45,15 +45,13 @@ func NanoProcess(user_id string, ci string, ctx context.Context, gFlag int) {
 				tail := ""
 				switch gFlag {
 				case 2:	// 전화번호 010 일때만
-					subQuery = " and sms_sender like '010%' or sms_sender like '8210%' "
+					subQuery = " and (sms_sender like '010%' or sms_sender like '8210%') "
 					tail = "_G"
 				case 3: // 전화번호 010 아닌 것들
-					subQuery = " and sms_sender not like '010%' and sms_sender not like '8210%' "
+					subQuery = " and (sms_sender not like '010%' and sms_sender not like '8210%') "
 					tail = ""
 				}
 				tickSql = tickSql + subQuery + ` limit 1`
-
-				config.Stdlog.Println(tickSql)
 
 				cnterr := databasepool.DB.QueryRowContext(ctx, tickSql, user_id).Scan(&count)
 
