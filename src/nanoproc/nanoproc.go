@@ -49,7 +49,7 @@ func NanoProcess(user_id string, ci string, ctx context.Context, gFlag int) {
 					tail = "_G"
 				case 3: // 전화번호 010 아닌 것들
 					subQuery = " and sms_sender not like '010%' "
-					tail = "_G"
+					tail = ""
 				}
 				tickSql = tickSql + subQuery + ` limit 1`
 
