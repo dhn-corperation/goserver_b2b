@@ -53,7 +53,7 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 					if count.Valid && count.Int64 > 0 {		
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
-						updateRows, err := databasepool.DB.ExecContext(ctx, "update DHN_REQUEST_AT set send_group = '"+group_no+"' where id in (select id from dhn_request_at where send_group is null and (reserve_dt IS NULL OR to_timestamp(coalesce(reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW()) and userid = '"+user_id+"'  limit "+strconv.Itoa(config.Conf.SENDLIMIT)+")")
+						updateRows, err := databasepool.DB.ExecContext(ctx, "update DHN_REQUEST_AT set send_group = '"+group_no+"' where id in (select id from dhn_request_at where send_group is null and (reserve_dt IS NULL OR to_timestamp(coalesce(reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW()) and userid = '"+user_id+"'  limit "+strconv.Itoa(config.Conf.KAKAO_SENDLIMIT)+")")
 				
 						if err != nil {
 							config.Stdlog.Println(user_id,"alimtalk.go / 알림톡 send_group Update 오류 : ", err)
@@ -104,7 +104,7 @@ func atsendProcess(group_no string, user_id string) {
 	var startNow = time.Now()
 	var serial_number = fmt.Sprintf("%04d%02d%02d-", startNow.Year(), startNow.Month(), startNow.Day())
 
-	resultChan := make(chan resultStr, config.Conf.SENDLIMIT) // resultStr 은 friendtalk에 정의 됨
+	resultChan := make(chan resultStr, config.Conf.KAKAO_SENDLIMIT) // resultStr 은 friendtalk에 정의 됨
 	var reswg sync.WaitGroup
 
 	for reqrows.Next() {

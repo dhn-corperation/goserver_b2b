@@ -59,7 +59,7 @@ func FriendtalkProc(ctx context.Context) {
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
 				
-						updateRows, err := databasepool.DB.Exec("update DHN_REQUEST set send_group = '" + group_no + "' where id in (select id from dhn_request where send_group is null and (reserve_dt IS NULL OR to_timestamp(coalesce(reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW()) limit "+strconv.Itoa(config.Conf.SENDLIMIT)+")")
+						updateRows, err := databasepool.DB.Exec("update DHN_REQUEST set send_group = '" + group_no + "' where id in (select id from dhn_request where send_group is null and (reserve_dt IS NULL OR to_timestamp(coalesce(reserve_dt,'00000000000000'), 'YYYYMMDDHH24MISS') <= NOW()) limit "+strconv.Itoa(config.Conf.KAKAO_SENDLIMIT)+")")
 				
 						if err != nil {
 							config.Stdlog.Println("Request Table - send_group Update 오류")
@@ -110,7 +110,7 @@ func ftsendProcess(group_no string) {
 	var startNow = time.Now()
 	var serial_number = fmt.Sprintf("%04d%02d%02d-", startNow.Year(), startNow.Month(), startNow.Day())
 
-	resultChan := make(chan resultStr, config.Conf.SENDLIMIT)
+	resultChan := make(chan resultStr, config.Conf.KAKAO_SENDLIMIT)
 	var reswg sync.WaitGroup
 
 	for reqrows.Next() {

@@ -18,21 +18,25 @@ import (
 type Config struct {
 	DB               string
 	DBURL            string
-	PORT             string
+
+	CENTER_PORT      string
+
+	KAKAO_SENDLIMIT  int
 	SERVER_PORT      string
 	PROFILE_KEY      string
+	RESPONSE_METHOD  string
+	PHONE_MSG_FLAG   string
+	CHANNEL          string
+	DEBUG            string
+
 	API_SERVER       string
 	CENTER_SERVER    string
 	IMAGE_SERVER     string
-	CHANNEL          string
-	RESPONSE_METHOD  string
-	SENDLIMIT        int
-	PHONE_MSG_FLAG   string
-	NANO_MSG_FLAG    string
-	OTP_MSG_FLAG     string
-	DEBUG            string
+
 	NANO_IDENTI_CODE string
 	PHONE_TYPE_FLAG  string
+	
+	OTP_MSG_FLAG     string
 }
 
 var Conf Config
@@ -187,13 +191,26 @@ func createConfig(dirName string) error {
 		`DB = "DB종류"`,
 		`DBURL = "사용자:패스워드@tcp(000.000.000.000:포트번호)/데이터베이스"`,
 		``,
-		`# kakao Server`,
-		`PORT = "서버 포트번호"`,
+		`# CENTER 관련`,
+		`CENTER_PORT = "CENTER 포트번호"`,
+		``,
+		`# SERVER 관련`,
+		`KAKAO_SENDLIMIT = 500`,
+		`SERVER_PORT = "SERVER 포트번호"`,
 		`PROFILE_KEY = "프로필키"`,
+		`RESPONSE_METHOD = "push" (알림톡 전송방식 : push, polling)`,
+		`PHONE_MSG_FLAG = "YES (2차 발송 플래그(1차 발송이 알림톡, 친구톡 일 시))"`,
+		`CHANNEL = "채널명"`,
+		`DEBUG = "N" (친구톡 데이터 확인 플래그)`,
+		``,
+		`# 카카오 API URL`,
 		`API_SERVER = "https://bzm-api.kakao.com/"`,
 		`CENTER_SERVER = "https://bzm-center.kakao.com/"`,
 		`IMAGE_SERVER = "https://bzm-upload-api.kakao.com/"`,
-		`CHANNEL = "채널명"`,
+		``,
+		`# 나노 메시지`,
+		`NANO_IDENTI_CODE = "302190001" (default identification code)`,
+		`NANO_TYPE_FLAG = "N" (전화번호 별 분리 작업, 010이 붙은 것과 붙지 않은 것)`,
 		``,
 		`#추가할 설정 내용 필요에 따라 작성`,
 	}
