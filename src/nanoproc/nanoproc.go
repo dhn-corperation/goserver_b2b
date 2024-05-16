@@ -45,10 +45,10 @@ func NanoProcess(user_id string, ci string, ctx context.Context, gFlag int) {
 				tail := ""
 				switch gFlag {
 				case 2:	// 전화번호 010 일때만
-					subQuery = " and (sms_sender like '010%' or sms_sender like '8210%') "
+					subQuery = " and sms_sender like '010%' "
 					tail = "_G"
 				case 3: // 전화번호 010 아닌 것들
-					subQuery = " and (sms_sender not like '010%' and sms_sender not like '8210%') "
+					subQuery = " and sms_sender not like '010%' "
 					tail = ""
 				}
 				tickSql = tickSql + subQuery + ` limit 1`
@@ -112,8 +112,6 @@ func updateReqeust(ctx context.Context, group_no string, user_id string, subQuer
 	`
 
 	gudQuery = gudQuery + subQuery + ` limit 500) `
-
-	config.Stdlog.Println(gudQuery)
 
 	_, err = tx.ExecContext(ctx, gudQuery, group_no, user_id)
 
@@ -205,12 +203,12 @@ func resProcess(ctx context.Context, group_no string, user_id string, tail strin
 		tcnt++
 
 		if len(smsValues) > 500 {
-			insertNanoReqData(smsValues, "sms_msg" + tail)
+			insertNanoReqData(smsValues, "sms"+tail+"_msg")
 			smsValues = []kaocommon.NanoReqColumn{}
 		}
 
 		if len(mmsValues) > 500 {
-			insertNanoReqData(mmsValues, "mms_msg" + tail)
+			insertNanoReqData(mmsValues, "mms"+tail+"_msg" + tail)
 			mmsValues = []kaocommon.NanoReqColumn{}
 		}
 
@@ -287,11 +285,11 @@ func resProcess(ctx context.Context, group_no string, user_id string, tail strin
 	}
 
 	if len(smsValues) > 0 {
-		insertNanoReqData(smsValues, "sms_msg" + tail)
+		insertNanoReqData(smsValues, "sms"+tail+"_msg")
 	}
 
 	if len(mmsValues) > 0 {
-		insertNanoReqData(mmsValues, "mms_msg" + tail)
+		insertNanoReqData(mmsValues, "mms"+tail+"_msg")
 
 	}
 
