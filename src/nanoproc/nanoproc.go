@@ -53,6 +53,8 @@ func NanoProcess(user_id string, ci string, ctx context.Context, gFlag int) {
 				}
 				tickSql = tickSql + subQuery + ` limit 1`
 
+				config.Stdlog.Println(tickSql)
+
 				cnterr := databasepool.DB.QueryRowContext(ctx, tickSql, user_id).Scan(&count)
 
 				if cnterr != nil && cnterr != sql.ErrNoRows {
@@ -112,6 +114,8 @@ func updateReqeust(ctx context.Context, group_no string, user_id string, subQuer
 	`
 
 	gudQuery = gudQuery + subQuery + ` limit 500) `
+
+	config.Stdlog.Println(gudQuery)
 
 	_, err = tx.ExecContext(ctx, gudQuery, group_no, user_id)
 
