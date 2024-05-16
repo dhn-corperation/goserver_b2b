@@ -86,7 +86,6 @@ func main() {
 		config.Stdlog.Println(status, "\nError: ", err)
 		os.Exit(1)
 	}
-	resultProc()
 }
 
 func resultProc() {
