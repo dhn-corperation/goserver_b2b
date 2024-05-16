@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -86,6 +87,7 @@ func main() {
 		config.Stdlog.Println(status, "\nError: ", err)
 		os.Exit(1)
 	}
+	fmt.Println(status)
 }
 
 func resultProc() {
