@@ -209,7 +209,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 			ml := len(ms)
 
 			if s.EqualFold(sms_kind.String, "S") {
-				ms = []rune(ms)
+				ms = []rune(string(ms))
 				ms = string(ms[:100])
 				if ml <= 90 || s.EqualFold(sms_len_check.String, "N") {
 					smsValues = append(smsValues, kaocommon.OshotReqColumn{
