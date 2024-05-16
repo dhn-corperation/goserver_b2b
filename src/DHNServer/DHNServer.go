@@ -271,7 +271,7 @@ func resultProc() {
 		for nanoUserList.Next() {
 			nanoUserList.Scan(&user_id, &ci)
 
-			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "N") { // 기본
+			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "NO") { // 기본
 				ctx, cancel := context.WithCancel(context.Background())
 				ctx = context.WithValue(ctx, "user_id", user_id.String)
 
@@ -280,7 +280,7 @@ func resultProc() {
 				nanoCtxC[user_id.String] = cancel
 				allCtxC["NN"+user_id.String] = cancel
 				allService["NN"+user_id.String] = "nano_proc " + user_id.String
-			} else if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
+			} else if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "YES") { // 콜비서
 
 				ctxY, cancelY := context.WithCancel(context.Background())
 				ctxY = context.WithValue(ctxY, "user_id", user_id.String)
@@ -317,8 +317,6 @@ func resultProc() {
 
 		allCtxC["nanosms"] = nscancel
 		allService["nanosms"] = "nano_result_SMS"
-
-		// if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
 
 		nlctxG, nlcancelG := context.WithCancel(context.Background())
 
@@ -486,12 +484,12 @@ Command :
 			cancel := nanoCtxC[uid].(context.CancelFunc)
 			cancel()
 			delete(nanoUser, uid)
-			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "N") { // 기본
+			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "NO") { // 기본
 				delete(nanoCtxC, uid)
 
 				delete(allService, "NN"+uid)
 				delete(allCtxC, "NN"+uid)
-			} else if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
+			} else if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "YES") { // 콜비서
 				delete(nanoCtxC, uid+"_Y")
 				delete(nanoCtxC, uid+"_N")
 
@@ -542,7 +540,7 @@ Command :
 				return
 			} 
 
-			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "N") { // 기본
+			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "NO") { // 기본
 				ctx, cancel := context.WithCancel(context.Background())
 				ctx = context.WithValue(ctx, "user_id", uid)
 
@@ -552,7 +550,7 @@ Command :
 
 				allCtxC["NN"+uid] = cancel
 				allService["NN"+uid] = "NanoService " + uid
-			} else if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
+			} else if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "YES") { // 콜비서
 
 				ctxY, cancelY := context.WithCancel(context.Background())
 				ctxY = context.WithValue(ctxY, "user_id", uid)

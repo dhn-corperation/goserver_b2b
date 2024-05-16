@@ -270,7 +270,7 @@ func ftsendProcess(group_no string) {
 		}
 		friendtalk.Attachment = attache
 		
-		if s.EqualFold(conf.DEBUG,"Y") {
+		if s.EqualFold(conf.DEBUG,"YES") {
 		  	jsonstr, _ := json.Marshal(friendtalk)
 			stdlog.Println(string(jsonstr))
 		}
