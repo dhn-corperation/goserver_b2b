@@ -101,7 +101,8 @@ func ReqReceive(c *gin.Context) {
   header,
   carousel,
   att_items,
-  att_coupon      
+  att_coupon,
+  mms_img_id       
 ) values %s
 	`
 		atreqinsQuery := `insert IGNORE into DHN_REQUEST_AT(
@@ -142,7 +143,8 @@ func ReqReceive(c *gin.Context) {
   currency_type,
   title,
   header,
-  carousel      
+  carousel,
+  mms_img_id       
 ) values %s
 	`
 
@@ -191,7 +193,8 @@ supplement ,
 price ,
 currency_type,
 header,
-carousel      
+carousel,
+mms_img_id       
 ) values %s`
 
 		resinstempquery := `insert IGNORE into DHN_RESULT_TEMP(
@@ -237,7 +240,8 @@ supplement ,
 price ,
 currency_type,
 header,
-carousel      
+carousel,
+mms_img_id       
 ) values %s`
 
 		//fmt.Printf("%d 건 임.\n", len(msg))
@@ -245,7 +249,7 @@ carousel
 			//fmt.Println(msg[i])
 			if s.HasPrefix(s.ToUpper(msg[i].Messagetype), "F") {
 
-				reqinsStrs = append(reqinsStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+				reqinsStrs = append(reqinsStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 				reqinsValues = append(reqinsValues, msg[i].Msgid)
 				reqinsValues = append(reqinsValues, userid)
 				reqinsValues = append(reqinsValues, msg[i].Adflag)
@@ -292,6 +296,7 @@ carousel
 				reqinsValues = append(reqinsValues, msg[i].Carousel)
 				reqinsValues = append(reqinsValues, msg[i].Att_items)
 				reqinsValues = append(reqinsValues, msg[i].Att_coupon)
+				reqinsValues = append(reqinsValues, msg[i].Mms_img_id)
 			} else if s.EqualFold(msg[i].Messagetype, "PH") || s.EqualFold(msg[i].Messagetype, "OT") {
 				//fmt.Println(msg[i])
 				var resdt = time.Now()
@@ -300,7 +305,7 @@ carousel
 					resultStr = "O"
 				}
 				var resdtstr = fmt.Sprintf("%4d-%02d-%02d %02d:%02d:%02d", resdt.Year(), resdt.Month(), resdt.Day(), resdt.Hour(), resdt.Minute(), resdt.Second())
-				resinsStrs = append(resinsStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+				resinsStrs = append(resinsStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 				resinsValues = append(resinsValues, msg[i].Msgid)
 				resinsValues = append(resinsValues, userid)
 				resinsValues = append(resinsValues, msg[i].Adflag)
@@ -374,10 +379,11 @@ carousel
 				resinsValues = append(resinsValues, nil)
 				resinsValues = append(resinsValues, msg[i].Header)
 				resinsValues = append(resinsValues, msg[i].Carousel)
+				resinsValues = append(resinsValues, msg[i].Mms_img_id)
 
 			} else {
 
-				atreqinsStrs = append(atreqinsStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+				atreqinsStrs = append(atreqinsStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 				atreqinsValues = append(atreqinsValues, msg[i].Msgid)
 				atreqinsValues = append(atreqinsValues, userid)
 				atreqinsValues = append(atreqinsValues, msg[i].Adflag)
@@ -423,6 +429,7 @@ carousel
 				atreqinsValues = append(atreqinsValues, msg[i].Title)
 				atreqinsValues = append(atreqinsValues, msg[i].Header)
 				atreqinsValues = append(atreqinsValues, msg[i].Carousel)
+				atreqinsValues = append(atreqinsValues, msg[i].Mms_img_id)
 			}
 			if len(reqinsStrs) >= 500 {
 				stmt := fmt.Sprintf(reqinsQuery, s.Join(reqinsStrs, ","))

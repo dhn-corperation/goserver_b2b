@@ -42,4 +42,5 @@ type Reqtable struct {
 	Att_items    string `json:"att_items"`
 	Att_coupon   string `json:"att_coupon"`
 	Crypto       string `json:"crypto"`
+	Mms_img_id   string `json:"mmsimgid"`
 }

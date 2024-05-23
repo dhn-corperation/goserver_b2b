@@ -76,7 +76,7 @@ limit 1
 						//config.Stdlog.Println(group_no, " Update 끝 ", rowcnt)
 						upError := updateReqeust(group_no, user_id)
 						if upError != nil {
-							config.Stdlog.Println(user_id , "Group No Update 오류", group_no)
+							config.Stdlog.Println(user_id, "Group No Update 오류", group_no)
 						} else {
 							go resProcess(group_no, user_id)
 						}
@@ -140,7 +140,7 @@ LIMIT 500
 	_, err = tx.Query(gudQuery)
 
 	if err != nil {
-		config.Stdlog.Println(user_id, "- Group NO Update - Select error : ( " + group_no + " ) : " + err.Error())
+		config.Stdlog.Println(user_id, "- Group NO Update - Select error : ( "+group_no+" ) : "+err.Error())
 		config.Stdlog.Println(gudQuery)
 		return err
 	}
@@ -190,9 +190,9 @@ func resProcess(group_no string, user_id string) {
 	sms_sender, 
 	res_dt, 
 	reserve_dt, 
-	(select file1_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file1, 
-	(select file2_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file2, 
-	(select file3_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file3
+	(select file1_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.mms_img_id) as mms_file1, 
+	(select file2_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.mms_img_id) as mms_file2, 
+	(select file3_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.mms_img_id) as mms_file3
 	,(case when sms_kind = 'S' then length(convert(REMOVE_WS(msg_sms) using euckr)) else 100 end) as msg_len
 	,userid
 	,(select max(sms_len_check) from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as sms_len_check
