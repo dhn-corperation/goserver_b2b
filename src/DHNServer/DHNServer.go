@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 
@@ -125,6 +126,12 @@ func main() {
 
 func resultProc() {
 	config.Stdlog.Println("DHN Server 시작")
+
+	_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set pre_send_type = 0, pre_update_date = null")
+				
+	if err != nil {
+		config.Stdlog.Println("DHN_CLIENT_LIST의 pre_send_type, pre_update_date 컬럼 초기화 실패 : ", err)
+	}
 
 	allService := map[string]string{}
 	allCtxC := map[string]interface{}{}
@@ -366,6 +373,12 @@ Command :
 			delete(allService, "OS"+uid)
 			delete(allCtxC, "OS"+uid)
 			c.String(200, uid+" 종료 신호 전달 완료")
+
+			_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = NULL, pre_send_type = 1, pre_update_date = ? where user_id = ?", now.Format("2006-01-02 15:04:05"), uid)
+				
+			if err != nil {
+				config.Stdlog.Println(uid," /ostop 오샷 DHN_CLIENT_LIST 업데이트 실패 : ", err)
+			}
 		} else {
 			c.String(200, uid+"는 실행 중이지 않습니다.")
 		}
@@ -388,6 +401,12 @@ Command :
 
 			allCtxC["OS"+uid] = cancel
 			allService["OS"+uid] = uid
+
+			_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = 'OSHOT' where user_id = ?", uid)
+				
+			if err != nil {
+				config.Stdlog.Println(uid," /orun 오샷 DHN_CLIENT_LIST 업데이트 실패 : ", err)
+			}
 
 			c.String(200, uid+" 시작 신호 전달 완료")
 		}
@@ -414,6 +433,12 @@ Command :
 			delete(allService, "AL"+uid)
 			delete(allCtxC, "AL"+uid)
 
+			_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set alimtalk = 'N' where user_id = ?", uid)
+				
+			if err != nil {
+				config.Stdlog.Println(uid," /astop 알림톡 DHN_CLIENT_LIST 업데이트 실패 : ", err)
+			}
+
 			c.String(200, uid+" 종료 신호 전달 완료")
 		} else {
 			c.String(200, uid+"는 실행 중이지 않습니다.")
@@ -437,6 +462,12 @@ Command :
 
 			allCtxC["AL"+uid] = cancel
 			allService["AL"+uid] = uid
+
+			_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set alimtalk = 'Y' where user_id = ?", uid)
+				
+			if err != nil {
+				config.Stdlog.Println(uid," /arun 알림톡 DHN_CLIENT_LIST 업데이트 실패 : ", err)
+			}
 
 			c.String(200, uid+" 시작 신호 전달 완료")
 		}
@@ -472,6 +503,12 @@ Command :
 
 				delete(allCtxC, "NN"+uid+"_Y")
 				delete(allCtxC, "NN"+uid+"_N")
+			}
+
+			_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = NULL, pre_send_type = 2, pre_update_date = ? where user_id = ?", now.Format("2006-01-02 15:04:05"), uid)
+				
+			if err != nil {
+				config.Stdlog.Println(uid," /nstop 나노 DHN_CLIENT_LIST 업데이트 실패 : ", err)
 			}
 
 			c.String(200, uid+" 종료 신호 전달 완료")
@@ -520,7 +557,14 @@ Command :
 				allService["NN"+uid+"_N"] = "NanoService N"
 			}
 
+			_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = 'NANO' where user_id = ?", uid)
+				
+			if err != nil {
+				config.Stdlog.Println(uid," /nrun 나노 DHN_CLIENT_LIST 업데이트 실패 : ", err)
+			}
+
 			c.String(200, uid+" 시작 신호 전달 완료")
+
 		}
 	})
 
