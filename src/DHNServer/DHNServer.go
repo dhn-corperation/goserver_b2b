@@ -374,7 +374,7 @@ Command :
 			delete(allCtxC, "OS"+uid)
 			c.String(200, uid+" 종료 신호 전달 완료")
 
-			_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = NULL, pre_send_type = 1, pre_update_date = ? where user_id = ?", now.Format("2006-01-02 15:04:05"), uid)
+			_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = NULL, pre_send_type = 1, pre_update_date = ? where user_id = ?", time.Now().Format("2006-01-02 15:04:05"), uid)
 				
 			if err != nil {
 				config.Stdlog.Println(uid," /ostop 오샷 DHN_CLIENT_LIST 업데이트 실패 : ", err)
@@ -505,7 +505,7 @@ Command :
 				delete(allCtxC, "NN"+uid+"_N")
 			}
 
-			_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = NULL, pre_send_type = 2, pre_update_date = ? where user_id = ?", now.Format("2006-01-02 15:04:05"), uid)
+			_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = NULL, pre_send_type = 2, pre_update_date = ? where user_id = ?", time.Now().Format("2006-01-02 15:04:05"), uid)
 				
 			if err != nil {
 				config.Stdlog.Println(uid," /nstop 나노 DHN_CLIENT_LIST 업데이트 실패 : ", err)
