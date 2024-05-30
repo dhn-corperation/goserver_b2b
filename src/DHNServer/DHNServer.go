@@ -284,8 +284,6 @@ func resultProc() {
 					allService["NN"+user_id.String+"_N"] = "NanoService N"
 				}
 
-				nanoUser[user_id.String] = user_id.String
-
 			}
 
 			nlctx, nlcancel := context.WithCancel(context.Background())
