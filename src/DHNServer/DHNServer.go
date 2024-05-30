@@ -257,6 +257,7 @@ func resultProc() {
 
 					go nanoproc.NanoProcess(user_id.String, ctx)
 
+					nanoUser[user_id.String] = user_id.String
 					nanoCtxC[user_id.String] = cancel
 
 					allCtxC["NN"+user_id.String] = cancel
@@ -272,10 +273,12 @@ func resultProc() {
 					go nanoproc.NanoProcess_Y(user_id.String, ctxY) // 010으로 시작하는 번호
 					go nanoproc.NanoProcess_N(user_id.String, ctxN) // 010이 아닌 번호
 
+					nanoUser[user_id.String+"_Y"] = user_id.String
 					nanoCtxC[user_id.String+"_Y"] = cancelY
 					allCtxC["NN"+user_id.String+"_Y"] = cancelY
 					allService["NN"+user_id.String+"_Y"] = "NanoService Y"
 
+					nanoUser[user_id.String+"_N"] = user_id.String
 					nanoCtxC[user_id.String+"_N"] = cancelN
 					allCtxC["NN"+user_id.String+"_N"] = cancelN
 					allService["NN"+user_id.String+"_N"] = "NanoService N"
