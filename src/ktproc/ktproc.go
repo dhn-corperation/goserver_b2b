@@ -2,6 +2,7 @@ package ktproc
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 
 	config "mycs/src/kaoconfig"
@@ -181,6 +182,8 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	lmscnt := 0
 	tcnt := 0
 	reg, err := regexp.Compile("[^0-9]+")
+	smsSeq := 1
+	mmsSeq := 1
 	
 	for resrows.Next() {
 		resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check)
@@ -196,7 +199,6 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 			}
 			
 			if s.EqualFold(sms_kind.String, "S") {
-				stdlog.Println("sms?")
 				if msgLen.Int64 <= 90 || s.EqualFold(sms_len_check.String, "N") {
 					smsBox = SendReqTable{
 						MessageSubType : 1,
@@ -223,19 +225,25 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 						continue
 					}
 
+					if smsSeq > 3 {
+						smsSeq = 1
+					}
+
 					body, _ := ioutil.ReadAll(resp.Body)
 					resBox = append(resBox, SendResTable{
 						SendReqTable : smsBox,
+						MessageType : "sms",
 						ResCode : resp.StatusCode,
 						BodyData : body,
+						Seq : smsSeq,
 					})
 
+					smsSeq++
 					smscnt++
 				} else {
 					db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code = '7003', dr.message = '메세지 길이 오류', dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + userid.String + "' and msgid = '" + msgid.String + "'")
 				}
 			} else if s.EqualFold(sms_kind.String, "L") || s.EqualFold(sms_kind.String, "M") {
-				stdlog.Println("mms?")
 				mmsBox = SendReqTable{
 					MessageSubType : 1,
 					CallbackNumber : sms_sender.String,
@@ -249,16 +257,25 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 						},
 					},
 				}
-
+				messageType := "lms"
 				var fileParam []string
 				if mms_file1.String != "" {
 					fileParam = append(fileParam, mms_file1.String)
+					messageType = "mms"
+				} else {
+					fileParam = append(fileParam, "")
 				}
 				if mms_file2.String != "" {
 					fileParam = append(fileParam, mms_file2.String)
+					messageType = "mms"
+				} else {
+					fileParam = append(fileParam, "")
 				}
 				if mms_file3.String != "" {
 					fileParam = append(fileParam, mms_file3.String)
+					messageType = "mms"
+				} else {
+					fileParam = append(fileParam, "")
 				}
 
 				resp, err := client.ExecSMS("/send/mms", mmsBox)
@@ -273,13 +290,21 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 					continue
 				}
 
+				if mmsSeq > 3 {
+					mmsSeq = 1
+				}
+
 				body, _ := ioutil.ReadAll(resp.Body)
 				resBox = append(resBox, SendResTable{
-					SendReqTable : smsBox,
+					SendReqTable : mmsBox,
+					MessageType : messageType,
+					FileParam : fileParam,
 					ResCode : resp.StatusCode,
 					BodyData : body,
+					Seq : mmsSeq,
 				})
 
+				mmsSeq++
 				lmscnt++
 			}
 
@@ -289,10 +314,51 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 
 	}
 
+	if len(resBox) > 0 {
+		tx, _ := db.Begin()
+		stmtSMS, _ := tx.Prepare("insert into KT_SMS(userid, msgid, MessageSubType, CallbackNumber, Bundle_Num, Bundle_Content, resp_JobID) values(?,?,?,?,?,?,?)")
+		stmtMMS, _ := tx.Prepare("insert into KT_MMS(userid, msgid, MessageSubType, CallbackNumber, Bundle_Num, Bundle_Content, Bundle_Subject, Image_path1, Image_path2, Image_path3, resp_JobID) values(?,?,?,?,?,?,?,?,?,?,?)")
+		var decodeBody SendResDetileTable
+		for _, val := range resBox {
+			srt := val.SendReqTable
+			json.Unmarshal([]byte(val.BodyData), &decodeBody)
+			if val.MessageType == "sms" {
+				_, err := stmtSMS.Exec(user_id, srt.CustomMessageID, srt.MessageSubType, srt.CallbackNumber, srt.Bundle[0].Number, srt.Bundle[0].Content, decodeBody.JobIDs[0].JobID)
+				if err != nil {
+					tx.Rollback()
+					stdlog.Println(user_id, "- msgid : ", srt.CustomMessageID, " KT테이블 insert 중 오류 발생 : ", err)
+				}
+			} else if val.MessageType == "lms" {
+				_, err := stmtMMS.Exec(user_id, srt.CustomMessageID, srt.MessageSubType, srt.CallbackNumber, srt.Bundle[0].Number, srt.Bundle[0].Content, srt.Bundle[0].Subject, "", "", "", decodeBody.JobIDs[0].JobID)
+				if err != nil {
+					tx.Rollback()
+					stdlog.Println(user_id, "- msgid : ", srt.CustomMessageID, " KT테이블 insert 중 오류 발생 : ", err)
+				}
+			} else if val.MessageType == "mms" {
+				_, err := stmtMMS.Exec(user_id, srt.CustomMessageID, srt.MessageSubType, srt.CallbackNumber, srt.Bundle[0].Number, srt.Bundle[0].Content, srt.Bundle[0].Subject, val.FileParam[0], val.FileParam[1], val.FileParam[2], decodeBody.JobIDs[0].JobID)
+				if err != nil {
+					tx.Rollback()
+					stdlog.Println(user_id, "- msgid : ", srt.CustomMessageID, " KT테이블 insert 중 오류 발생 : ", err)
+				}
+			}
+			
+		}
+
+		err = tx.Commit()
+		if err != nil {
+			tx.Rollback()
+			stdlog.Println(user_id, " KT테이블 insert commit 중 오류 발생 시작 : ", err)
+			for _, val := range resBox {
+				stdlog.Println(user_id, "- msgid : ", val.SendReqTable.CustomMessageID, " KT테이블 insert 중 오류 발생 : ", err)
+			}
+			stdlog.Println(user_id, " KT테이블 insert commit 중 오류 발생 끝 : ", err)
+		}
+	}
+
 	if len(apiErrBox) > 0 {
 		for _, id := range apiErrBox {
 			db.Exec("update DHN_RESULT set send_group = null where msgid = ?", id)
-			stdlog.Println("여기 오는놈 있을까 ?")
+			stdlog.Println(user_id, "- msgid : ", msgid.String, " KT크로샷 오류건 send_group null 처리")
 		}
 	}
 

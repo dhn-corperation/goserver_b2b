@@ -50,8 +50,11 @@ type Attachment struct {
 
 type SendResTable struct {
 	SendReqTable SendReqTable	`json:"SendReqTable,omitempty"`
+	FileParam []string			`json:"ImageParam,omitempty"`
+	MessageType string			`json:"MassageType,omitempty"`
 	ResCode int 				`json:"ResCode,omitempty"`
 	BodyData []byte 			`json:"BodyData,omitempty"`
+	Seq int   					`json:"Seq,omitempty"`
 }
 
 type SendResDetileTable struct {
