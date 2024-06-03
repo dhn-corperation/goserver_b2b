@@ -3,6 +3,7 @@ package oshotproc
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 
 	//"sync"
 	config "mycs/src/kaoconfig"
@@ -65,7 +66,7 @@ func OshotProcess(user_id string, ctx context.Context) {
 
 						upError := updateReqeust(ctx, group_no, user_id)
 						if upError != nil {
-							config.Stdlog.Println(user_id , "Group No Update 오류", group_no)
+							config.Stdlog.Println(user_id, "Group No Update 오류", group_no)
 						} else {
 							go resProcess(ctx, group_no, user_id)
 						}
@@ -94,7 +95,6 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 		return err
 	}()
 
-
 	config.Stdlog.Println(user_id, "- 스마트미 Group No Update 시작", group_no)
 
 	gudQuery := `
@@ -109,7 +109,7 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 	_, err = tx.ExecContext(ctx, gudQuery, group_no, user_id)
 
 	if err != nil {
-		config.Stdlog.Println(user_id, "- Group NO Update - Select error : ( group_no : " + group_no + " / user_id : "+user_id+" ) : " + err.Error())
+		config.Stdlog.Println(user_id, "- Group NO Update - Select error : ( group_no : "+group_no+" / user_id : "+user_id+" ) : "+err.Error())
 		config.Stdlog.Println(gudQuery)
 		return err
 	}
@@ -254,7 +254,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 			osmmsStrs = nil
 			osmmsValues = nil
 		}
-		
+
 		// 알림톡 발송 성공 혹은 문자 발송이 아니면
 		// API_RESULT 성공 처리 함.
 		if len(msg_sms.String) > 0 && len(sms_sender.String) > 0 { // msg_sms 가 와 sms_sender 에 값이 있으면 Oshot 발송 함.
@@ -297,7 +297,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 					osmmsValues = append(osmmsValues, remark1.String)
 				}
 				*/
-				osmmsValues = append(osmmsValues, group_no)
+				osmmsValues = append(osmmsValues, group_no+"-"+strconv.Itoa(lmscnt))
 				osmmsValues = append(osmmsValues, sms_sender.String)
 				osmmsValues = append(osmmsValues, phnstr)
 				osmmsValues = append(osmmsValues, sms_lms_tit.String)
