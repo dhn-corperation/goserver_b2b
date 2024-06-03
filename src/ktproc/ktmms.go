@@ -104,8 +104,13 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 				SendDay : time.Now().Format("20060102"),
 			})
 
+			if err != nil {
+				errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조회 API 발송 중 오류 발생 : err : ", err)
+				continue
+			}
+
 			if resp.StatusCode != 200 {
-				errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조 API 발송 중 오류 발생 : ", err, "  /  statusCode : ", resp.StatusCode)
+				errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조회 API 발송 중 오류 발생 : statusCode : ", resp.StatusCode)
 				continue
 			}
 
