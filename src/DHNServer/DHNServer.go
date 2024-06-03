@@ -653,9 +653,8 @@ Command :
 
 	r.GET("/krun", func(c *gin.Context) {
 		var uid string
-		var acc int
 		uid = c.Query("uid")
-		acc, err = strconv.Atoi(c.Query("acc"))
+		acc, err := strconv.Atoi(c.Query("acc"))
 		if err != nil {
 			c.String(200, uid+" 에러입니다. err : ", err)
 			return
