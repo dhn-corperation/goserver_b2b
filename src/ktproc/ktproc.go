@@ -360,6 +360,8 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 			db.Exec("update DHN_RESULT set send_group = null where msgid = ?", id)
 			stdlog.Println(user_id, "- msgid : ", msgid.String, " KT크로샷 오류건 send_group null 처리")
 		}
+		time.Sleep(5 * time.Second)
+
 	}
 
 	if scnt > 0 || smscnt > 0 || lmscnt > 0 || fcnt > 0 {
