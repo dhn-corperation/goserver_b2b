@@ -654,9 +654,10 @@ Command :
 	r.GET("/krun", func(c *gin.Context) {
 		var uid string
 		uid = c.Query("uid")
-		acc, err := strconv.Atoi(c.Query("acc"))
+		acc := c.Query("acc")
+		convAcc, err := strconv.Atoi(acc)
 		if err != nil {
-			c.String(200, uid+" 에러입니다. err : ", err)
+			c.String(200, uid+" 에러입니다. err : ", err, "  /  acc : ", acc)
 			return
 		}
 		temp := ktxroCtxC[uid]
@@ -665,7 +666,7 @@ Command :
 		} else {
 			ctx, cancel := context.WithCancel(context.Background())
 			ctx = context.WithValue(ctx, "user_id", uid)
-			go ktproc.KtProcess(uid, ctx, acc)
+			go ktproc.KtProcess(uid, ctx, convAcc)
 
 			ktxroCtxC[uid] = cancel
 			ktxroUser[uid] = uid
@@ -674,12 +675,12 @@ Command :
 			allService["KTX"+uid] = uid
 
 			klctx, klcancel := context.WithCancel(context.Background())
-			go ktproc.LMSProcess(klctx, acc)
+			go ktproc.LMSProcess(klctx, convAcc)
 			allCtxC["ktxrolms"] = klcancel
 			allService["ktxrolms"] = "Ktxro LMS"
 
 			// ksctx, kscancel := context.WithCancel(context.Background())
-			// go oshotproc.SMSProcess(ksctx, acc)
+			// go oshotproc.SMSProcess(ksctx, convAcc)
 			// allCtxC["ktxrosms"] = kscancel
 			// allService["ktxrosms"] = "Ktxro SMS"
 
