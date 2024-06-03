@@ -33,6 +33,8 @@ import (
 	"sort"
 	//"reflect"
 
+	"io/ioutil"
+
 )
 
 const (
@@ -88,13 +90,6 @@ func (service *Service) Manage() (string, error) {
 }
 
 func main() {
-
-	var test ktproc.SendReqTable
-
-
-	ktproc.InitHeader("dhn7137985a", "6081476994sjk!", "userkey", test, false)
-
-	return
 
 	config.InitConfig()
 
@@ -239,6 +234,48 @@ func resultProc() {
 			allService["oshotsms"] = "Oshot SMS"
 
 		}
+	}
+
+	ktxroUser := map[string]string{}
+	ktxroCtxC := map[string]interface{}{}
+
+	if s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
+		ktxroUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl  where dcl.use_flag   = 'Y' and IFNULL(dcl.dest, 'OSHOT') = 'KTXRO'")
+		isKtxro := true
+		if error != nil {
+			config.Stdlog.Println("KT 크로샷 유저 select 오류 ")
+			isKtxro = false
+		}
+		defer ktxroUserList.Close()
+
+		if isKtxro {
+			var user_id sql.NullString
+
+			for ktxroUserList.Next() {
+				config.Stdlog.Println("실행되는지 확인 ", user_id.String)
+				ktxroUserList.Scan(&user_id)
+				ctx, cancel := context.WithCancel(context.Background())
+				ctx = context.WithValue(ctx, "user_id", user_id.String)
+				go ktproc.KtProcess(user_id.String, ctx, 0)
+
+				ktxroUser[user_id.String] = user_id.String
+				ktxroCtxC[user_id.String] = cancel
+
+				allCtxC["KTX"+user_id.String] = cancel
+				allService["KTX"+user_id.String] = user_id.String
+
+			}
+		}
+
+		// olctx, olcancel := context.WithCancel(context.Background())
+		// go oshotproc.LMSProcess(olctx)
+		// allCtxC["oshotlms"] = olcancel
+		// allService["oshotlms"] = "Oshot LMS"
+
+		// osctx, oscancel := context.WithCancel(context.Background())
+		// go oshotproc.SMSProcess(osctx)
+		// allCtxC["oshotsms"] = oscancel
+		// allService["oshotsms"] = "Oshot SMS"
 	}
 
 	nanoUser := map[string]string{}

@@ -1,5 +1,23 @@
 package ktproc
 
+var account = []map[string]string{
+	{
+		"apiKey" : "dhn7137985a",
+		"apiPw" : "6081476994sjk!",
+		"userKey" : "????",
+	},
+	{
+		"apiKey" : "dhn7137985b",
+		"apiPw" : "6081476994sjk!",
+		"userKey" : "????",
+	},
+	{
+		"apiKey" : "dhn7137985c",
+		"apiPw" : "6081476994sjk!",
+		"userKey" : "????",
+	},
+}
+
 type SendReqTable struct {
 	MessageSubType int   		`json:"MessageSubType,omitempty"`
 	CallbackNumber string		`json:"CallbackNumber,omitempty"`
@@ -31,8 +49,9 @@ type Attachment struct {
 }
 
 type SendResTable struct {
-	ResCode int
-	BodyData []byte
+	SendReqTable SendReqTable	`json:"SendReqTable,omitempty"`
+	ResCode int 				`json:"ResCode,omitempty"`
+	BodyData []byte 			`json:"BodyData,omitempty"`
 }
 
 type SendResDetileTable struct {

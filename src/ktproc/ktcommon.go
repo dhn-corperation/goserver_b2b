@@ -7,16 +7,14 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"mime"
-	"mime/multipart"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 	
-	config "mycs/src/kaoconfig"
+	// config "mycs/src/kaoconfig"
 )
 
 const (
@@ -47,9 +45,11 @@ func NewMessage(apiKey, apiPw, userKey string, isDev bool, apiCenter int) *Messa
 	case 3:
 		m.apiHost = "https://openapis.xroshot.com/V1"
 	}
+
+	return m
 }
 
-func (m *Message) setHeader(param SendReqTable, isMulti bool) []string {
+func (m *Message) setHeader(param SendReqTable, isMulti bool) ([]string, string) {
 	datetime := time.Now().Format("20060102150405")
 	hashKey := m.apiPw + "_" + datetime
 	hashData, _ := json.Marshal(param)
@@ -67,33 +67,33 @@ func (m *Message) setHeader(param SendReqTable, isMulti bool) []string {
 		headers = append(headers, "Content-Type: application/json; charset=utf-8")
 	}
 
-	return headers
+	return headers, datetime
 }
 
 func (m *Message) getHash(data, key string) string {
 	h := hmac.New(sha256.New, []byte(key))
 	h.Write([]byte(data))
-	return hex.EncodeToString(h.sum(nil))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
-func (m *Message) getBoundary() string {
-	hash := md5.Sum([]byte(m.getHashKey()))
+func (m *Message) getBoundary(datetime string) string {
+	hash := md5.Sum([]byte(m.apiPw + "_" + datetime))
 	return "--------------------------" + hex.EncodeToString(hash[:])[:25]
 }
 
-func (m *Message) execSMS(apiUrl string, param SendReqTable) (*http.Response, error) {
-	headers := m.setHeader(param, false)
-	body, err := json.Marchal(param)
+func (m *Message) ExecSMS(apiUrl string, param SendReqTable) (*http.Response, error) {
+	headers, _ := m.setHeader(param, false)
+	body, err := json.Marshal(param)
 	if err != nil {
 		return nil, err
 	}
 	return m.requestAPI(apiUrl, headers, body)
 }
 
-func (m *Message) execMMS(apiUrl string, msgParam map[string]interface{}, fileParam []string) (*http.Response, error) {
+func (m *Message) ExecMMS(apiUrl string, param SendReqTable, fileParam []string) (*http.Response, error) {
 	cr := "\r\n"
-	headers := m.setHeader(msgParam, true)
-	boundary := m.getBoundary()
+	headers, datetime := m.setHeader(param, true)
+	boundary := m.getBoundary(datetime)
 	headers = append(headers, "Content-Type: multipart/form-data; boundary="+boundary)
 
 	var msgBody bytes.Buffer
@@ -103,7 +103,7 @@ func (m *Message) execMMS(apiUrl string, msgParam map[string]interface{}, filePa
 	msgBody.WriteString("Content-Disposition: form-data; name=\"message\"" + cr)
 	msgBody.WriteString("Content-Type: application/json; charset=utf-8" + cr + cr)
 
-	msgJson, err := json.Marshal(msgParam)
+	msgJson, err := json.Marshal(param)
 	if err != nil {
 		return nil, err
 	}
@@ -156,42 +156,9 @@ func (m *Message) requestAPI(apiUrl string, headers []string, body []byte) (*htt
 	for _, header := range headers {
 		parts := strings.SplitN(header, ": ", 2)
 		if len(parts) == 2 {
-			req.Header.set(parts[0], parts[1])
+			req.Header.Set(parts[0], parts[1])
 		}
 	}
 
 	return client.Do(req)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
