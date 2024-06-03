@@ -396,9 +396,9 @@ Command :
 /nrun?uid=dhn    -> dhn Nano process run.
 /nlist           -> 실행 중인 Nano process User List.
 
-/nstop?uid=dhn       -> dhn KTXRO process stop.
-/nrun?uid=dhn&acc=0  -> dhn KTXRO process run.
-/nlist               -> 실행 중인 KTXRO process User List.
+/kstop?uid=dhn       -> dhn KTXRO process stop.
+/krun?uid=dhn&acc=0  -> dhn KTXRO process run.
+/klist               -> 실행 중인 KTXRO process User List.
 
 /all             -> DHNServer process list
 /allstop         -> DHNServer process stop
@@ -657,7 +657,8 @@ Command :
 		uid = c.Query("uid")
 		acc, err = strconv.Atoi(c.Query("acc"))
 		if err != nil {
-			c.String(200, uid+" 에러입니다.")
+			c.String(200, uid+" 에러입니다. err : ", err)
+			return
 		}
 		temp := ktxroCtxC[uid]
 		if temp != nil {
