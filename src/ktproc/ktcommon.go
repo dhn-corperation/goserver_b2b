@@ -1,15 +1,22 @@
 package ktproc
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
-    "encoding/hex"
-    "strings"
-    "fmt"
-    "encoding/json"
-    "time"
-
-    config "mycs/src/kaoconfig"
+	"crypto/md5"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"mime"
+	"mime/multipart"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+	
+	config "mycs/src/kaoconfig"
 )
 
 const (
@@ -81,6 +88,55 @@ func (m *Message) execSMS(apiUrl string, param SendReqTable) (*http.Response, er
 		return nil, err
 	}
 	return m.requestAPI(apiUrl, headers, body)
+}
+
+func (m *Message) execMMS(apiUrl string, msgParam map[string]interface{}, fileParam []string) (*http.Response, error) {
+	cr := "\r\n"
+	headers := m.setHeader(msgParam, true)
+	boundary := m.getBoundary()
+	headers = append(headers, "Content-Type: multipart/form-data; boundary="+boundary)
+
+	var msgBody bytes.Buffer
+	var fileBody bytes.Buffer
+
+	msgBody.WriteString("--" + boundary + cr)
+	msgBody.WriteString("Content-Disposition: form-data; name=\"message\"" + cr)
+	msgBody.WriteString("Content-Type: application/json; charset=utf-8" + cr + cr)
+
+	msgJson, err := json.Marshal(msgParam)
+	if err != nil {
+		return nil, err
+	}
+	msgBody.WriteString(string(msgJson) + cr)
+
+	for _, val := range fileParam {
+		if _, err := os.Stat(val); err == nil {
+			file, err := os.Open(val)
+			if err != nil {
+				return nil, err
+			}
+			defer file.Close()
+
+			fileMime := mime.TypeByExtension(val)
+			fileBody.WriteString("--" + boundary + cr)
+			fileBody.WriteString("Content-Disposition: form-data; name=\"file\"; filename=\"" + file.Name() + "\"" + cr)
+			fileBody.WriteString("Content-Type: " + fileMime + cr + cr)
+
+			content, err := ioutil.ReadAll(file)
+			if err != nil {
+				return nil, err
+			}
+			fileBody.Write(content)
+			fileBody.WriteString(cr)
+		}
+	}
+
+	var body bytes.Buffer
+	body.Write(msgBody.Bytes())
+	body.Write(fileBody.Bytes())
+	body.WriteString("--" + boundary + "--")
+
+	return m.requestAPI(apiUrl, headers, body.Bytes())
 }
 
 func (m *Message) requestAPI(apiUrl string, headers []string, body []byte) (*http.Response, error) {
