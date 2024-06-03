@@ -69,7 +69,7 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 
 	var MMSTable = table + "_" + monthStr
 
-	var searchQuery = "select userid, msgid, resp_JobID from " + MMSTable + " where sep_seq = " + strconv.Itoa(seq)
+	var searchQuery = "select userid, msgid, resp_JobID from " + table + " where sep_seq = " + strconv.Itoa(seq)
 
 	searchData, err := db.Query(searchQuery)
 	if err != nil {
