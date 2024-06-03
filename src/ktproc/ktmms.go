@@ -123,6 +123,10 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 			}
 			first := decodeBody[0]
 
+			if first.Result == 0 {
+				continue
+			}
+
 			//TODO 결과코드 변환 과정 필요함
 
 			var telInfo = "ETC"
