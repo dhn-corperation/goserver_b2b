@@ -290,7 +290,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	}
 
 	if len(apiErrBox) > 0 {
-		for _, id range apiErrBox {
+		for _, id := range apiErrBox {
 			db.Exec("update DHN_RESULT set send_group = null where msgid = ?", id)
 			stdlog.Println("여기 오는놈 있을까 ?")
 		}
