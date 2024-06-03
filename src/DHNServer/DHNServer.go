@@ -655,6 +655,8 @@ Command :
 		var uid string
 		uid = c.Query("uid")
 		acc := c.Query("acc")
+		c.String(200, acc)
+		return
 		convAcc, err := strconv.Atoi(acc)
 		if err != nil {
 			c.String(200, uid+" 에러입니다. err : ", err, "  /  acc : ", acc)
