@@ -33,8 +33,6 @@ import (
 	"sort"
 	//"reflect"
 
-	"io/ioutil"
-
 )
 
 const (
