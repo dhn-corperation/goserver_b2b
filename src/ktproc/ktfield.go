@@ -25,7 +25,7 @@ type SendReqTable struct {
 	ReserveType int 			`json:"ReserveType,omitempty"`
 	ReserveTime string			`json:"ReserveTime,omitempty"`
 	ReserveDTime string			`json:"ReserveDTime,omitempty"`
-	CustomMessageID string		`json:"Custom MessageID,omitempty"`
+	CustomMessageID string		`json:"CustomMessageID,omitempty"`
 	CDRID string				`json:"CDRID,omitempty"`
 	CDRTime string				`json:"CDRTime,omitempty"`
 	CallbackURL string			`json:"CallbackURL,omitempty"`
@@ -70,4 +70,32 @@ type SendResDetileTable struct {
 type JobIDs struct {
 	Index int 					`json:"Index,omitempty"`
 	JobID int64 				`json:"JobID,omitempty"`
+}
+
+type SearchReqTable struct {
+	JobIDs []JobIDs				`json:"JobIDs,omitempty"`
+	SendDay string				`json:"SendDay,omitempty"`
+}
+
+type SearchResTable struct {
+	ServiceProviderID string 	`json:"ServiceProviderID,omitempty"`
+	EndUserID string			`json:"EndUserID,omitempty"`
+	Result int 					`json:"Result,omitempty"`
+	Time string 				`json:"Time,omitempty"`
+	FinishPage int 				`json:"FinishPage,omitempty"`
+	Duration int 				`json:"Duration,omitempty"`
+	CustomMessageID string 		`json:"CustomMessageID,omitempty"`
+	SequenceNumber int 			`json:"SequenceNumber,omitempty"`
+	JobID int64 				`json:"JobID,omitempty"`
+	GroupID int64 				`json:"GroupID,omitempty"`
+	MessageType int 			`json:"MessageType,omitempty"`
+	SendNumber string			`json:"SendNumber,omitempty"`
+	ReceiveNumber string 		`json:"ReceiveNumber,omitempty"`
+	CallbackNumber string 		`json:"CallbackNumber,omitempty"`
+	ReplyInfo string 			`json:"ReplyInfo,omitempty"`
+	TelconInfo int              `json:"TelconInfo,omitempty"`
+	Fee int 					`json:"Fee,omitempty"`
+	Rtime string				`json:"Rtime,omitempty"`
+	SubmitTime string			`json:"SubmitTime,omitempty"`
+	StatusText string			`json:"StatusText,omitempty"`
 }

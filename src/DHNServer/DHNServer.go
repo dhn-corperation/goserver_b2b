@@ -264,15 +264,15 @@ func resultProc() {
 			}
 		}
 
-		// olctx, olcancel := context.WithCancel(context.Background())
-		// go oshotproc.LMSProcess(olctx)
-		// allCtxC["oshotlms"] = olcancel
-		// allService["oshotlms"] = "Oshot LMS"
+		klctx, klcancel := context.WithCancel(context.Background())
+		go ktproc.LMSProcess(klctx, 0)
+		allCtxC["ktxrolms"] = klcancel
+		allService["ktxrolms"] = "Ktxro LMS"
 
 		// osctx, oscancel := context.WithCancel(context.Background())
-		// go oshotproc.SMSProcess(osctx)
-		// allCtxC["oshotsms"] = oscancel
-		// allService["oshotsms"] = "Oshot SMS"
+		// go oshotproc.SMSProcess(osctx, 0)
+		// allCtxC["ktxrosms"] = oscancel
+		// allService["ktxrosms"] = "Ktxro SMS"
 	}
 
 	nanoUser := map[string]string{}

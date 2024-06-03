@@ -49,7 +49,7 @@ func NewMessage(apiKey, apiPw, userKey string, isDev bool, apiCenter int) *Messa
 	return m
 }
 
-func (m *Message) setHeader(param SendReqTable, isMulti bool) ([]string, string) {
+func (m *Message) setHeader(param interface{}, isMulti bool) ([]string, string) {
 	datetime := time.Now().Format("20060102150405")
 	hashKey := m.apiPw + "_" + datetime
 	hashData, _ := json.Marshal(param)
@@ -82,6 +82,15 @@ func (m *Message) getBoundary(datetime string) string {
 }
 
 func (m *Message) ExecSMS(apiUrl string, param SendReqTable) (*http.Response, error) {
+	headers, _ := m.setHeader(param, false)
+	body, err := json.Marshal(param)
+	if err != nil {
+		return nil, err
+	}
+	return m.requestAPI(apiUrl, headers, body)
+}
+
+func (m *Message) SearchResult(apiUrl string, param SearchReqTable) (*http.Response, error) {
 	headers, _ := m.setHeader(param, false)
 	body, err := json.Marshal(param)
 	if err != nil {
