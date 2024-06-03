@@ -67,7 +67,7 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 
 	var monthStr = fmt.Sprintf("%d%02d", t.Year(), t.Month())
 
-	var MMSTable = "KT_MMS_" + monthStr
+	var MMSTable = table + "_" + monthStr
 
 	var searchQuery = "select userid, msgid, resp_JobID from " + MMSTable + " where sep_seq = " + strconv.Itoa(seq)
 
@@ -77,7 +77,7 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 		errlog.Println("KT크로샷 MMS 조회 중 오류 발생", searchQuery, errcode)
 
 		if s.Index(errcode, "1146") > 0 {
-			db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like " + table + "MMS")
+			db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like " + table)
 			errlog.Println(MMSTable + " 생성 !!")
 		}
 
