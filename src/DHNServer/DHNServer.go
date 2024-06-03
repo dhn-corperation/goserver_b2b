@@ -250,7 +250,6 @@ func resultProc() {
 			var user_id sql.NullString
 
 			for ktxroUserList.Next() {
-				config.Stdlog.Println("실행되는지 확인 ", user_id.String)
 				ktxroUserList.Scan(&user_id)
 				ctx, cancel := context.WithCancel(context.Background())
 				ctx = context.WithValue(ctx, "user_id", user_id.String)

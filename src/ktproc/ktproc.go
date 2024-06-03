@@ -110,12 +110,11 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 }
 
 func resProcess(ctx context.Context, group_no string, user_id string) {
-	//defer wg.Done()
 	procCnt++
 
-	account := account[0]
-	client := NewMessage(account["apiKey"], account["apiPw"], account["userKey"], true, 3)
-
+	acc := account[0]
+	client := NewMessage(acc["apiKey"], acc["apiPw"], acc["userKey"], true, 3)
+	stdlog.Println("여기까지 오긴오냐 ", acc["apiKey"], "   ", acc["apiPw"], "    ", acc["userKey"])
 	var db = databasepool.DB
 	var stdlog = config.Stdlog
 
@@ -182,7 +181,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	lmscnt := 0
 	tcnt := 0
 	reg, err := regexp.Compile("[^0-9]+")
-
+	stdlog.Println("여기가 두번쨰다 ")
 	for resrows.Next() {
 		resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check)
 
