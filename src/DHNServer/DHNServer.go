@@ -69,7 +69,7 @@ func (service *Service) Manage() (string, error) {
 			return usage, nil
 		}
 	}
-	// resultProc()
+	resultProc()
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
 
