@@ -114,9 +114,10 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 
 	acc := account[0]
 	client := NewMessage(acc["apiKey"], acc["apiPw"], acc["userKey"], true, 3)
-	stdlog.Println("여기까지 오긴오냐 ", acc["apiKey"], "   ", acc["apiPw"], "    ", acc["userKey"])
+	
 	var db = databasepool.DB
 	var stdlog = config.Stdlog
+	stdlog.Println("여기까지 오긴오냐 ", acc["apiKey"], "   ", acc["apiPw"], "    ", acc["userKey"])
 
 	defer func() {
 		if err := recover(); err != nil {
