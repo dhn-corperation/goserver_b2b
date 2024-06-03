@@ -140,7 +140,6 @@ func (m *Message) ExecMMS(apiUrl string, param SendReqTable, fileParam []string)
 }
 
 func (m *Message) requestAPI(apiUrl string, headers []string, body []byte) (*http.Response, error) {
-	config.Stdlog.Println("바로 안옴 ?")
 	client := &http.Client{}
 	fullUrl := apiUrl
 	if !m.isDev{

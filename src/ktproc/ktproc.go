@@ -189,7 +189,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 
 		// 알림톡 발송 성공 혹은 문자 발송이 아니면
 		// API_RESULT 성공 처리 함.
-		if len(msg_sms.String) > 0 && len(sms_sender.String) > 0 { // msg_sms 가 와 sms_sender 에 값이 있으면 Oshot 발송 함.
+		if len(msg_sms.String) > 0 && len(sms_sender.String) > 0 {
 			phnstr = reg.ReplaceAllString(phnstr, "")
 			if s.HasPrefix(phnstr, "82") {
 				phnstr = "0" + phnstr[2:len(phnstr)]
@@ -217,6 +217,11 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 						stdlog.Println(user_id, "- msgid : ", msgid.String, " KT크로샷 sms API 발송 중 오류 발생 : ", err)
 						continue
 					}
+					if resp.StatusCode != 200 {
+						apiErrBox = append(apiErrBox, msgid.String)
+						stdlog.Println(user_id, "- msgid : ", msgid.String, " KT크로샷 sms API 발송 중 오류 발생 : ", err, "  /  statusCode : ", resp.StatusCode)
+						continue
+					}
 
 					body, _ := ioutil.ReadAll(resp.Body)
 					resBox = append(resBox, SendResTable{
@@ -224,7 +229,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 						ResCode : resp.StatusCode,
 						BodyData : body,
 					})
-					stdlog.Println("code : ", resp.StatusCode, "  /  body : ", string(body))
+
 					smscnt++
 				} else {
 					db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code = '7003', dr.message = '메세지 길이 오류', dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + userid.String + "' and msgid = '" + msgid.String + "'")
@@ -262,6 +267,11 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 					stdlog.Println(user_id, "- msgid : ", msgid.String, " KT크로샷 mms API 발송 중 오류 발생 : ", err)
 					continue
 				}
+				if resp.StatusCode != 200 {
+					apiErrBox = append(apiErrBox, msgid.String)
+					stdlog.Println(user_id, "- msgid : ", msgid.String, " KT크로샷 sms API 발송 중 오류 발생 : ", err, "  /  statusCode : ", resp.StatusCode)
+					continue
+				}
 
 				body, _ := ioutil.ReadAll(resp.Body)
 				resBox = append(resBox, SendResTable{
@@ -269,7 +279,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 					ResCode : resp.StatusCode,
 					BodyData : body,
 				})
-				stdlog.Println("code : ", resp.StatusCode, "  /  body : ", string(body))
+
 				lmscnt++
 			}
 
@@ -277,6 +287,13 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 			db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7011', dr.message = concat(dr.message, ',문자 발송 정보 누락'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + userid.String + "' and msgid = '" + msgid.String + "'")
 		}
 
+	}
+
+	if len(apiErrBox) > 0 {
+		for _, id range apiErrBox {
+			db.Exec("update DHN_RESULT set send_group = null where msgid = ?", id)
+			stdlog.Println("여기 오는놈 있을까 ?")
+		}
 	}
 
 	if scnt > 0 || smscnt > 0 || lmscnt > 0 || fcnt > 0 {
