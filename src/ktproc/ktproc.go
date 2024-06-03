@@ -150,9 +150,9 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 		sms_sender, 
 		res_dt, 
 		reserve_dt, 
-		(select ifull(file1_path, "") from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file1, 
-		(select ifull(file2_path, "") from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file2, 
-		(select ifull(file3_path, "") from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file3
+		(select ifnull(file1_path, "") from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file1, 
+		(select ifnull(file2_path, "") from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file2, 
+		(select ifnull(file3_path, "") from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.p_invoice) as mms_file3
 		,(case when sms_kind = 'S' then length(convert(REMOVE_WS(msg_sms) using euckr)) else 100 end) as msg_len
 		,userid
 		,(select max(sms_len_check) from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as sms_len_check
@@ -217,14 +217,14 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 						stdlog.Println(user_id, "- msgid : ", msgid.String, " KT크로샷 sms API 발송 중 오류 발생 : ", err)
 						continue
 					}
-					
+
 					body, _ := ioutil.ReadAll(resp.Body)
 					resBox = append(resBox, SendResTable{
 						SendReqTable : smsBox,
 						ResCode : resp.StatusCode,
 						BodyData : body,
 					})
-
+					stdlog.Println("code : ", resp.StatusCode, "  /  body : ", body)
 					smscnt++
 				} else {
 					db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code = '7003', dr.message = '메세지 길이 오류', dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + userid.String + "' and msgid = '" + msgid.String + "'")
@@ -268,7 +268,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 					ResCode : resp.StatusCode,
 					BodyData : body,
 				})
-				
+				stdlog.Println("code : ", resp.StatusCode, "  /  body : ", body)
 				lmscnt++
 			}
 
