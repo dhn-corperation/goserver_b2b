@@ -20,6 +20,7 @@ import (
 	"mycs/src/nanoproc"
 	"mycs/src/oshotproc"
 	"mycs/src/otpproc"
+	"mycs/src/ktproc"
 
 	//"strconv"
 	//"time"
@@ -31,6 +32,7 @@ import (
 	"context"
 	"sort"
 	//"reflect"
+
 )
 
 const (
@@ -67,7 +69,7 @@ func (service *Service) Manage() (string, error) {
 			return usage, nil
 		}
 	}
-	resultProc()
+	// resultProc()
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
 
@@ -86,6 +88,13 @@ func (service *Service) Manage() (string, error) {
 }
 
 func main() {
+
+	var test ktproc.SendReqTable
+
+
+	ktproc.InitHeader("dhn7137985a", "6081476994sjk!", "userkey", test, false)
+
+	return
 
 	config.InitConfig()
 
@@ -489,13 +498,17 @@ Command :
 		if temp != nil {
 			cancel := nanoCtxC[uid].(context.CancelFunc)
 			cancel()
-			delete(nanoUser, uid)
+			
 			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "N") { // 기본
 				delete(nanoCtxC, uid)
+				delete(nanoUser, uid)
 
 				delete(allService, "NN"+uid)
 				delete(allCtxC, "NN"+uid)
 			} else if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
+				delete(nanoUser, uid+"_Y")
+				delete(nanoUser, uid+"_N")
+
 				delete(nanoCtxC, uid+"_Y")
 				delete(nanoCtxC, uid+"_N")
 
