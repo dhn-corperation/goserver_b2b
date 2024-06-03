@@ -117,7 +117,6 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	
 	var db = databasepool.DB
 	var stdlog = config.Stdlog
-	stdlog.Println("여기까지 오긴오냐 ", acc["apiKey"], "   ", acc["apiPw"], "    ", acc["userKey"])
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -182,7 +181,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	lmscnt := 0
 	tcnt := 0
 	reg, err := regexp.Compile("[^0-9]+")
-	stdlog.Println("여기가 두번쨰다 ")
+	
 	for resrows.Next() {
 		resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check)
 
@@ -197,6 +196,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 			}
 			
 			if s.EqualFold(sms_kind.String, "S") {
+				stdlog.Println("sms?")
 				if msgLen.Int64 <= 90 || s.EqualFold(sms_len_check.String, "N") {
 					smsBox = SendReqTable{
 						MessageSubType : 1,
@@ -230,6 +230,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 					db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code = '7003', dr.message = '메세지 길이 오류', dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + userid.String + "' and msgid = '" + msgid.String + "'")
 				}
 			} else if s.EqualFold(sms_kind.String, "L") || s.EqualFold(sms_kind.String, "M") {
+				stdlog.Println("mms?")
 				mmsBox = SendReqTable{
 					MessageSubType : 1,
 					CallbackNumber : sms_sender.String,
