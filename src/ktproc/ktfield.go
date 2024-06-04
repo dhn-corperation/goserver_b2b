@@ -113,7 +113,7 @@ type SearchReqTable struct {
 	SendDay string				`json:"SendDay,omitempty"`
 }
 
-type SearchResDatailTable struct {
+type SearchResTable struct {
 	JobIDs []SearchResDatailTable 	`json:"JobIDs,omitempty"`
 }
 
