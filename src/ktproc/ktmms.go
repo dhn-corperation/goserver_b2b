@@ -115,15 +115,16 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 			}
 
 			body, _ := ioutil.ReadAll(resp.Body)
-			var decodeBody []SearchResTable
+			var decodeBody SearchResTable
 
 			errlog.Println(string(body))
 
 			err = json.Unmarshal([]byte(body), &decodeBody)
-			if err != nil { 
+			if err != nil {
+				errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조 API 별과 변환중 에러 발생 : ", err)
 				continue
 			}
-			first := decodeBody[0]
+			first := decodeBody.JobIDs[0]
 
 			if first.Result == 0 {
 				continue
@@ -142,7 +143,7 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 
 		    parsedTime, err := time.Parse("20060102150405", first.Time)
 		    if err != nil {
-		        errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조 API 발송 중 시간변환 오류 발생 : ", err, "  /  statusCode : ", first.Time)
+		        errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조회 API 발송 중 시간변환 오류 발생 : ", err, "  /  statusCode : ", first.Time)
 		        continue
 		    }
 
