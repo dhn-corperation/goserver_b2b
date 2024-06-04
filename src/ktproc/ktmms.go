@@ -91,9 +91,9 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 		client := NewMessage(acc["apiKey"], acc["apiPw"], acc["userKey"], false, 3)
 		for searchData.Next() {
 			var userid, msgid sql.NullString
-			var resp_Result sql.NullInt64
+			var resp_JobID sql.NullInt64
 
-			searchData.Scan(&userid, &msgid, &resp_Result)
+			searchData.Scan(&userid, &msgid, &resp_JobID)
 
 			sendData := SearchReqTable{
 				JobIDs : []JobIDs{
