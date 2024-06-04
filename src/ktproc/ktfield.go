@@ -96,7 +96,7 @@ type SendResTable struct {
 type SendResDetileTable struct {
 	CustomMessageID string		`json:"CustomMessageID,omitempty"`
 	Time string					`json:"Time,omitempty"`
-	GrpID int64					`json:"GrpID,omitempty"`
+	// GrpID int64					`json:"GrpID,omitempty"`
 	SubmitTime string			`json:"SubmitTime,omitempty"`
 	Result int 					`json:"Result,omitempty"`
 	Count int 					`json:"Count,omitempty"`

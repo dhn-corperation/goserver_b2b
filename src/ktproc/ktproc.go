@@ -331,6 +331,17 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 					stdlog.Println(user_id, "- msgid : ", srt.CustomMessageID, " KT테이블 SMS insert 중 오류 발생 : ", err)
 				}
 			} else if val.MessageType == "lms" {
+				stdlog.Println(user_id)
+				stdlog.Println(val.MsgID)
+				stdlog.Println(srt.CustomMessageID)
+				stdlog.Println(srt.MessageSubType)
+				stdlog.Println(srt.CallbackNumber)
+				stdlog.Println(srt.Bundle[0].Seq)
+				stdlog.Println(srt.Bundle[0].Number)
+				stdlog.Println(srt.Bundle[0].Content)
+				stdlog.Println(srt.Bundle[0].Subject)
+				stdlog.Println(decodeBody.JobIDs[0].JobID)
+				stdlog.Println(acc)
 				_, err := stmtMMS.Exec(user_id, val.MsgID, srt.CustomMessageID, srt.MessageSubType, srt.CallbackNumber, srt.Bundle[0].Seq, srt.Bundle[0].Number, srt.Bundle[0].Content, srt.Bundle[0].Subject, "", "", "", decodeBody.JobIDs[0].JobID, acc)
 				if err != nil {
 					tx.Rollback()
