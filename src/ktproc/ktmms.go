@@ -140,7 +140,7 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 
 		    parsedTime, err := time.Parse("20060102150405", first.Time)
 		    if err != nil {
-		        errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조 API 발송 중 시간변환 오ㄹ 발생 : ", err, "  /  statusCode : ", first.Time)
+		        errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조 API 발송 중 시간변환 오류 발생 : ", err, "  /  statusCode : ", first.Time)
 		        continue
 		    }
 

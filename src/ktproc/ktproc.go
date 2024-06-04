@@ -185,9 +185,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 	mmsSeq := 1
 	
 	for resrows.Next() {
-		stdlog.Println("1")
 		resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check)
-		stdlog.Println("2")
 		phnstr = phn.String
 
 		// 알림톡 발송 성공 혹은 문자 발송이 아니면
@@ -244,7 +242,6 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 					db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code = '7003', dr.message = '메세지 길이 오류', dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + userid.String + "' and msgid = '" + msgid.String + "'")
 				}
 			} else if s.EqualFold(sms_kind.String, "L") || s.EqualFold(sms_kind.String, "M") {
-				stdlog.Println("3")
 				mmsBox = SendReqTable{
 					MessageSubType : 1,
 					CallbackNumber : sms_sender.String,
@@ -305,7 +302,6 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 					BodyData : body,
 					Seq : mmsSeq,
 				})
-				stdlog.Println("4")
 
 				mmsSeq++
 				lmscnt++
@@ -318,7 +314,6 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 	}
 
 	if len(resBox) > 0 {
-		stdlog.Println("5")
 		tx, _ := db.Begin()
 		stmtSMS, _ := tx.Prepare("insert into KT_SMS(userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, resp_JobID, dhn_id) values(?,?,?,?,?,?,?,?)")
 		stmtMMS, _ := tx.Prepare("insert into KT_MMS(userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, Bundle_Subject, Image_path1, Image_path2, Image_path3, resp_JobID, dhn_id) values(?,?,?,?,?,?,?,?,?,?,?,?)")
@@ -326,6 +321,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 		for _, val := range resBox {
 			srt := val.SendReqTable
 			json.Unmarshal([]byte(val.BodyData), &decodeBody)
+			stdlog.Println("1")
 			if val.MessageType == "sms" {
 				_, err := stmtSMS.Exec(user_id, srt.CustomMessageID, srt.MessageSubType, srt.CallbackNumber, srt.Bundle[0].Seq, srt.Bundle[0].Number, srt.Bundle[0].Content, decodeBody.JobIDs[0].JobID, acc)
 				if err != nil {
@@ -333,12 +329,14 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 					stdlog.Println(user_id, "- msgid : ", srt.CustomMessageID, " KT테이블 SMS insert 중 오류 발생 : ", err)
 				}
 			} else if val.MessageType == "lms" {
+				stdlog.Println("2")
 				_, err := stmtMMS.Exec(user_id, srt.CustomMessageID, srt.MessageSubType, srt.CallbackNumber, srt.Bundle[0].Seq, srt.Bundle[0].Number, srt.Bundle[0].Content, srt.Bundle[0].Subject, "", "", "", decodeBody.JobIDs[0].JobID, acc)
 				if err != nil {
 					tx.Rollback()
 					stdlog.Println(user_id, "- msgid : ", srt.CustomMessageID, " KT테이블 LMS insert 중 오류 발생 : ", err)
 				}
 			} else if val.MessageType == "mms" {
+				stdlog.Println("3")
 				_, err := stmtMMS.Exec(user_id, srt.CustomMessageID, srt.MessageSubType, srt.CallbackNumber, srt.Bundle[0].Seq, srt.Bundle[0].Number, srt.Bundle[0].Content, srt.Bundle[0].Subject, val.FileParam[0], val.FileParam[1], val.FileParam[2], decodeBody.JobIDs[0].JobID, acc)
 				if err != nil {
 					tx.Rollback()
@@ -346,7 +344,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 				}
 			}
 		}
-
+		stdlog.Println("4")
 		err = tx.Commit()
 		if err != nil {
 			tx.Rollback()
