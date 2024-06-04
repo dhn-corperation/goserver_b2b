@@ -317,46 +317,32 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 
 	if len(resBox) > 0 {
 		tx, _ := db.Begin()
-		stmtSMS, _ := tx.Prepare("insert into KT_SMS(userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, resp_JobID, dhn_id) values(?,?,?,?,?,?,?,?)")
-		stmtMMS, _ := tx.Prepare("insert into KT_MMS(userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, Bundle_Subject, Image_path1, Image_path2, Image_path3, resp_JobID, dhn_id) values(?,?,?,?,?,?,?,?,?,?,?,?)")
+		stmtSMS, _ := tx.Prepare("insert into KT_SMS(userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, resp_JobID, dhn_id) values(?,?,?,?,?,?,?,?,?)")
+		stmtMMS, _ := tx.Prepare("insert into KT_MMS(userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, Bundle_Subject, Image_path1, Image_path2, Image_path3, resp_JobID, dhn_id) values(?,?,?,?,?,?,?,?,?,?,?,?,?)")
 		var decodeBody SendResDetileTable
 		for _, val := range resBox {
 			srt := val.SendReqTable
 			json.Unmarshal([]byte(val.BodyData), &decodeBody)
-			stdlog.Println("1")
 			if val.MessageType == "sms" {
-				_, err := stmtSMS.Exec(user_id, val.MsgID, srt.CustomMessageID, srt.MessageSubType, srt.CallbackNumber, srt.Bundle[0].Seq, srt.Bundle[0].Number, srt.Bundle[0].Content, decodeBody.JobIDs[0].JobID, acc)
+				_, err := stmtSMS.Exec(user_id, val.MsgID, srt.MessageSubType, srt.CallbackNumber, srt.Bundle[0].Seq, srt.Bundle[0].Number, srt.Bundle[0].Content, decodeBody.JobIDs[0].JobID, acc)
 				if err != nil {
 					tx.Rollback()
-					stdlog.Println(user_id, "- msgid : ", srt.CustomMessageID, " KT테이블 SMS insert 중 오류 발생 : ", err)
+					stdlog.Println(user_id, "- msgid : ", val.MsgID, " KT테이블 SMS insert 중 오류 발생 : ", err)
 				}
 			} else if val.MessageType == "lms" {
-				stdlog.Println(user_id)
-				stdlog.Println(val.MsgID)
-				stdlog.Println(srt.CustomMessageID)
-				stdlog.Println(srt.MessageSubType)
-				stdlog.Println(srt.CallbackNumber)
-				stdlog.Println(srt.Bundle[0].Seq)
-				stdlog.Println(srt.Bundle[0].Number)
-				stdlog.Println(srt.Bundle[0].Content)
-				stdlog.Println(srt.Bundle[0].Subject)
-				stdlog.Println(decodeBody.JobIDs[0].JobID)
-				stdlog.Println(acc)
-				_, err := stmtMMS.Exec(user_id, val.MsgID, srt.CustomMessageID, srt.MessageSubType, srt.CallbackNumber, srt.Bundle[0].Seq, srt.Bundle[0].Number, srt.Bundle[0].Content, srt.Bundle[0].Subject, "", "", "", decodeBody.JobIDs[0].JobID, acc)
+				_, err := stmtMMS.Exec(user_id, val.MsgID, srt.MessageSubType, srt.CallbackNumber, srt.Bundle[0].Seq, srt.Bundle[0].Number, srt.Bundle[0].Content, srt.Bundle[0].Subject, "", "", "", decodeBody.JobIDs[0].JobID, acc)
 				if err != nil {
 					tx.Rollback()
-					stdlog.Println(user_id, "- msgid : ", srt.CustomMessageID, " KT테이블 LMS insert 중 오류 발생 : ", err)
+					stdlog.Println(user_id, "- msgid : ", val.MsgID, " KT테이블 LMS insert 중 오류 발생 : ", err)
 				}
 			} else if val.MessageType == "mms" {
-				stdlog.Println("3")
-				_, err := stmtMMS.Exec(user_id, val.MsgID, srt.CustomMessageID, srt.MessageSubType, srt.CallbackNumber, srt.Bundle[0].Seq, srt.Bundle[0].Number, srt.Bundle[0].Content, srt.Bundle[0].Subject, val.FileParam[0], val.FileParam[1], val.FileParam[2], decodeBody.JobIDs[0].JobID, acc)
+				_, err := stmtMMS.Exec(user_id, val.MsgID, srt.MessageSubType, srt.CallbackNumber, srt.Bundle[0].Seq, srt.Bundle[0].Number, srt.Bundle[0].Content, srt.Bundle[0].Subject, val.FileParam[0], val.FileParam[1], val.FileParam[2], decodeBody.JobIDs[0].JobID, acc)
 				if err != nil {
 					tx.Rollback()
-					stdlog.Println(user_id, "- msgid : ", srt.CustomMessageID, " KT테이블 MMS insert 중 오류 발생 : ", err)
+					stdlog.Println(user_id, "- msgid : ", val.MsgID, " KT테이블 MMS insert 중 오류 발생 : ", err)
 				}
 			}
 		}
-		stdlog.Println("4")
 		err = tx.Commit()
 		if err != nil {
 			tx.Rollback()
