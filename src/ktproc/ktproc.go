@@ -176,7 +176,6 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 	var resBox []SendResTable
 	var apiErrBox []string
 
-	scnt := 0
 	fcnt := 0
 	smscnt := 0
 	lmscnt := 0
