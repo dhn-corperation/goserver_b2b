@@ -109,7 +109,7 @@ type JobIDs struct {
 }
 
 type SearchReqTable struct {
-	JobIDs []JobIDs				`json:"JobIDs,omitempty"`
+	JobIDs []int64				`json:"JobIDs,omitempty"`
 	SendDay string				`json:"SendDay,omitempty"`
 }
 
