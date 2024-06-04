@@ -229,7 +229,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 
 					body, _ := ioutil.ReadAll(resp.Body)
 					resBox = append(resBox, SendResTable{
-						MsgID : msgid,
+						MsgID : msgid.String,
 						SendReqTable : smsBox,
 						MessageType : "sms",
 						ResCode : resp.StatusCode,
@@ -296,7 +296,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 				body, _ := ioutil.ReadAll(resp.Body)
 				stdlog.Println(string(body))
 				resBox = append(resBox, SendResTable{
-					MsgID : msgid,
+					MsgID : msgid.String,
 					SendReqTable : mmsBox,
 					MessageType : messageType,
 					FileParam : fileParam,
