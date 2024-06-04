@@ -114,7 +114,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 	procCnt++
 
 	myacc := account[acc]
-	client := NewMessage(myacc["apiKey"], myacc["apiPw"], myacc["userKey"], true, 3)
+	client := NewMessage(myacc["apiKey"], myacc["apiPw"], myacc["userKey"], false, 3)
 	
 	var db = databasepool.DB
 	var stdlog = config.Stdlog

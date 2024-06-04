@@ -88,7 +88,7 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 
 	if isProc {
 		acc := account[acc]
-		client := NewMessage(acc["apiKey"], acc["apiPw"], acc["userKey"], true, 3)
+		client := NewMessage(acc["apiKey"], acc["apiPw"], acc["userKey"], false, 3)
 		for searchData.Next() {
 			var userid, msgid sql.NullString
 			var resp_Result sql.NullInt64
