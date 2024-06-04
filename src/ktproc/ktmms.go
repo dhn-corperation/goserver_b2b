@@ -119,6 +119,8 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 			body, _ := ioutil.ReadAll(resp.Body)
 			var decodeBody []SearchResTable
 
+			errlog.Println(string(body))
+
 			err = json.Unmarshal([]byte(body), &decodeBody)
 			if err != nil { 
 				continue
