@@ -278,7 +278,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 					fileParam = append(fileParam, "")
 				}
 
-				resp, err := client.ExecSMS("/send/mms", mmsBox)
+				resp, err := client.ExecMMS("/send/mms", mmsBox, fileParam)
 				if err != nil {
 					apiErrBox = append(apiErrBox, msgid.String)
 					stdlog.Println(user_id, "- msgid : ", msgid.String, " KT크로샷 mms API 발송 중 오류 발생 : ", err)
@@ -359,12 +359,13 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 			db.Exec("update DHN_RESULT set send_group = null where msgid = ?", id)
 			stdlog.Println(user_id, "- msgid : ", msgid.String, " KT크로샷 오류건 send_group null 처리")
 		}
+		fcnt++
 		time.Sleep(5 * time.Second)
 
 	}
 
-	if scnt > 0 || smscnt > 0 || lmscnt > 0 || fcnt > 0 {
-		stdlog.Println(user_id, "-", group_no, "문자 발송 처리 완료 ( ", tcnt, " ) : 성공 -", scnt, " , SMS -", smscnt, " , LMS -", lmscnt, ", 실패 - ", fcnt, "  >> Process cnt : ", procCnt)
+	if smscnt > 0 || lmscnt > 0 || fcnt > 0 {
+		stdlog.Println(user_id, "-", group_no, "문자 발송 처리 완료 ( ", tcnt, " ) : SMS -", smscnt, " , LMS -", lmscnt, ", 그룹넘버초기화 - ", fcnt, "  >> Process cnt : ", procCnt)
 	}
 	procCnt--
 }
