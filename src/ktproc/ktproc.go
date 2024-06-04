@@ -185,8 +185,9 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 	mmsSeq := 1
 	
 	for resrows.Next() {
+		stdlog.Println("1")
 		resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check)
-
+		stdlog.Println("2")
 		phnstr = phn.String
 
 		// 알림톡 발송 성공 혹은 문자 발송이 아니면
@@ -243,6 +244,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 					db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code = '7003', dr.message = '메세지 길이 오류', dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + userid.String + "' and msgid = '" + msgid.String + "'")
 				}
 			} else if s.EqualFold(sms_kind.String, "L") || s.EqualFold(sms_kind.String, "M") {
+				stdlog.Println("3")
 				mmsBox = SendReqTable{
 					MessageSubType : 1,
 					CallbackNumber : sms_sender.String,
@@ -302,6 +304,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 					BodyData : body,
 					Seq : mmsSeq,
 				})
+				stdlog.Println("4")
 
 				mmsSeq++
 				lmscnt++
@@ -314,6 +317,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 	}
 
 	if len(resBox) > 0 {
+		stdlog.Println("5")
 		tx, _ := db.Begin()
 		stmtSMS, _ := tx.Prepare("insert into KT_SMS(userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, resp_JobID, dhn_id) values(?,?,?,?,?,?,?,?)")
 		stmtMMS, _ := tx.Prepare("insert into KT_MMS(userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, Bundle_Subject, Image_path1, Image_path2, Image_path3, resp_JobID, dhn_id) values(?,?,?,?,?,?,?,?,?,?,?,?)")
