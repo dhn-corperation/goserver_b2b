@@ -95,14 +95,16 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 
 			searchData.Scan(&userid, &msgid, &resp_Result)
 
-			resp, err := client.SearchResult("/inquiry/report", SearchReqTable{
+			sendData := SearchReqTable{
 				JobIDs : []JobIDs{
 					{
-						JobID : resp_Result.Int64,
+						JobID : resp_JobID.Int64,
 					},
 				},
 				SendDay : time.Now().Format("20060102"),
-			})
+			}
+
+			resp, err := client.SearchResult("/inquiry/report", sendData)
 
 			if err != nil {
 				errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조회 API 발송 중 오류 발생 : err : ", err)
