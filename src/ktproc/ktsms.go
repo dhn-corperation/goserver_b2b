@@ -74,15 +74,11 @@ func smsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 
 	_, err := db.Query(tableQuery)
 	if err != nil {
-		errcode := err.Error()
-		errlog.Println("KT크로샷 SMS LOG 테이블 존재유무 체크 ", tableQuery, errcode)
-
 		if s.Index(errcode, "1146") > 0 {
 			db.Exec("Create Table IF NOT EXISTS " + SMSTable + " like " + table)
 			errlog.Println(SMSTable + " 생성 !!")
-		}
-
-		return
+			return
+		}		
 	}
 
 	var searchQuery = "select userid, msgid, resp_JobID from " + table + " where sep_seq = " + strconv.Itoa(seq)
