@@ -69,6 +69,15 @@ func smsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 	var monthStr = fmt.Sprintf("%d%02d", t.Year(), t.Month())
 
 	var SMSTable = table + "_" + monthStr
+	
+	exists, err := checkTableExists(db, SMSTable)
+	if err != nil {
+		errlog.Println("KT MMS LOG table 존재유무 조회 오류 err : ", err)
+	}
+	if !exists {
+		db.Exec("Create Table IF NOT EXISTS " + SMSTable + " like " + table)
+		errlog.Println(SMSTable + " 생성 !!")
+	}
 
 	// var tableQuery = "select 1 from " + SMSTable
 

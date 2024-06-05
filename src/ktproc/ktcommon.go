@@ -13,6 +13,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"database/sql"
 	// config "mycs/src/kaoconfig"
 )
 
@@ -325,4 +326,22 @@ func KTCodeMessage(code string) string {
 		val = "기타 오류"
 	}
 	return val
+}
+
+func checkTableExists(db *sql.DB, tableName string) (bool, error) {
+	var name string
+	query := `
+		SELECT table_name
+		FROM information_schema.tables
+		WHERE table_schema = DATABASE() AND table_name = ?
+		LIMIT 1;
+	`
+	err := db.QueryRow(query, tableName).Scan(&name)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
