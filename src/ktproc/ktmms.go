@@ -124,23 +124,21 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 			}
 			first := decodeBody.JobIDs[0]
 
-			test, _ := json.Marshal(first)
-			errlog.Println(string(test))
-
 			if first.Result == 0 {
-				errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조 API 결과 Result 0")
 				continue
 			}
 
 			//TODO 결과코드 변환 과정 필요함
 
 			var telInfo = "ETC"
-			if first.TelconInfo == 1 {
-				telInfo = "SKT"
-			} else if first.TelconInfo == 2 {
-				telInfo = "KTF"
-			} else if first.TelconInfo == 3 {
-				telInfo = "LGT"
+			if first.TelconInfo != nil {
+				if first.TelconInfo == 1 {
+					telInfo = "SKT"
+				} else if first.TelconInfo == 2 {
+					telInfo = "KTF"
+				} else if first.TelconInfo == 3 {
+					telInfo = "LGT"
+				}
 			}
 
 		    parsedTime, err := time.Parse("20060102150405", first.Time)
