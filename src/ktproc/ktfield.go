@@ -134,7 +134,7 @@ type SearchResDatailTable struct {
 	ReceiveNumber string 		`json:"ReceiveNumber,omitempty"`
 	CallbackNumber string 		`json:"CallbackNumber,omitempty"`
 	ReplyInfo string 			`json:"ReplyInfo,omitempty"`
-	TelconInfo *int              `json:"TelconInfo,omitempty"`
+	TelcoInfo *int              `json:"TelcoInfo,omitempty"`
 	Fee int 					`json:"Fee,omitempty"`
 	Rtime string				`json:"Rtime,omitempty"`
 	SubmitTime string			`json:"SubmitTime,omitempty"`

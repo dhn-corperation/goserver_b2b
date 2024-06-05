@@ -124,15 +124,15 @@ func smsProcess(wg *sync.WaitGroup, table string, seq int, acc int) {
 
 			var telInfo = "ETC"
 			var telInfoLog = 0
-			if first.TelconInfo != nil {
-				if *first.TelconInfo == 1 {
+			if first.TelcoInfo != nil {
+				if *first.TelcoInfo == 1 {
 					telInfo = "SKT"
-				} else if *first.TelconInfo == 2 {
+				} else if *first.TelcoInfo == 2 {
 					telInfo = "KTF"
-				} else if *first.TelconInfo == 3 {
+				} else if *first.TelcoInfo == 3 {
 					telInfo = "LGT"
 				}
-				telInfoLog = *first.TelconInfo
+				telInfoLog = *first.TelcoInfo
 			}
 
 			parsedTime, err := time.Parse("20060102150405", first.Time)
