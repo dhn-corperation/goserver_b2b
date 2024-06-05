@@ -10,7 +10,7 @@ import (
 	"strconv"
 
 	//	"log"
-	// s "strings"
+	s "strings"
 	"sync"
 	"time"
 
@@ -23,7 +23,6 @@ func LMSProcess(ctx context.Context, acc int) {
 	var wg sync.WaitGroup
 
 	for {
-		config.Stdlog.Println("ㅁㄴㅇㄹ")
 		select {
 		case <-ctx.Done():
 
@@ -71,16 +70,16 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 
 	var MMSTable = table + "_" + monthStr
 
-	// var tableQuery = "select 1 from " + MMSTable
+	var tableQuery = "select 1 from " + MMSTable
 
-	// _, err := db.Query(tableQuery)
-	// if err != nil {
-	// 	if s.Index(err.Error(), "1146") > 0 {
-	// 		db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like " + table)
-	// 		errlog.Println(MMSTable + " 생성 !!")
-	// 		return
-	// 	}
-	// }
+	_, err := db.Query(tableQuery)
+	if err != nil && err != sql.ErrNoRows {
+		if s.Index(err.Error(), "1146") > 0 {
+			db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like " + table)
+			errlog.Println(MMSTable + " 생성 !!")
+			return
+		}
+	}
 
 	var searchQuery = "select userid, msgid, resp_JobID from " + table + " where sep_seq = " + strconv.Itoa(seq)
 
@@ -158,7 +157,7 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 			}
 
 			formattedTime := parsedTime.Format("2006-01-02 15:04:05")
-			
+
 			_, err = db.Exec(`insert into ` + MMSTable + `(userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, Bundle_Subject, Image_path1, Image_path2, Image_path3, resp_JobID, resp_Time, resp_SubmitTime, resp_Result, Resp_TelconInfo, resp_EndUserID, resp_ServiceProviderID, sep_seq, dhn_id)
 				select userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, Bundle_Subject, Image_path1, Image_path2, Image_path3, resp_JobID, '` + first.Time + `', '` + first.SubmitTime + `', '` + strconv.Itoa(first.Result) + `', '` + strconv.Itoa(telInfoLog) + `', '` + first.EndUserID + `', '` + first.ServiceProviderID + `', sep_seq, dhn_id
 				from KT_MMS
