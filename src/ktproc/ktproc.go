@@ -202,6 +202,7 @@ func resProcess(group_no string, user_id string, acc int) {
 						MessageSubType : 1,
 						CallbackNumber : s.ReplaceAll(sms_sender.String, "-", ""),
 						CustomMessageID : msgid.String,
+						KisaOrigCode : 302190001,
 						Bundle : []Bundle{
 							{
 								Seq : 1,
@@ -274,6 +275,7 @@ func resProcess(group_no string, user_id string, acc int) {
 					MessageSubType : subType,
 					CallbackNumber : s.ReplaceAll(sms_sender.String, "-", ""),
 					CustomMessageID : msgid.String,
+					KisaOrigCode : 302190001,
 					Bundle : []Bundle{
 						{
 							Seq : 1,
