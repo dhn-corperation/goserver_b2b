@@ -74,7 +74,7 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 
 	_, err := db.Query(tableQuery)
 	if err != nil {
-		if s.Index(err, "1146") > 0 {
+		if s.Index(err.Error(), "1146") > 0 {
 			db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like " + table)
 			errlog.Println(MMSTable + " 생성 !!")
 			return
