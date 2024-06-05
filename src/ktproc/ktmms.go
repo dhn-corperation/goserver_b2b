@@ -66,7 +66,7 @@ func mmsProcess(wg *sync.WaitGroup, table string, seq int, acc int) {
 		errlog.Println(MMSTable + " 생성 !!")
 	}
 
-	var searchQuery = "select userid, msgid, resp_JobID from " + table + " where sep_seq = " + strconv.Itoa(seq)
+	var searchQuery = "select userid, msgid, resp_JobID, resp_SubmitTime from " + table + " where sep_seq = " + strconv.Itoa(seq)
 
 	searchData, err := db.Query(searchQuery)
 	if err != nil {
@@ -89,7 +89,7 @@ func mmsProcess(wg *sync.WaitGroup, table string, seq int, acc int) {
 				JobIDs: []int64{
 					resp_JobID.Int64,
 				},
-				SendDay: time.Now().Format("20060102"),
+				SendDay: resp_SubmitTime.String[:8],
 			}
 
 			resp, err := client.SearchResult("/inquiry/report/", sendData)

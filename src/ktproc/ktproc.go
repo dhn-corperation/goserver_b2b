@@ -328,26 +328,26 @@ func resProcess(group_no string, user_id string, acc int) {
 		if err != nil {
 			stdlog.Println(err)
 		}
-		stmtSMS, _ := tx.Prepare("insert into KT_SMS(userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, resp_JobID, sep_seq, dhn_id) values(?,?,?,?,?,?,?,?,?,?)")
-		stmtMMS, _ := tx.Prepare("insert into KT_MMS(userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, Bundle_Subject, Image_path1, Image_path2, Image_path3, resp_JobID, sep_seq, dhn_id) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+		stmtSMS, _ := tx.Prepare("insert into KT_SMS(userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, resp_JobID, resp_SubmitTime, sep_seq, dhn_id) values(?,?,?,?,?,?,?,?,?,?,?)")
+		stmtMMS, _ := tx.Prepare("insert into KT_MMS(userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, Bundle_Subject, Image_path1, Image_path2, Image_path3, resp_JobID, resp_SubmitTime, sep_seq, dhn_id) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 		var decodeBody SendResDetileTable
 		for _, val := range resBox {
 			srt := val.SendReqTable
 			json.Unmarshal([]byte(val.BodyData), &decodeBody)
 			if val.MessageType == "sms" {
-				_, err := stmtSMS.Exec(user_id, val.MsgID, srt.MessageSubType, srt.CallbackNumber, srt.Bundle[0].Seq, srt.Bundle[0].Number, srt.Bundle[0].Content, decodeBody.JobIDs[0].JobID, val.Seq, acc)
+				_, err := stmtSMS.Exec(user_id, val.MsgID, srt.MessageSubType, srt.CallbackNumber, srt.Bundle[0].Seq, srt.Bundle[0].Number, srt.Bundle[0].Content, decodeBody.JobIDs[0].JobID, decodeBody.SubmitTime, val.Seq, acc)
 				if err != nil {
 					tx.Rollback()
 					stdlog.Println(user_id, "- msgid : ", val.MsgID, " KT테이블 SMS insert 중 오류 발생 : ", err)
 				}
 			} else if val.MessageType == "lms" {
-				_, err := stmtMMS.Exec(user_id, val.MsgID, srt.MessageSubType, srt.CallbackNumber, srt.Bundle[0].Seq, srt.Bundle[0].Number, srt.Bundle[0].Content, srt.Bundle[0].Subject, "", "", "", decodeBody.JobIDs[0].JobID, val.Seq, acc)
+				_, err := stmtMMS.Exec(user_id, val.MsgID, srt.MessageSubType, srt.CallbackNumber, srt.Bundle[0].Seq, srt.Bundle[0].Number, srt.Bundle[0].Content, srt.Bundle[0].Subject, "", "", "", decodeBody.JobIDs[0].JobID, decodeBody.SubmitTime, val.Seq, acc)
 				if err != nil {
 					tx.Rollback()
 					stdlog.Println(user_id, "- msgid : ", val.MsgID, " KT테이블 LMS insert 중 오류 발생 : ", err)
 				}
 			} else if val.MessageType == "mms" {
-				_, err := stmtMMS.Exec(user_id, val.MsgID, srt.MessageSubType, srt.CallbackNumber, srt.Bundle[0].Seq, srt.Bundle[0].Number, srt.Bundle[0].Content, srt.Bundle[0].Subject, val.FileParam[0], val.FileParam[1], val.FileParam[2], decodeBody.JobIDs[0].JobID, val.Seq, acc)
+				_, err := stmtMMS.Exec(user_id, val.MsgID, srt.MessageSubType, srt.CallbackNumber, srt.Bundle[0].Seq, srt.Bundle[0].Number, srt.Bundle[0].Content, srt.Bundle[0].Subject, val.FileParam[0], val.FileParam[1], val.FileParam[2], decodeBody.JobIDs[0].JobID, decodeBody.SubmitTime, val.Seq, acc)
 				if err != nil {
 					tx.Rollback()
 					stdlog.Println(user_id, "- msgid : ", val.MsgID, " KT테이블 MMS insert 중 오류 발생 : ", err)
