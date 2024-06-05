@@ -84,8 +84,9 @@ func mmsProcess(wg *sync.WaitGroup, table string, seq int, acc int) {
 			var resp_JobID sql.NullInt64
 
 			searchData.Scan(&userid, &msgid, &resp_JobID, &resp_SubmitTime)
-
+			errlog.Println(resp_SubmitTime.String)
 			st := resp_SubmitTime.String[:8]
+			errlog.Println(st)
 
 			sendData := SearchReqTable{
 				JobIDs: []int64{
