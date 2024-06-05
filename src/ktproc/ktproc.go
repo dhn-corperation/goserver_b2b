@@ -228,6 +228,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 					}
 
 					body, _ := ioutil.ReadAll(resp.Body)
+					stdlog.Println(string(body))
 					resBox = append(resBox, SendResTable{
 						MsgID : msgid.String,
 						SendReqTable : smsBox,
@@ -294,6 +295,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 				}
 
 				body, _ := ioutil.ReadAll(resp.Body)
+				stdlog.Println(string(body))
 				resBox = append(resBox, SendResTable{
 					MsgID : msgid.String,
 					SendReqTable : mmsBox,
