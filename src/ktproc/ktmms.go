@@ -23,6 +23,7 @@ func LMSProcess(ctx context.Context, acc int) {
 	var wg sync.WaitGroup
 
 	for {
+		config.Stdlog.Println("ㅁㄴㅇㄹ")
 		select {
 		case <-ctx.Done():
 
