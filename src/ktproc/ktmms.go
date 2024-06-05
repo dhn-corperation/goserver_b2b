@@ -74,7 +74,7 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 
 	_, err := db.Query(tableQuery)
 	if err != nil {
-		if s.Index(errcode, "1146") > 0 {
+		if s.Index(err, "1146") > 0 {
 			db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like " + table)
 			errlog.Println(MMSTable + " 생성 !!")
 			return
@@ -87,13 +87,6 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 	if err != nil {
 		errcode := err.Error()
 		errlog.Println("KT크로샷 MMS 조회 중 오류 발생", searchQuery, errcode)
-
-		if s.Index(errcode, "1146") > 0 {
-			db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like " + table)
-			errlog.Println(MMSTable + " 생성 !!")
-		}
-
-		isProc = false
 		return
 	}
 	defer searchData.Close()

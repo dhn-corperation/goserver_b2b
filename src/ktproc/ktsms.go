@@ -74,7 +74,7 @@ func smsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 
 	_, err := db.Query(tableQuery)
 	if err != nil {
-		if s.Index(errcode, "1146") > 0 {
+		if s.Index(err, "1146") > 0 {
 			db.Exec("Create Table IF NOT EXISTS " + SMSTable + " like " + table)
 			errlog.Println(SMSTable + " 생성 !!")
 			return
