@@ -70,17 +70,28 @@ func smsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 
 	var SMSTable = table + "_" + monthStr
 
+	var tableQuery = "select 1 from " + SMSTable
+
+	_, err := db.Query(tableQuery)
+	if err != nil {
+		errcode := err.Error()
+		errlog.Println("KT크로샷 SMS LOG 테이블 존재유무 체크 ", tableQuery, errcode)
+
+		if s.Index(errcode, "1146") > 0 {
+			db.Exec("Create Table IF NOT EXISTS " + SMSTable + " like " + table)
+			errlog.Println(SMSTable + " 생성 !!")
+		}
+
+		isProc = false
+		return
+	}
+
 	var searchQuery = "select userid, msgid, resp_JobID from " + table + " where sep_seq = " + strconv.Itoa(seq)
 
 	searchData, err := db.Query(searchQuery)
 	if err != nil {
 		errcode := err.Error()
 		errlog.Println("KT크로샷 SMS 조회 중 오류 발생", searchQuery, errcode)
-
-		if s.Index(errcode, "1146") > 0 {
-			db.Exec("Create Table IF NOT EXISTS " + SMSTable + " like " + table)
-			errlog.Println(SMSTable + " 생성 !!")
-		}
 
 		isProc = false
 		return
