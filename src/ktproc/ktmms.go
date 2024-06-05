@@ -32,18 +32,9 @@ func LMSProcess(ctx context.Context, acc int) {
 			return
 		default:
 
-			var t = time.Now()
-
-			if t.Day() < 3 {
-				for i := 1; i < 6; i++ {
-					wg.Add(1)
-					go mmsProcess(&wg, "KT_MMS", true, i, acc)
-				}
-			}
-
 			for i := 1; i < 6; i++ {
 				wg.Add(1)
-				go mmsProcess(&wg, "KT_MMS", false, i, acc)
+				go mmsProcess(&wg, "KT_MMS", i, acc)
 			}
 
 			wg.Wait()
@@ -52,7 +43,7 @@ func LMSProcess(ctx context.Context, acc int) {
 
 }
 
-func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int) {
+func mmsProcess(wg *sync.WaitGroup, table string, seq int, acc int) {
 
 	defer wg.Done()
 	var db = databasepool.DB
@@ -60,11 +51,7 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 
 	var isProc = true
 	var t time.Time
-	if preFlag {
-		t = time.Now().Add(time.Hour * -96)
-	} else {
-		t = time.Now()
-	}
+	t = time.Now()
 
 	var monthStr = fmt.Sprintf("%d%02d", t.Year(), t.Month())
 
@@ -78,17 +65,6 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 		db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like " + table)
 		errlog.Println(MMSTable + " 생성 !!")
 	}
-
-	// var tableQuery = "select 1 from " + MMSTable
-
-	// _, err := db.Query(tableQuery)
-	// if err != nil && err != sql.ErrNoRows {
-	// 	if s.Index(err.Error(), "1146") > 0 {
-	// 		db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like " + table)
-	// 		errlog.Println(MMSTable + " 생성 !!")
-	// 		return
-	// 	}
-	// }
 
 	var searchQuery = "select userid, msgid, resp_JobID from " + table + " where sep_seq = " + strconv.Itoa(seq)
 

@@ -262,6 +262,7 @@ func resultProc() {
 			}
 		}
 	}
+	
 	klctx, klcancel := context.WithCancel(context.Background())
 	go ktproc.LMSProcess(klctx, 0)
 	allCtxC["ktxrolms"] = klcancel
