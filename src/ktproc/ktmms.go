@@ -119,7 +119,6 @@ func mmsProcess(wg *sync.WaitGroup, table string, seq int, acc int) {
 			}
 
 			convResult := strconv.Itoa(first.Result)
-			errlog.Println(convResult)
 			resultCode := KTCode(convResult)
 			resultMessage := KTCodeMessage(resultCode)
 
