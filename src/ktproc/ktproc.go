@@ -49,6 +49,7 @@ func KtProcess(user_id string, ctx context.Context, acc int) {
 				limit 1
 					`
 				cnterr := databasepool.DB.QueryRowContext(ctx, tickSql, user_id).Scan(&count)
+				config.Stdlog.Println("asdf?")
 
 				if cnterr != nil && cnterr != sql.ErrNoRows {
 					config.Stdlog.Println("DHN_RESULT Table - select 오류 : " + cnterr.Error())
@@ -62,7 +63,7 @@ func KtProcess(user_id string, ctx context.Context, acc int) {
 							config.Stdlog.Println(user_id, "Group No Update 오류", group_no)
 						} else {
 							go resProcess(ctx, group_no, user_id, acc)
-							config.Stdlog.Println("asdf?")
+
 						}
 					}
 				}
