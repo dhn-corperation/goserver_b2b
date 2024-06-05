@@ -85,11 +85,13 @@ func mmsProcess(wg *sync.WaitGroup, table string, seq int, acc int) {
 
 			searchData.Scan(&userid, &msgid, &resp_JobID, &resp_SubmitTime)
 
+			st := resp_SubmitTime.String[:8]
+
 			sendData := SearchReqTable{
 				JobIDs: []int64{
 					resp_JobID.Int64,
 				},
-				SendDay: resp_SubmitTime.String[:8],
+				SendDay: st,
 			}
 
 			resp, err := client.SearchResult("/inquiry/report/", sendData)
