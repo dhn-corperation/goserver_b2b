@@ -10,7 +10,7 @@ import (
 	"strconv"
 
 	//	"log"
-	s "strings"
+	// s "strings"
 	"sync"
 	"time"
 
@@ -70,16 +70,16 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 
 	var MMSTable = table + "_" + monthStr
 
-	var tableQuery = "select 1 from " + MMSTable
+	// var tableQuery = "select 1 from " + MMSTable
 
-	_, err := db.Query(tableQuery)
-	if err != nil && err != sql.ErrNoRows {
-		if s.Index(err.Error(), "1146") > 0 {
-			db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like " + table)
-			errlog.Println(MMSTable + " 생성 !!")
-			return
-		}
-	}
+	// _, err := db.Query(tableQuery)
+	// if err != nil && err != sql.ErrNoRows {
+	// 	if s.Index(err.Error(), "1146") > 0 {
+	// 		db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like " + table)
+	// 		errlog.Println(MMSTable + " 생성 !!")
+	// 		return
+	// 	}
+	// }
 
 	var searchQuery = "select userid, msgid, resp_JobID from " + table + " where sep_seq = " + strconv.Itoa(seq)
 
