@@ -49,6 +49,12 @@ func mmsProcess(wg *sync.WaitGroup, table string, seq int, acc int) {
 	var db = databasepool.DB
 	var errlog = config.Stdlog
 
+	defer func() {
+		if err := recover(); err != nil {
+			errlog.Println("KT크로샷 MMS 결과 처리 중 패닉 발생 : ", err)
+		}
+	}()
+
 	var isProc = true
 	var t time.Time
 	t = time.Now()
@@ -85,11 +91,19 @@ func mmsProcess(wg *sync.WaitGroup, table string, seq int, acc int) {
 
 			searchData.Scan(&userid, &msgid, &resp_JobID, &resp_SubmitTime)
 
+			var st string
+
+			if len(resp_SubmitTime.String) >= 8 {
+				st = resp_SubmitTime.String[:8]
+			} else {
+				continue
+			}
+
 			sendData := SearchReqTable{
 				JobIDs: []int64{
 					resp_JobID.Int64,
 				},
-				SendDay: resp_SubmitTime.String[:8],
+				SendDay: st,
 			}
 
 			resp, err := client.SearchResult("/inquiry/report/", sendData)
