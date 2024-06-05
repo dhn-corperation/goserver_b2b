@@ -129,9 +129,6 @@ func smsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 			}
 			first := decodeBody.JobIDs[0]
 
-			testData, _ := json.Marshal(first)
-			errlog.Println(string(testData))
-
 			if first.Result == 0 {
 				continue
 			}
