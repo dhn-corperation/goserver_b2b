@@ -26,7 +26,7 @@ func KtProcess(user_id string, ctx context.Context, acc int) {
 	for {
 
 		if procCnt < 5 {
-
+			config.Stdlog.Println(procCnt)
 			select {
 			case <-ctx.Done():
 				config.Stdlog.Println(user_id, " - Ktxro process가 10초 후에 종료 됨.")
@@ -113,7 +113,6 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 
 func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 	procCnt++
-	config.Stdlog.Println(procCnt)
 	myacc := account[acc]
 	client := NewMessage(myacc["apiKey"], myacc["apiPw"], myacc["userKey"], false, 3)
 	
