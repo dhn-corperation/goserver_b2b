@@ -132,11 +132,11 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 
 			var telInfo = "ETC"
 			if first.TelconInfo != nil {
-				if first.TelconInfo == 1 {
+				if *first.TelconInfo == 1 {
 					telInfo = "SKT"
-				} else if first.TelconInfo == 2 {
+				} else if *first.TelconInfo == 2 {
 					telInfo = "KTF"
-				} else if first.TelconInfo == 3 {
+				} else if *first.TelconInfo == 3 {
 					telInfo = "LGT"
 				}
 			}
