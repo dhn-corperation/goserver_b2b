@@ -80,10 +80,10 @@ func smsProcess(wg *sync.WaitGroup, table string, seq int, acc int) {
 		acc := account[acc]
 		client := NewMessage(acc["apiKey"], acc["apiPw"], acc["userKey"], false, 3)
 		for searchData.Next() {
-			var userid, msgid sql.NullString
+			var userid, msgid, resp_SubmitTime sql.NullString
 			var resp_JobID sql.NullInt64
 
-			searchData.Scan(&userid, &msgid, &resp_JobID)
+			searchData.Scan(&userid, &msgid, &resp_JobID, &resp_SubmitTime)
 
 			sendData := SearchReqTable{
 				JobIDs: []int64{
