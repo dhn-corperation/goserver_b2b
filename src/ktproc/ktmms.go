@@ -117,16 +117,18 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 			body, _ := ioutil.ReadAll(resp.Body)
 			var decodeBody SearchResTable
 
-			errlog.Println(string(body))
-
 			err = json.Unmarshal([]byte(body), &decodeBody)
 			if err != nil {
-				errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조 API 별과 변환중 에러 발생 : ", err)
+				errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조 API 결과 변환중 에러 발생 : ", err)
 				continue
 			}
 			first := decodeBody.JobIDs[0]
 
+			test, _ = json.marshal(first)
+			errlog.Println(string(test))
+
 			if first.Result == 0 {
+				errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조 API 결과 Result 0")
 				continue
 			}
 
