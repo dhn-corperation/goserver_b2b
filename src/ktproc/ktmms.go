@@ -162,12 +162,12 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 				continue
 			}
 			if first.Result != 10000 {
-				_, err = db.Exec("update DHN_RESULT set message_type = 'PH', result = 'Y', code = '" + resultCode + "', message = concat(dr.message, '," + "여기 에러 문구 넣어야" + "'), remark1 = '" + telInfo + "', dr.remark2 = '" + formattedTime + "' where userid='" + userid.String + "' and msgid = '" + msgid.String + "'")
+				_, err = db.Exec("update DHN_RESULT set message_type = 'PH', result = 'Y', code = '" + resultCode + "', message = concat(dr.message, '," + "여기 에러 문구 넣어야" + "'), remark1 = '" + telInfo + "', remark2 = '" + formattedTime + "' where userid='" + userid.String + "' and msgid = '" + msgid.String + "'")
 				if err != nil {
 					errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조 API 결과 DHN_RESULT 테이블 반영 실패1 : ", err)
 				}
 			} else {
-				_, err = db.Exec("update DHN_RESULT set message_type = 'PH', result = 'Y', code = '0000', message = '', remark1 = '" + telInfo + "', dr.remark2 = '" + formattedTime + "' where userid='" + userid.String + "' and msgid = '" + msgid.String + "'")
+				_, err = db.Exec("update DHN_RESULT set message_type = 'PH', result = 'Y', code = '0000', message = '', remark1 = '" + telInfo + "', remark2 = '" + formattedTime + "' where userid='" + userid.String + "' and msgid = '" + msgid.String + "'")
 				if err != nil {
 					errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조 API 결과 DHN_RESULT 테이블 반영 실패2 : ", err)
 				}
