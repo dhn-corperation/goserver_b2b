@@ -70,6 +70,21 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 
 	var MMSTable = table + "_" + monthStr
 
+	var tableQuery = "select 1 from " + MMSTable
+
+	_, err := db.Query(tableQuery)
+	if err != nil {
+		errcode := err.Error()
+		errlog.Println("KT크로샷 SMS LOG 테이블 존재유무 체크 ", tableQuery, errcode)
+
+		if s.Index(errcode, "1146") > 0 {
+			db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like " + table)
+			errlog.Println(MMSTable + " 생성 !!")
+		}
+
+		return
+	}
+
 	var searchQuery = "select userid, msgid, resp_JobID from " + table + " where sep_seq = " + strconv.Itoa(seq)
 
 	searchData, err := db.Query(searchQuery)

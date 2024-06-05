@@ -269,7 +269,7 @@ func resultProc() {
 		allService["ktxrolms"] = "Ktxro LMS"
 
 		Ksctx, Kscancel := context.WithCancel(context.Background())
-		go oshotproc.SMSProcess(Ksctx, 0)
+		go ktproc.SMSProcess(Ksctx, 0)
 		allCtxC["ktxrosms"] = Kscancel
 		allService["ktxrosms"] = "Ktxro SMS"
 	}

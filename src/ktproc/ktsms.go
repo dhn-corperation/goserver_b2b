@@ -82,7 +82,6 @@ func smsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 			errlog.Println(SMSTable + " 생성 !!")
 		}
 
-		isProc = false
 		return
 	}
 
@@ -92,8 +91,6 @@ func smsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 	if err != nil {
 		errcode := err.Error()
 		errlog.Println("KT크로샷 SMS 조회 중 오류 발생", searchQuery, errcode)
-
-		isProc = false
 		return
 	}
 	defer searchData.Close()
