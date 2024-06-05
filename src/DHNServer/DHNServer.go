@@ -268,10 +268,10 @@ func resultProc() {
 		allCtxC["ktxrolms"] = klcancel
 		allService["ktxrolms"] = "Ktxro LMS"
 
-		// Ksctx, Kscancel := context.WithCancel(context.Background())
-		// go oshotproc.SMSProcess(osctx, 0)
-		// allCtxC["ktxrosms"] = Kscancel
-		// allService["ktxrosms"] = "Ktxro SMS"
+		Ksctx, Kscancel := context.WithCancel(context.Background())
+		go oshotproc.SMSProcess(Ksctx, 0)
+		allCtxC["ktxrosms"] = Kscancel
+		allService["ktxrosms"] = "Ktxro SMS"
 	}
 
 	nanoUser := map[string]string{}
