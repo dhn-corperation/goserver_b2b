@@ -154,7 +154,8 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 				select userid, msgid, MessageSubType, CallbackNumber, Bundle_Num, Bundle_Content, Bundle_Subject, Image_path1, Image_path2, Image_path3, resp_JobID, '`+first.Time+`', '`+first.SubmitTime+`', '`+strconv.Itoa(first.Result)+`', '`+telInfo+`', '`+first.EndUserID+`', '`+first.ServiceProviderID+`', sep_seq, dhn_id
 				from KT_MMS
 				WHERE userid = '`+userid.String+`' and msgid = '`+msgid.String+`'`)
-			if err != nil { 
+			if err != nil {
+				errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조 API 결과 LOG 테이블 입력중 에러 발생 : ", err)
 				continue
 			}
 			if first.Result != 10000 {
