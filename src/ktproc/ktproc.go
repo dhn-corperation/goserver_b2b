@@ -175,8 +175,8 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 
 	var smsBox SendReqTable
 	var mmsBox SendReqTable
-	var resBox []SendResTable
-	var apiErrBox []string
+	var resBox = []SendResTable{}
+	var apiErrBox = []string{}
 
 	fcnt := 0
 	smscnt := 0
