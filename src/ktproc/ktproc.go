@@ -46,7 +46,7 @@ func KtProcess(user_id string, ctx context.Context, acc int) {
 					and userid = ?
 				limit 1
 					`
-				cnterr := databasepool.DB.QueryRowContext(ctx, tickSql, user_id).Scan(&count)
+				cnterr := databasepool.DB.QueryRow(tickSql, user_id).Scan(&count)
 
 				if cnterr != nil && cnterr != sql.ErrNoRows {
 					config.Stdlog.Println("DHN_RESULT Table - select 오류 : " + cnterr.Error())
@@ -55,11 +55,11 @@ func KtProcess(user_id string, ctx context.Context, acc int) {
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%02d%06d", startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), (startNow.Nanosecond() / 1000))
 
-						upError := updateReqeust(ctx, group_no, user_id)
+						upError := updateReqeust(group_no, user_id)
 						if upError != nil {
 							config.Stdlog.Println(user_id, "Group No Update 오류", group_no)
 						} else {
-							go resProcess(ctx, group_no, user_id, acc)
+							go resProcess(group_no, user_id, acc)
 
 						}
 					}
@@ -70,7 +70,7 @@ func KtProcess(user_id string, ctx context.Context, acc int) {
 	}
 }
 
-func updateReqeust(ctx context.Context, group_no string, user_id string) error {
+func updateReqeust(group_no string, user_id string) error {
 
 	tx, err := databasepool.DB.Begin()
 	if err != nil {
@@ -98,7 +98,7 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 	  and userid = ?
 	LIMIT 500
 	`
-	_, err = tx.ExecContext(ctx, gudQuery, group_no, user_id)
+	_, err = tx.Exec(gudQuery, group_no, user_id)
 
 	if err != nil {
 		config.Stdlog.Println(user_id, "- Group NO Update - Select error : ( group_no : "+group_no+" / user_id : "+user_id+" ) : "+err.Error())
@@ -109,7 +109,7 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 	return nil
 }
 
-func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
+func resProcess(group_no string, user_id string, acc int) {
 	procCnt++
 	myacc := account[acc]
 	client := NewMessage(myacc["apiKey"], myacc["apiPw"], myacc["userKey"], false, 3)
@@ -160,7 +160,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
       and userid = ?
 	order by userid
 	`
-	resrows, err := db.QueryContext(ctx, resquery, group_no, user_id)
+	resrows, err := db.Query(resquery, group_no, user_id)
 
 	if err != nil {
 		stdlog.Println("Result Table 조회 중 오류 발생")
@@ -317,12 +317,10 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 		if err != nil {
 			stdlog.Println(err)
 		}
-		stdlog.Println("여기오냐1")
 		stmtSMS, _ := tx.Prepare("insert into KT_SMS(userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, resp_JobID, sep_seq, dhn_id) values(?,?,?,?,?,?,?,?,?,?)")
 		stmtMMS, _ := tx.Prepare("insert into KT_MMS(userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, Bundle_Subject, Image_path1, Image_path2, Image_path3, resp_JobID, sep_seq, dhn_id) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 		var decodeBody SendResDetileTable
 		for _, val := range resBox {
-			stdlog.Println("여기오냐2")
 			srt := val.SendReqTable
 			json.Unmarshal([]byte(val.BodyData), &decodeBody)
 			if val.MessageType == "sms" {
@@ -345,9 +343,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 				}
 			}
 		}
-		stdlog.Println("여기오냐3")
 		err = tx.Commit()
-		stdlog.Println("여기오냐4")
 		if err != nil {
 			stdlog.Println(user_id, " KT테이블 insert commit 중 오류 발생 시작 : ", err)
 			tx.Rollback()
@@ -356,12 +352,9 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 			}
 			stdlog.Println(user_id, " KT테이블 insert commit 중 오류 발생 끝 : ", err)
 		}
-		stdlog.Println("여기오냐5")
 	}
 	if len(apiErrBox) > 0 {
-		stdlog.Println("여기오냐6")
 		for _, id := range apiErrBox {
-			stdlog.Println("여기오냐7")
 			db.Exec("update DHN_RESULT set send_group = null where msgid = ?", id)
 			stdlog.Println(user_id, "- msgid : ", msgid.String, " KT크로샷 오류건 send_group null 처리")
 		}
@@ -369,9 +362,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 		time.Sleep(5 * time.Second)
 
 	}
-	stdlog.Println("여기오냐8")
 	if smscnt > 0 || lmscnt > 0 || fcnt > 0 {
-		stdlog.Println("여기오냐9")
 		stdlog.Println(user_id, "-", group_no, "문자 발송 처리 완료 ( ", tcnt, " ) : SMS -", smscnt, " , LMS -", lmscnt, ", 그룹넘버초기화 - ", fcnt, "  >> Process cnt : ", procCnt)
 	}
 	procCnt--
