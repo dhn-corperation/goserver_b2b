@@ -219,19 +219,18 @@ func resultProc() {
 				allService["OS"+user_id.String] = user_id.String
 
 			}
-
-			olctx, olcancel := context.WithCancel(context.Background())
-			go oshotproc.LMSProcess(olctx)
-			allCtxC["oshotlms"] = olcancel
-			allService["oshotlms"] = "Oshot LMS"
-
-			osctx, oscancel := context.WithCancel(context.Background())
-			go oshotproc.SMSProcess(osctx)
-			allCtxC["oshotsms"] = oscancel
-			allService["oshotsms"] = "Oshot SMS"
-
 		}
 	}
+
+	olctx, olcancel := context.WithCancel(context.Background())
+	go oshotproc.LMSProcess(olctx)
+	allCtxC["oshotlms"] = olcancel
+	allService["oshotlms"] = "Oshot LMS"
+
+	osctx, oscancel := context.WithCancel(context.Background())
+	go oshotproc.SMSProcess(osctx)
+	allCtxC["oshotsms"] = oscancel
+	allService["oshotsms"] = "Oshot SMS"
 
 	ktxroUser := map[string]string{}
 	ktxroCtxC := map[string]interface{}{}
@@ -262,17 +261,16 @@ func resultProc() {
 
 			}
 		}
-
-		klctx, klcancel := context.WithCancel(context.Background())
-		go ktproc.LMSProcess(klctx, 0)
-		allCtxC["ktxrolms"] = klcancel
-		allService["ktxrolms"] = "Ktxro LMS"
-
-		Ksctx, Kscancel := context.WithCancel(context.Background())
-		go ktproc.SMSProcess(Ksctx, 0)
-		allCtxC["ktxrosms"] = Kscancel
-		allService["ktxrosms"] = "Ktxro SMS"
 	}
+	klctx, klcancel := context.WithCancel(context.Background())
+	go ktproc.LMSProcess(klctx, 0)
+	allCtxC["ktxrolms"] = klcancel
+	allService["ktxrolms"] = "Ktxro LMS"
+
+	Ksctx, Kscancel := context.WithCancel(context.Background())
+	go ktproc.SMSProcess(Ksctx, 0)
+	allCtxC["ktxrosms"] = Kscancel
+	allService["ktxrosms"] = "Ktxro SMS"
 
 	nanoUser := map[string]string{}
 	nanoCtxC := map[string]interface{}{}
@@ -673,16 +671,6 @@ Command :
 
 			allCtxC["KTX"+uid] = cancel
 			allService["KTX"+uid] = uid
-
-			klctx, klcancel := context.WithCancel(context.Background())
-			go ktproc.LMSProcess(klctx, convAcc)
-			allCtxC["ktxrolms"] = klcancel
-			allService["ktxrolms"] = "Ktxro LMS"
-
-			// ksctx, kscancel := context.WithCancel(context.Background())
-			// go oshotproc.SMSProcess(ksctx, convAcc)
-			// allCtxC["ktxrosms"] = kscancel
-			// allService["ktxrosms"] = "Ktxro SMS"
 
 			// _, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = 'KTXRO' where user_id = ?", uid)
 				
