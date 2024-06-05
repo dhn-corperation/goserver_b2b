@@ -200,7 +200,7 @@ func resProcess(group_no string, user_id string, acc int) {
 					smsBox = SendReqTable{
 						MessageType : 1,
 						MessageSubType : 1,
-						CallbackNumber : sms_sender.String,
+						CallbackNumber : s.ReplaceAll(sms_sender.String, "-", ""),
 						CustomMessageID : msgid.String,
 						Bundle : []Bundle{
 							{
@@ -272,7 +272,7 @@ func resProcess(group_no string, user_id string, acc int) {
 				mmsBox = SendReqTable{
 					MessageType : 4,
 					MessageSubType : subType,
-					CallbackNumber : sms_sender.String,
+					CallbackNumber : s.ReplaceAll(sms_sender.String, "-", ""),
 					CustomMessageID : msgid.String,
 					Bundle : []Bundle{
 						{
