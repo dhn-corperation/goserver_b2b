@@ -24,7 +24,6 @@ func KtProcess(user_id string, ctx context.Context, acc int) {
 	config.Stdlog.Println(user_id, "Kt Process 시작 됨.")
 	procCnt = 0
 	for {
-		config.Stdlog.Println(procCnt)
 		if procCnt < 5 {
 			select {
 			case <-ctx.Done():
