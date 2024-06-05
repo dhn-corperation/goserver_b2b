@@ -313,11 +313,16 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 
 	}
 	if len(resBox) > 0 {
-		tx, _ := db.Begin()
+		tx, err := db.Begin()
+		if err != nil {
+			stdlog.Println(err)
+		}
+		stdlog.Println("여기오냐1")
 		stmtSMS, _ := tx.Prepare("insert into KT_SMS(userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, resp_JobID, sep_seq, dhn_id) values(?,?,?,?,?,?,?,?,?,?)")
 		stmtMMS, _ := tx.Prepare("insert into KT_MMS(userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, Bundle_Subject, Image_path1, Image_path2, Image_path3, resp_JobID, sep_seq, dhn_id) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 		var decodeBody SendResDetileTable
 		for _, val := range resBox {
+			stdlog.Println("여기오냐2")
 			srt := val.SendReqTable
 			json.Unmarshal([]byte(val.BodyData), &decodeBody)
 			if val.MessageType == "sms" {
@@ -340,18 +345,23 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 				}
 			}
 		}
+		stdlog.Println("여기오냐3")
 		err = tx.Commit()
+		stdlog.Println("여기오냐4")
 		if err != nil {
-			tx.Rollback()
 			stdlog.Println(user_id, " KT테이블 insert commit 중 오류 발생 시작 : ", err)
+			tx.Rollback()
 			for _, val := range resBox {
 				stdlog.Println(user_id, "- msgid : ", val.SendReqTable.CustomMessageID, " KT테이블 insert 중 오류 발생 : ", err)
 			}
 			stdlog.Println(user_id, " KT테이블 insert commit 중 오류 발생 끝 : ", err)
 		}
+		stdlog.Println("여기오냐5")
 	}
 	if len(apiErrBox) > 0 {
+		stdlog.Println("여기오냐6")
 		for _, id := range apiErrBox {
+			stdlog.Println("여기오냐7")
 			db.Exec("update DHN_RESULT set send_group = null where msgid = ?", id)
 			stdlog.Println(user_id, "- msgid : ", msgid.String, " KT크로샷 오류건 send_group null 처리")
 		}
@@ -359,8 +369,9 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 		time.Sleep(5 * time.Second)
 
 	}
-
+	stdlog.Println("여기오냐8")
 	if smscnt > 0 || lmscnt > 0 || fcnt > 0 {
+		stdlog.Println("여기오냐9")
 		stdlog.Println(user_id, "-", group_no, "문자 발송 처리 완료 ( ", tcnt, " ) : SMS -", smscnt, " , LMS -", lmscnt, ", 그룹넘버초기화 - ", fcnt, "  >> Process cnt : ", procCnt)
 	}
 	procCnt--
