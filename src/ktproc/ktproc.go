@@ -62,6 +62,7 @@ func KtProcess(user_id string, ctx context.Context, acc int) {
 							config.Stdlog.Println(user_id, "Group No Update 오류", group_no)
 						} else {
 							go resProcess(ctx, group_no, user_id, acc)
+							config.Stdlog.Println("asdf?")
 						}
 					}
 				}
