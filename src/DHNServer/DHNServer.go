@@ -137,7 +137,7 @@ func resultProc() {
 	allService := map[string]string{}
 	allCtxC := map[string]interface{}{}
 
-	alim_user_list, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST where alimtalk='Y'")
+	alim_user_list, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST where use_flag = 'Y' and alimtalk='Y'")
 	isAlim := true
 	if error != nil {
 		config.Stdlog.Println("알림톡 유저 select 오류 ")
@@ -262,7 +262,7 @@ func resultProc() {
 			}
 		}
 	}
-	
+
 	klctx, klcancel := context.WithCancel(context.Background())
 	go ktproc.LMSProcess(klctx, 0)
 	allCtxC["ktxrolms"] = klcancel
