@@ -151,6 +151,8 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 			resultCode := KTCode(convResult)
 			resultMessage := KTCodeMessage(resultCode)
 
+			errlog.Println("1")
+
 			var telInfo = "ETC"
 			var telInfoLog = 0
 			if first.TelconInfo != nil {
@@ -163,12 +165,14 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 				}
 				telInfoLog = *first.TelconInfo
 			}
+			errlog.Println("2")
 
 			parsedTime, err := time.Parse("20060102150405", first.Time)
 			if err != nil {
 				errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조회 API 발송 중 시간변환 오류 발생 : ", err, "  /  statusCode : ", first.Time)
 				continue
 			}
+			errlog.Println("3")
 
 			formattedTime := parsedTime.Format("2006-01-02 15:04:05")
 
@@ -180,11 +184,13 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 				errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조 API 결과 LOG 테이블 입력중 에러 발생 : ", err)
 				continue
 			}
+			errlog.Println("4")
 			if first.Result != 10000 {
 				_, err = db.Exec("update DHN_RESULT set message_type = 'PH', result = 'Y', code = '" + resultCode + "', message = concat(message, '," + resultMessage + "'), remark1 = '" + telInfo + "', remark2 = '" + formattedTime + "' where userid='" + userid.String + "' and msgid = '" + msgid.String + "'")
 				if err != nil {
 					errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조 API 결과 DHN_RESULT 테이블 반영 실패1 : ", err)
 				}
+				errlog.Println("5")
 			} else {
 				_, err = db.Exec("update DHN_RESULT set message_type = 'PH', result = 'Y', code = '0000', message = '', remark1 = '" + telInfo + "', remark2 = '" + formattedTime + "' where userid='" + userid.String + "' and msgid = '" + msgid.String + "'")
 				if err != nil {
