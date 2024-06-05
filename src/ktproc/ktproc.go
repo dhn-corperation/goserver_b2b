@@ -113,7 +113,7 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 
 func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 	procCnt++
-
+	config.Stdlog.Println(procCnt)
 	myacc := account[acc]
 	client := NewMessage(myacc["apiKey"], myacc["apiPw"], myacc["userKey"], false, 3)
 	
@@ -185,10 +185,8 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 	smsSeq := 1
 	mmsSeq := 1
 
-	stdlog.Println("여기1")
 	
 	for resrows.Next() {
-		stdlog.Println("여기2")
 		resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check)
 		phnstr = phn.String
 
@@ -247,7 +245,6 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 					db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code = '7003', dr.message = '메세지 길이 오류', dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + userid.String + "' and msgid = '" + msgid.String + "'")
 				}
 			} else if s.EqualFold(sms_kind.String, "L") || s.EqualFold(sms_kind.String, "M") {
-				stdlog.Println("여기3")
 				mmsBox = SendReqTable{
 					MessageSubType : 1,
 					CallbackNumber : sms_sender.String,
@@ -311,7 +308,6 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 
 				mmsSeq++
 				lmscnt++
-				stdlog.Println("여기4")
 			}
 
 		} else {
@@ -319,7 +315,6 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 		}
 
 	}
-	stdlog.Println("1 : ", len(resBox))
 	if len(resBox) > 0 {
 		tx, _ := db.Begin()
 		stmtSMS, _ := tx.Prepare("insert into KT_SMS(userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, resp_JobID, sep_seq, dhn_id) values(?,?,?,?,?,?,?,?,?,?)")
@@ -358,7 +353,6 @@ func resProcess(ctx context.Context, group_no string, user_id string, acc int) {
 			stdlog.Println(user_id, " KT테이블 insert commit 중 오류 발생 끝 : ", err)
 		}
 	}
-	stdlog.Println("2 : ", len(apiErrBox))
 	if len(apiErrBox) > 0 {
 		for _, id := range apiErrBox {
 			db.Exec("update DHN_RESULT set send_group = null where msgid = ?", id)
