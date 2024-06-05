@@ -327,38 +327,39 @@ func resultProc() {
 
 			}
 
-			nlctx, nlcancel := context.WithCancel(context.Background())
-
-			go nanoproc.NanoLMSProcess(nlctx)
-
-			allCtxC["nanolms"] = nlcancel
-			allService["nanolms"] = "Nano LMS"
-
-			nsctx, nscancel := context.WithCancel(context.Background())
-
-			go nanoproc.NanoSMSProcess(nsctx)
-
-			allCtxC["nanosms"] = nscancel
-			allService["nanosms"] = "Nano SMS"
-
-			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
-
-				nlctxG, nlcancelG := context.WithCancel(context.Background())
-
-				go nanoproc.NanoLMSProcess_G(nlctxG)
-
-				allCtxC["nanolmsG"] = nlcancelG
-				allService["nanolmsG"] = "Nano LMS G"
-
-				nsctxG, nscancelG := context.WithCancel(context.Background())
-
-				go nanoproc.NanoSMSProcess_G(nsctxG)
-
-				allCtxC["nanosmsG"] = nscancelG
-				allService["nanosmsG"] = "Nano SMS G"
-
-			}
 		}
+	}
+
+	nlctx, nlcancel := context.WithCancel(context.Background())
+
+	go nanoproc.NanoLMSProcess(nlctx)
+
+	allCtxC["nanolms"] = nlcancel
+	allService["nanolms"] = "Nano LMS"
+
+	nsctx, nscancel := context.WithCancel(context.Background())
+
+	go nanoproc.NanoSMSProcess(nsctx)
+
+	allCtxC["nanosms"] = nscancel
+	allService["nanosms"] = "Nano SMS"
+
+	if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
+
+		nlctxG, nlcancelG := context.WithCancel(context.Background())
+
+		go nanoproc.NanoLMSProcess_G(nlctxG)
+
+		allCtxC["nanolmsG"] = nlcancelG
+		allService["nanolmsG"] = "Nano LMS G"
+
+		nsctxG, nscancelG := context.WithCancel(context.Background())
+
+		go nanoproc.NanoSMSProcess_G(nsctxG)
+
+		allCtxC["nanosmsG"] = nscancelG
+		allService["nanosmsG"] = "Nano SMS G"
+
 	}
 
 	if s.EqualFold(config.Conf.OTP_MSG_FLAG, "YES") {
