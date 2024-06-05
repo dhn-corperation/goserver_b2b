@@ -89,7 +89,7 @@ func smsProcess(wg *sync.WaitGroup, table string, seq int, acc int) {
 				JobIDs: []int64{
 					resp_JobID.Int64,
 				},
-				SendDay: time.Now().Format("20210102"),
+				SendDay: time.Now().Format("20060102"),
 			}
 
 			resp, err := client.SearchResult("/inquiry/report/", sendData)
