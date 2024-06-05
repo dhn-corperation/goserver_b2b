@@ -153,7 +153,7 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 
 
 			_, err = db.Exec(`insert into ` + MMSTable + `(userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, Bundle_Subject, Image_path1, Image_path2, Image_path3, resp_JobID, resp_Time, resp_SubmitTime, resp_Result, Resp_TelconInfo, resp_EndUserID, resp_ServiceProviderID, sep_seq, dhn_id)
-				select userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, Bundle_Subject, Image_path1, Image_path2, Image_path3, resp_JobID, '`+first.Time+`', '`+first.SubmitTime+`', '`+strconv.Itoa(first.Result)+`', '`+telInfoLog+`', '`+first.EndUserID+`', '`+first.ServiceProviderID+`', sep_seq, dhn_id
+				select userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, Bundle_Subject, Image_path1, Image_path2, Image_path3, resp_JobID, '`+first.Time+`', '`+first.SubmitTime+`', '`+strconv.Itoa(first.Result)+`', '`+strconv.Itoa(telInfoLog)+`', '`+first.EndUserID+`', '`+first.ServiceProviderID+`', sep_seq, dhn_id
 				from KT_MMS
 				WHERE userid = '`+userid.String+`' and msgid = '`+msgid.String+`'`)
 			if err != nil {
