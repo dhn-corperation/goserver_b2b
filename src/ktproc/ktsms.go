@@ -70,16 +70,16 @@ func smsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 
 	var SMSTable = table + "_" + monthStr
 
-	var tableQuery = "select 1 from " + SMSTable
+	// var tableQuery = "select 1 from " + SMSTable
 
-	_, err := db.Query(tableQuery)
-	if err != nil {
-		if s.Index(err.Error(), "1146") > 0 {
-			db.Exec("Create Table IF NOT EXISTS " + SMSTable + " like " + table)
-			errlog.Println(SMSTable + " 생성 !!")
-			return
-		}		
-	}
+	// _, err := db.Query(tableQuery)
+	// if err != nil {
+	// 	if s.Index(err.Error(), "1146") > 0 {
+	// 		db.Exec("Create Table IF NOT EXISTS " + SMSTable + " like " + table)
+	// 		errlog.Println(SMSTable + " 생성 !!")
+	// 		return
+	// 	}		
+	// }
 
 	var searchQuery = "select userid, msgid, resp_JobID from " + table + " where sep_seq = " + strconv.Itoa(seq)
 
