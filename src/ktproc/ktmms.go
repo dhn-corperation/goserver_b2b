@@ -162,22 +162,25 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 				select userid, msgid, MessageSubType, CallbackNumber, Bundle_Seq, Bundle_Num, Bundle_Content, Bundle_Subject, Image_path1, Image_path2, Image_path3, resp_JobID, '` + first.Time + `', '` + first.SubmitTime + `', '` + strconv.Itoa(first.Result) + `', '` + strconv.Itoa(telInfoLog) + `', '` + first.EndUserID + `', '` + first.ServiceProviderID + `', sep_seq, dhn_id
 				from KT_MMS
 				WHERE userid = '` + userid.String + `' and msgid = '` + msgid.String + `'`)
+			errlog.Println("MMS 여기2")
 			if err != nil {
 				errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조 API 결과 LOG 테이블 입력중 에러 발생 : ", err)
 				continue
 			}
 			if first.Result != 10000 {
+				errlog.Println("MMS 여기3")
 				_, err = db.Exec("update DHN_RESULT set message_type = 'PH', result = 'Y', code = '" + resultCode + "', message = concat(message, '," + resultMessage + "'), remark1 = '" + telInfo + "', remark2 = '" + formattedTime + "' where userid='" + userid.String + "' and msgid = '" + msgid.String + "'")
 				if err != nil {
 					errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조 API 결과 DHN_RESULT 테이블 반영 실패1 : ", err)
 				}
 			} else {
+				errlog.Println("MMS 여기4")
 				_, err = db.Exec("update DHN_RESULT set message_type = 'PH', result = 'Y', code = '0000', message = '', remark1 = '" + telInfo + "', remark2 = '" + formattedTime + "' where userid='" + userid.String + "' and msgid = '" + msgid.String + "'")
 				if err != nil {
 					errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조 API 결과 DHN_RESULT 테이블 반영 실패2 : ", err)
 				}
 			}
-
+			errlog.Println("MMS 여기5")
 			db.Exec(`delete from KT_MMS where userid = '` + userid.String + `' and msgid = '` + msgid.String + `'`)
 
 		}
