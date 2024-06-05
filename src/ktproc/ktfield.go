@@ -54,6 +54,7 @@ var account = []map[string]string{
 }
 
 type SendReqTable struct {
+	MessageType int   			`json:"MessageType,omitempty"`
 	MessageSubType int   		`json:"MessageSubType,omitempty"`
 	CallbackNumber string		`json:"CallbackNumber,omitempty"`
 	SendNumber string			`json:"SendNumber,omitempty"`

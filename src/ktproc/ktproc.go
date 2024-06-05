@@ -198,6 +198,7 @@ func resProcess(group_no string, user_id string, acc int) {
 			if s.EqualFold(sms_kind.String, "S") {
 				if msgLen.Int64 <= 90 || s.EqualFold(sms_len_check.String, "N") {
 					smsBox = SendReqTable{
+						MessageType : 1,
 						MessageSubType : 1,
 						CallbackNumber : sms_sender.String,
 						CustomMessageID : msgid.String,
@@ -242,8 +243,35 @@ func resProcess(group_no string, user_id string, acc int) {
 					db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code = '7003', dr.message = '메세지 길이 오류', dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + userid.String + "' and msgid = '" + msgid.String + "'")
 				}
 			} else if s.EqualFold(sms_kind.String, "L") || s.EqualFold(sms_kind.String, "M") {
+
+				messageType := "lms"
+				subType := 1
+				var fileParam []string
+				if mms_file1.String != "" {
+					fileParam = append(fileParam, mms_file1.String)
+					messageType = "mms"
+					subType = 3
+				} else {
+					fileParam = append(fileParam, "")
+				}
+				if mms_file2.String != "" {
+					fileParam = append(fileParam, mms_file2.String)
+					messageType = "mms"
+					subType = 3
+				} else {
+					fileParam = append(fileParam, "")
+				}
+				if mms_file3.String != "" {
+					fileParam = append(fileParam, mms_file3.String)
+					messageType = "mms"
+					subType = 3
+				} else {
+					fileParam = append(fileParam, "")
+				}
+
 				mmsBox = SendReqTable{
-					MessageSubType : 1,
+					MessageType : 4,
+					MessageSubType : subType,
 					CallbackNumber : sms_sender.String,
 					CustomMessageID : msgid.String,
 					Bundle : []Bundle{
@@ -255,26 +283,7 @@ func resProcess(group_no string, user_id string, acc int) {
 						},
 					},
 				}
-				messageType := "lms"
-				var fileParam []string
-				if mms_file1.String != "" {
-					fileParam = append(fileParam, mms_file1.String)
-					messageType = "mms"
-				} else {
-					fileParam = append(fileParam, "")
-				}
-				if mms_file2.String != "" {
-					fileParam = append(fileParam, mms_file2.String)
-					messageType = "mms"
-				} else {
-					fileParam = append(fileParam, "")
-				}
-				if mms_file3.String != "" {
-					fileParam = append(fileParam, mms_file3.String)
-					messageType = "mms"
-				} else {
-					fileParam = append(fileParam, "")
-				}
+				
 
 				resp, err := client.ExecMMS("/send/mms", mmsBox, fileParam)
 				if err != nil {
