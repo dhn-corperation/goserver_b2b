@@ -139,8 +139,8 @@ func mmsProcess(wg *sync.WaitGroup, table string, preFlag bool, seq int, acc int
 				continue
 			}
 			first := decodeBody.JobIDs[0]
-			
-			testData, _ = json.Marshal(first)
+
+			testData, _ := json.Marshal(first)
 			errlog.Println(string(testData))
 
 			if first.Result == 0 {
