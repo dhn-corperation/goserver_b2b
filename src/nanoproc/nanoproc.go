@@ -323,7 +323,15 @@ func resProcess(group_no string, user_id string) {
 			}
 
 		} else {
-			db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7011', dr.message = concat(dr.message, ',문자 발송 정보 누락'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + userid.String + "' and msgid = '" + msgid.String + "'")
+			errCode := ""
+			if len(sms_sender.String) <= 0 {
+				errCode = "7051"
+			} else if len(msg_sms.String) <= 0 {
+				errCode = "7011"
+			} else {
+				errCode = "7011"
+			}
+			db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='" + errCode + "', dr.message = concat(dr.message, ',문자 발송 정보 누락'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + userid.String + "' and msgid = '" + msgid.String + "'")
 		}
 
 	}
