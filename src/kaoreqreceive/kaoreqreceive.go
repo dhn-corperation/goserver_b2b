@@ -117,19 +117,19 @@ func ReqReceive(c *gin.Context) {
 				reqinsValues = append(reqinsValues, msg[i].Imagelink)
 				reqinsValues = append(reqinsValues, msg[i].Imageurl)
 				reqinsValues = append(reqinsValues, msg[i].Messagetype)
-				if s.Contains(msg[i].Crypto, "MSG") {
+				if s.Contains(s.ToLower(msg[i].Crypto), "msg") {
 					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
 				} else {
 					reqinsValues = append(reqinsValues, msg[i].Msg)
 				}
-				if s.Contains(msg[i].Crypto, "Msgsms") && len(msg[i].Msgsms) > 0 {
+				if s.Contains(s.ToLower(msg[i].Crypto), "msg") && len(msg[i].Msgsms) > 0 {
 					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
 				} else {
 					reqinsValues = append(reqinsValues, msg[i].Msgsms)
 				}
 				reqinsValues = append(reqinsValues, msg[i].Onlysms)
 				reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
-				if s.Contains(msg[i].Crypto, "Profile") && len(msg[i].Profile) > 0 {
+				if s.Contains(s.ToLower(msg[i].Crypto), "profile") && len(msg[i].Profile) > 0 {
 					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
 				} else {
 					reqinsValues = append(reqinsValues, msg[i].Profile)
@@ -144,12 +144,12 @@ func ReqReceive(c *gin.Context) {
 				reqinsValues = append(reqinsValues, msg[i].Remark5)
 				reqinsValues = append(reqinsValues, msg[i].Reservedt)
 				reqinsValues = append(reqinsValues, msg[i].Smskind)
-				if s.Contains(msg[i].Crypto, "Smslmstit") && len(msg[i].Smslmstit) > 0 {
+				if s.Contains(s.ToLower(msg[i].Crypto), "smslmstit") && len(msg[i].Smslmstit) > 0 {
 					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
 				} else {
 					reqinsValues = append(reqinsValues, msg[i].Smslmstit)
 				}
-				if s.Contains(msg[i].Crypto, "Smssender") && len(msg[i].Smssender) > 0 {
+				if s.Contains(s.ToLower(msg[i].Crypto), "smssender") && len(msg[i].Smssender) > 0 {
 					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
 				} else {
 					reqinsValues = append(reqinsValues, msg[i].Smssender)
@@ -190,13 +190,13 @@ func ReqReceive(c *gin.Context) {
 				resinsValues = append(resinsValues, nil) // kind
 				resinsValues = append(resinsValues, "")  // 결과 Message
 				resinsValues = append(resinsValues, msg[i].Messagetype)
-				if s.Contains(msg[i].Crypto, "MSG") {
+				if s.Contains(s.ToLower(msg[i].Crypto), "msg") {
 					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Msg)
 				}
 
-				if s.Contains(msg[i].Crypto, "Msgsms") && len(msg[i].Msgsms) > 0 {
+				if s.Contains(s.ToLower(msg[i].Crypto), "msg") && len(msg[i].Msgsms) > 0 {
 					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Msgsms)
@@ -205,7 +205,7 @@ func ReqReceive(c *gin.Context) {
 				resinsValues = append(resinsValues, msg[i].Pcom)
 				resinsValues = append(resinsValues, msg[i].Pinvoice)
 				resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
-				if s.Contains(msg[i].Crypto, "Profile") && len(msg[i].Profile) > 0 {
+				if s.Contains(s.ToLower(msg[i].Crypto), "profile") && len(msg[i].Profile) > 0 {
 					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Profile)
@@ -221,13 +221,13 @@ func ReqReceive(c *gin.Context) {
 				resinsValues = append(resinsValues, "P") // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
 				resinsValues = append(resinsValues, msg[i].Scode)
 				resinsValues = append(resinsValues, msg[i].Smskind)
-				if s.Contains(msg[i].Crypto, "Smslmstit") && len(msg[i].Smslmstit) > 0 {
+				if s.Contains(s.ToLower(msg[i].Crypto), "smslmstit") && len(msg[i].Smslmstit) > 0 {
 					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Smslmstit)
 				}
 
-				if s.Contains(msg[i].Crypto, "Smssender") && len(msg[i].Smssender) > 0 {
+				if s.Contains(s.ToLower(msg[i].Crypto), "smssender") && len(msg[i].Smssender) > 0 {
 					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Smssender)
@@ -255,13 +255,13 @@ func ReqReceive(c *gin.Context) {
 				atreqinsValues = append(atreqinsValues, msg[i].Imagelink)
 				atreqinsValues = append(atreqinsValues, msg[i].Imageurl)
 				atreqinsValues = append(atreqinsValues, msg[i].Messagetype)
-				if s.Contains(msg[i].Crypto, "MSG") {
+				if s.Contains(s.ToLower(msg[i].Crypto), "msg") {
 					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
 				} else {
 					atreqinsValues = append(atreqinsValues, msg[i].Msg)
 				}
 
-				if s.Contains(msg[i].Crypto, "Msgsms") && len(msg[i].Msgsms) > 0 {
+				if s.Contains(s.ToLower(msg[i].Crypto), "msg") && len(msg[i].Msgsms) > 0 {
 					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
 				} else {
 					atreqinsValues = append(atreqinsValues, msg[i].Msgsms)
@@ -270,7 +270,7 @@ func ReqReceive(c *gin.Context) {
 
 				atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
 				// atreqinsValues = append(atreqinsValues, msg[i].Phn)
-				if s.Contains(msg[i].Crypto, "Profile") && len(msg[i].Profile) > 0 {
+				if s.Contains(s.ToLower(msg[i].Crypto), "profile") && len(msg[i].Profile) > 0 {
 					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
 				} else {
 					atreqinsValues = append(atreqinsValues, msg[i].Profile)
@@ -285,13 +285,13 @@ func ReqReceive(c *gin.Context) {
 				atreqinsValues = append(atreqinsValues, msg[i].Remark5)
 				atreqinsValues = append(atreqinsValues, msg[i].Reservedt)
 				atreqinsValues = append(atreqinsValues, msg[i].Smskind)
-				if s.Contains(msg[i].Crypto, "Smslmstit") && len(msg[i].Smslmstit) > 0 {
+				if s.Contains(s.ToLower(msg[i].Crypto), "smslmstit") && len(msg[i].Smslmstit) > 0 {
 					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
 				} else {
 					atreqinsValues = append(atreqinsValues, msg[i].Smslmstit)
 				}
 
-				if s.Contains(msg[i].Crypto, "Smssender") && len(msg[i].Smssender) > 0 {
+				if s.Contains(s.ToLower(msg[i].Crypto), "smssender") && len(msg[i].Smssender) > 0 {
 					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
 				} else {
 					atreqinsValues = append(atreqinsValues, msg[i].Smssender)

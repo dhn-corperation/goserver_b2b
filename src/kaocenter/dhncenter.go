@@ -16,7 +16,7 @@ func Get_crypto(c *gin.Context){
 	if crypto.Valid {
 		c.String(200, crypto.String)
 	} else {
-		c.String(404, "")
+		c.String(200, "")
 	}
 	
 }
