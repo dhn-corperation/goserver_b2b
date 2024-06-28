@@ -22,11 +22,11 @@ import (
 )
 
 const (
-	name        = "DHNCenter"
+	name        = "DHNCenter2"
 	description = "대형네트웍스 카카오 Center API"
 )
 
-var dependencies = []string{"DHNCenter.service"}
+var dependencies = []string{"DHNCenter2.service"}
 
 var resultTable string
 
@@ -36,7 +36,7 @@ type Service struct {
 
 func (service *Service) Manage() (string, error) {
 
-	usage := "Usage: DHNCenter install | remove | start | stop | status"
+	usage := "Usage: DHNCenter2 install | remove | start | stop | status"
 
 	if len(os.Args) > 1 {
 		command := os.Args[1]
