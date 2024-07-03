@@ -77,7 +77,7 @@ func mmsProcess(wg *sync.WaitGroup) {
 
 	//발송 6시간 지난 메세지는 응답과 상관 없이 성공 처리 함.
 
-	var groupQuery = "select ETC1 as cb_msg_id, RSLT as sendresult, SENTDATE as senddt, MSGKEY as msgid, TELCOINFO as telecom, ETC2 as userid  from " + MMSTable + " a where a.status = '3' and a.ETC is null "
+	var groupQuery = "select ETC1 as cb_msg_id, RSLT as sendresult, SENTDATE as senddt, MSGKEY as msgid, TELCOINFO as telecom, ETC2 as userid  from " + MMSTable + " a where a.status = '3' and a.ETC4 is null "
 
 	groupRows, err := db.Query(groupQuery)
 	if err != nil {
@@ -134,7 +134,7 @@ func pre_mmsProcess(wg *sync.WaitGroup) {
 
 	//발송 6시간 지난 메세지는 응답과 상관 없이 성공 처리 함.
 
-	var groupQuery = "select ETC1 as cb_msg_id, RSLT as sendresult, SENTDATE as senddt, MSGKEY as msgid, TELCOINFO as telecom, ETC2 as userid  from " + MMSTable + " a where a.status = '3' and a.ETC is null "
+	var groupQuery = "select ETC1 as cb_msg_id, RSLT as sendresult, SENTDATE as senddt, MSGKEY as msgid, TELCOINFO as telecom, ETC2 as userid  from " + MMSTable + " a where a.status = '3' and a.ETC4 is null "
 
 	groupRows, err := db.Query(groupQuery)
 	if err != nil {
