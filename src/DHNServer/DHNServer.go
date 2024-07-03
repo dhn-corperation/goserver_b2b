@@ -385,7 +385,7 @@ func resultProc() {
 
 	llctx, llcancel := context.WithCancel(context.Background())
 	go lguproc.LMSProcess(llctx)
-	allCtxC["lgulms"] = olcancel
+	allCtxC["lgulms"] = llcancel
 	allService["lgulms"] = "LGU LMS"
 
 	lsctx, lscancel := context.WithCancel(context.Background())
