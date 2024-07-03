@@ -194,31 +194,29 @@ func resultProc() {
 	oshotUser := map[string]string{}
 	oshotCtxC := map[string]interface{}{}
 
-	if s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
-		oshotUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl  where dcl.use_flag   = 'Y' and IFNULL(dcl.dest, 'OSHOT') = 'OSHOT'")
-		isOshot := true
-		if error != nil {
-			config.Stdlog.Println("Oshot 유저 select 오류 ")
-			isOshot = false
-		}
-		defer oshotUserList.Close()
+	oshotUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl  where dcl.use_flag   = 'Y' and IFNULL(dcl.dest, '') = 'OSHOT'")
+	isOshot := true
+	if error != nil {
+		config.Stdlog.Println("Oshot 유저 select 오류 ")
+		isOshot = false
+	}
+	defer oshotUserList.Close()
 
-		if isOshot {
-			var user_id sql.NullString
+	if isOshot {
+		var user_id sql.NullString
 
-			for oshotUserList.Next() {
-				oshotUserList.Scan(&user_id)
-				ctx, cancel := context.WithCancel(context.Background())
-				ctx = context.WithValue(ctx, "user_id", user_id.String)
-				go oshotproc.OshotProcess(user_id.String, ctx)
+		for oshotUserList.Next() {
+			oshotUserList.Scan(&user_id)
+			ctx, cancel := context.WithCancel(context.Background())
+			ctx = context.WithValue(ctx, "user_id", user_id.String)
+			go oshotproc.OshotProcess(user_id.String, ctx)
 
-				oshotUser[user_id.String] = user_id.String
-				oshotCtxC[user_id.String] = cancel
+			oshotUser[user_id.String] = user_id.String
+			oshotCtxC[user_id.String] = cancel
 
-				allCtxC["OS"+user_id.String] = cancel
-				allService["OS"+user_id.String] = user_id.String
+			allCtxC["OS"+user_id.String] = cancel
+			allService["OS"+user_id.String] = user_id.String
 
-			}
 		}
 	}
 
@@ -235,31 +233,29 @@ func resultProc() {
 	ktxroUser := map[string]string{}
 	ktxroCtxC := map[string]interface{}{}
 
-	if s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
-		ktxroUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl  where dcl.use_flag   = 'Y' and IFNULL(dcl.dest, 'OSHOT') = 'KTXRO'")
-		isKtxro := true
-		if error != nil {
-			config.Stdlog.Println("KT 크로샷 유저 select 오류 ")
-			isKtxro = false
-		}
-		defer ktxroUserList.Close()
+	ktxroUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl  where dcl.use_flag   = 'Y' and IFNULL(dcl.dest, '') = 'KTXRO'")
+	isKtxro := true
+	if error != nil {
+		config.Stdlog.Println("KT 크로샷 유저 select 오류 ")
+		isKtxro = false
+	}
+	defer ktxroUserList.Close()
 
-		if isKtxro {
-			var user_id sql.NullString
+	if isKtxro {
+		var user_id sql.NullString
 
-			for ktxroUserList.Next() {
-				ktxroUserList.Scan(&user_id)
-				ctx, cancel := context.WithCancel(context.Background())
-				ctx = context.WithValue(ctx, "user_id", user_id.String)
-				go ktproc.KtProcess(user_id.String, ctx, 0)
+		for ktxroUserList.Next() {
+			ktxroUserList.Scan(&user_id)
+			ctx, cancel := context.WithCancel(context.Background())
+			ctx = context.WithValue(ctx, "user_id", user_id.String)
+			go ktproc.KtProcess(user_id.String, ctx, 0)
 
-				ktxroUser[user_id.String] = user_id.String
-				ktxroCtxC[user_id.String] = cancel
+			ktxroUser[user_id.String] = user_id.String
+			ktxroCtxC[user_id.String] = cancel
 
-				allCtxC["KTX"+user_id.String] = cancel
-				allService["KTX"+user_id.String] = user_id.String
+			allCtxC["KTX"+user_id.String] = cancel
+			allService["KTX"+user_id.String] = user_id.String
 
-			}
 		}
 	}
 
@@ -276,58 +272,57 @@ func resultProc() {
 	nanoUser := map[string]string{}
 	nanoCtxC := map[string]interface{}{}
 
-	if s.EqualFold(config.Conf.NANO_MSG_FLAG, "YES") {
+	nanoUserList, error := databasepool.DB.Query("select distinct user_id, nano_tel_seperate from DHN_CLIENT_LIST dcl  where dcl.use_flag   = 'Y' and IFNULL(dcl.dest, '') = 'NANO'")
+	isNano := true
+	if error != nil {
+		config.Stdlog.Println("Nano 유저 select 오류 ")
+		isNano = false
+	}
+	defer nanoUserList.Close()
 
-		nanoUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl  where dcl.use_flag   = 'Y' and IFNULL(dcl.dest, 'OSHOT') = 'NANO'")
-		isNano := true
-		if error != nil {
-			config.Stdlog.Println("Nano 유저 select 오류 ")
-			isNano = false
-		}
-		defer nanoUserList.Close()
+	if isNano {
+		var user_id sql.NullString
+		var nano_tel_seperate sql.NullString
 
-		if isNano {
-			var user_id sql.NullString
+		for nanoUserList.Next() {
+			nanoUserList.Scan(&user_id)
+			nanoUserList.Scan(&nano_tel_seperate)
 
-			for nanoUserList.Next() {
-				nanoUserList.Scan(&user_id)
+			if s.EqualFold(nano_tel_seperate.String, "N") { // 기본
+				ctx, cancel := context.WithCancel(context.Background())
+				ctx = context.WithValue(ctx, "user_id", user_id.String)
 
-				if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "N") { // 기본
-					ctx, cancel := context.WithCancel(context.Background())
-					ctx = context.WithValue(ctx, "user_id", user_id.String)
+				go nanoproc.NanoProcess(user_id.String, ctx)
 
-					go nanoproc.NanoProcess(user_id.String, ctx)
+				nanoUser[user_id.String] = user_id.String
+				nanoCtxC[user_id.String] = cancel
 
-					nanoUser[user_id.String] = user_id.String
-					nanoCtxC[user_id.String] = cancel
+				allCtxC["NN"+user_id.String] = cancel
+				allService["NN"+user_id.String] = user_id.String
+			} else if s.EqualFold(nano_tel_seperate.String, "Y") { // 콜비서
 
-					allCtxC["NN"+user_id.String] = cancel
-					allService["NN"+user_id.String] = user_id.String
-				} else if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
+				ctxY, cancelY := context.WithCancel(context.Background())
+				ctxY = context.WithValue(ctxY, "user_id", user_id.String)
 
-					ctxY, cancelY := context.WithCancel(context.Background())
-					ctxY = context.WithValue(ctxY, "user_id", user_id.String)
+				ctxN, cancelN := context.WithCancel(context.Background())
+				ctxN = context.WithValue(ctxN, "user_id", user_id.String)
 
-					ctxN, cancelN := context.WithCancel(context.Background())
-					ctxN = context.WithValue(ctxN, "user_id", user_id.String)
+				go nanoproc.NanoProcess_Y(user_id.String, ctxY) // 010으로 시작하는 번호
+				go nanoproc.NanoProcess_N(user_id.String, ctxN) // 010이 아닌 번호
 
-					go nanoproc.NanoProcess_Y(user_id.String, ctxY) // 010으로 시작하는 번호
-					go nanoproc.NanoProcess_N(user_id.String, ctxN) // 010이 아닌 번호
+				nanoUser[user_id.String+"_Y"] = user_id.String
+				nanoCtxC[user_id.String+"_Y"] = cancelY
+				allCtxC["NN"+user_id.String+"_Y"] = cancelY
+				allService["NN"+user_id.String+"_Y"] = "NanoService Y"
 
-					nanoUser[user_id.String+"_Y"] = user_id.String
-					nanoCtxC[user_id.String+"_Y"] = cancelY
-					allCtxC["NN"+user_id.String+"_Y"] = cancelY
-					allService["NN"+user_id.String+"_Y"] = "NanoService Y"
-
-					nanoUser[user_id.String+"_N"] = user_id.String
-					nanoCtxC[user_id.String+"_N"] = cancelN
-					allCtxC["NN"+user_id.String+"_N"] = cancelN
-					allService["NN"+user_id.String+"_N"] = "NanoService N"
-				}
-
+				nanoUser[user_id.String+"_N"] = user_id.String
+				nanoCtxC[user_id.String+"_N"] = cancelN
+				allCtxC["NN"+user_id.String+"_N"] = cancelN
+				allService["NN"+user_id.String+"_N"] = "NanoService N"
 			}
 
 		}
+
 	}
 
 	nlctx, nlcancel := context.WithCancel(context.Background())
@@ -344,23 +339,59 @@ func resultProc() {
 	allCtxC["nanosms"] = nscancel
 	allService["nanosms"] = "Nano SMS"
 
-	if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
+	nlctxG, nlcancelG := context.WithCancel(context.Background())
 
-		nlctxG, nlcancelG := context.WithCancel(context.Background())
+	go nanoproc.NanoLMSProcess_G(nlctxG)
 
-		go nanoproc.NanoLMSProcess_G(nlctxG)
+	allCtxC["nanolmsG"] = nlcancelG
+	allService["nanolmsG"] = "Nano LMS G"
 
-		allCtxC["nanolmsG"] = nlcancelG
-		allService["nanolmsG"] = "Nano LMS G"
+	nsctxG, nscancelG := context.WithCancel(context.Background())
 
-		nsctxG, nscancelG := context.WithCancel(context.Background())
+	go nanoproc.NanoSMSProcess_G(nsctxG)
 
-		go nanoproc.NanoSMSProcess_G(nsctxG)
+	allCtxC["nanosmsG"] = nscancelG
+	allService["nanosmsG"] = "Nano SMS G"
 
-		allCtxC["nanosmsG"] = nscancelG
-		allService["nanosmsG"] = "Nano SMS G"
+	lguUser := map[string]string{}
+	lguCtxC := map[string]interface{}{}
 
+	lguUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl  where dcl.use_flag   = 'Y' and IFNULL(dcl.dest, '') = 'LGU'")
+	isLgu := true
+	if error != nil {
+		config.Stdlog.Println("Lgu 유저 select 오류 ")
+		isLgu = false
 	}
+	defer lguUserList.Close()
+
+	if isLgu {
+		var user_id sql.NullString
+
+		for lguUserList.Next() {
+			lguUserList.Scan(&user_id)
+			ctx, cancel := context.WithCancel(context.Background())
+			ctx = context.WithValue(ctx, "user_id", user_id.String)
+			go lguproc.LguProcess(user_id.String, ctx)
+
+			lguUser[user_id.String] = user_id.String
+			lguCtxC[user_id.String] = cancel
+
+			allCtxC["LG"+user_id.String] = cancel
+			allService["LG"+user_id.String] = user_id.String
+
+		}
+	}
+
+	// llctx, llcancel := context.WithCancel(context.Background())
+	// go lguproc.LMSProcess(llctx)
+	// allCtxC["lgulms"] = olcancel
+	// allService["lgulms"] = "LGU LMS"
+
+	// lsctx, lscancel := context.WithCancel(context.Background())
+	// go lguproc.SMSProcess(lsctx)
+	// allCtxC["lgusms"] = lscancel
+	// allService["lgusms"] = "LGU SMS"
+
 
 	if s.EqualFold(config.Conf.OTP_MSG_FLAG, "YES") {
 		otpctx, otpcancel := context.WithCancel(context.Background())
