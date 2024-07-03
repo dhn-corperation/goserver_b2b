@@ -129,7 +129,6 @@ func pre_smsProcess(wg *sync.WaitGroup) {
 
 	defer wg.Done()
 	var db = databasepool.DB
-	var errlog = config.Stdlog
 
 	var isProc = true
 	var t = time.Now().Add(time.Hour * -96)
