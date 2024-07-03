@@ -126,7 +126,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 		}
 	}()
 
-	var msgid, code, message, message_type, msg_sms, phn, remark1, remark2, result, sms_lms_tit, sms_kind, sms_sender, res_dt, reserve_dt, mms_file1, mms_file2, mms_file3, userid, sms_len_check, oshot sql.NullString
+	var msgid, code, message, message_type, msg_sms, phn, remark1, remark2, result, sms_lms_tit, sms_kind, sms_sender, res_dt, reserve_dt, mms_file1, mms_file2, mms_file3, userid, sms_len_check sql.NullString
 	var msgLen sql.NullInt64
 	var phnstr string
 	ossmsStrs := []string{}
@@ -246,7 +246,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 
 		// 알림톡 발송 성공 혹은 문자 발송이 아니면
 		// API_RESULT 성공 처리 함.
-		if len(msg_sms.String) > 0 && len(sms_sender.String) > 0 { // msg_sms 가 와 sms_sender 에 값이 있으면 Oshot 발송 함.
+		if len(msg_sms.String) > 0 && len(sms_sender.String) > 0 { // msg_sms 가 와 sms_sender 에 값이 있으면 LG 발송 함.
 			phnstr = reg.ReplaceAllString(phnstr, "")
 			if s.HasPrefix(phnstr, "82") {
 				phnstr = "0" + phnstr[2:len(phnstr)]
