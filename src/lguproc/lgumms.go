@@ -46,7 +46,7 @@ func LMSProcess(ctx context.Context) {
 		    return
 		default:	
 		
-			for _ := range lguTable {
+			for _, _ := range lguTable {
 				var t = time.Now()
 	
 				if t.Day() < 3 {
