@@ -383,15 +383,15 @@ func resultProc() {
 		}
 	}
 
-	// llctx, llcancel := context.WithCancel(context.Background())
-	// go lguproc.LMSProcess(llctx)
-	// allCtxC["lgulms"] = olcancel
-	// allService["lgulms"] = "LGU LMS"
+	llctx, llcancel := context.WithCancel(context.Background())
+	go lguproc.LMSProcess(llctx)
+	allCtxC["lgulms"] = olcancel
+	allService["lgulms"] = "LGU LMS"
 
-	// lsctx, lscancel := context.WithCancel(context.Background())
-	// go lguproc.SMSProcess(lsctx)
-	// allCtxC["lgusms"] = lscancel
-	// allService["lgusms"] = "LGU SMS"
+	lsctx, lscancel := context.WithCancel(context.Background())
+	go lguproc.SMSProcess(lsctx)
+	allCtxC["lgusms"] = lscancel
+	allService["lgusms"] = "LGU SMS"
 
 
 	if s.EqualFold(config.Conf.OTP_MSG_FLAG, "YES") {
