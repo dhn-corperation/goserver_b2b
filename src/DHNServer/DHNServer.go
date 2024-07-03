@@ -21,6 +21,7 @@ import (
 	"mycs/src/oshotproc"
 	"mycs/src/otpproc"
 	"mycs/src/ktproc"
+	"mycs/src/lguproc"
 
 	"strconv"
 	s "strings"
