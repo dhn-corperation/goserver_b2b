@@ -46,7 +46,7 @@ func SMSProcess(ctx context.Context) {
 		    return
 		default:	
 		
-			for _, _ := range lguTable {
+			for range lguTable {
 				var t = time.Now()
 	
 				if t.Day() < 3 {
