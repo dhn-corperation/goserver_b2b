@@ -19,7 +19,7 @@ func LMSProcess(ctx context.Context) {
 
 	var db = databasepool.DB
 	var errlog = config.Stdlog
-	var lguTable [][]string
+	var lguTable []string
 	var ltable sql.NullString
 
 	var LguQuery = "select distinct ifnull(a.dest, '') as table_name from DHN_CLIENT_LIST a where a.use_flag = 'Y' and a.dest = 'LGU' "
@@ -37,29 +37,28 @@ func LMSProcess(ctx context.Context) {
 	}
 	errlog.Println("Lgu LMS length : ", len(lguTable))
 	for {
+		select {
+			case <- ctx.Done():
+		
+		    config.Stdlog.Println("Lgu LMS process가 20초 후에 종료 됨.")
+		    time.Sleep(20 * time.Second)
+		    config.Stdlog.Println("Lgu LMS process 종료 완료")
+		    return
+		default:	
+		
+			for _ := range lguTable {
+				var t = time.Now()
 	
-			select {
-				case <- ctx.Done():
-			
-			    config.Stdlog.Println("Lgu LMS process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println("Lgu LMS process 종료 완료")
-			    return
-			default:	
-			
-				for _, tableName := range lguTable {
-					var t = time.Now()
-		
-					if t.Day() < 3 {
-						wg.Add(1)
-						go pre_mmsProcess(&wg)
-					}
-		
+				if t.Day() < 3 {
 					wg.Add(1)
-					go mmsProcess(&wg)
+					go pre_mmsProcess(&wg)
 				}
-				wg.Wait()
+	
+				wg.Add(1)
+				go mmsProcess(&wg)
 			}
+			wg.Wait()
+		}
 	}
 
 }
@@ -104,7 +103,7 @@ func mmsProcess(wg *sync.WaitGroup) {
 
 			tr_net := telecom.String
  
-			resultCode := NanoCode(sendresult.String)
+			resultCode := LguCode(sendresult.String)
 
 			if !s.EqualFold(resultCode, "7006") {
 
@@ -153,7 +152,7 @@ func pre_mmsProcess(wg *sync.WaitGroup) {
 
 			tr_net := telecom.String
  
-			resultCode := NanoCode(sendresult.String)
+			resultCode := LguCode(sendresult.String)
 
 			if !s.EqualFold(resultCode, "7006") {
 

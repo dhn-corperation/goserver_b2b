@@ -19,7 +19,7 @@ func SMSProcess(ctx context.Context) {
 
 	var db = databasepool.DB
 	var errlog = config.Stdlog
-	var lguTable [][]string
+	var lguTable []string
 	var ltable sql.NullString
 
 	var LguQuery = "select distinct ifnull(a.dest, '') as table_name from DHN_CLIENT_LIST a where a.use_flag = 'Y' and a.dest = 'LGU' "
@@ -37,29 +37,29 @@ func SMSProcess(ctx context.Context) {
 	}
 	errlog.Println("Lgu SMS length : ", len(lguTable))
 	for {
-			select {
-				case <- ctx.Done():
-			
-			    config.Stdlog.Println("Lgu SMS process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println("Lgu SMS process 종료 완료")
-			    return
-			default:	
-			
-				for _, tableName := range lguTable {
-					var t = time.Now()
+		select {
+			case <- ctx.Done():
 		
-					if t.Day() < 3 {
-						wg.Add(1)
-						go pre_smsProcess(&wg)
-					}
+		    config.Stdlog.Println("Lgu SMS process가 20초 후에 종료 됨.")
+		    time.Sleep(20 * time.Second)
+		    config.Stdlog.Println("Lgu SMS process 종료 완료")
+		    return
+		default:	
 		
+			for _ := range lguTable {
+				var t = time.Now()
+	
+				if t.Day() < 3 {
 					wg.Add(1)
-					go smsProcess(&wg)
+					go pre_smsProcess(&wg)
 				}
-		
-				wg.Wait()
+	
+				wg.Add(1)
+				go smsProcess(&wg)
 			}
+	
+			wg.Wait()
+		}
 	}
 
 }
