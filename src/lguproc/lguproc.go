@@ -3,7 +3,7 @@ package lguproc
 import (
 	"database/sql"
 	"fmt"
-	"strconv"
+	//"strconv"
 
 	//"sync"
 	config "mycs/src/kaoconfig"
@@ -212,7 +212,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 					}
 				}
 			} else {
-				stdlog.Println(user_id, "- Lgu SMS Table Insert 처리 : ", len(ossmsStrs), " - ", preOshot)
+				stdlog.Println(user_id, "- Lgu SMS Table Insert 처리 : ", len(ossmsStrs), " - LG_SC_TRAN")
 			}
 			ossmsStrs = nil
 			ossmsValues = nil
@@ -238,7 +238,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 					}
 				}
 			} else {
-				stdlog.Println(user_id, "- Lgu MMS Table Insert 처리 : ", len(osmmsStrs), " - ", preOshot)
+				stdlog.Println(user_id, "- Lgu MMS Table Insert 처리 : ", len(osmmsStrs), " - LG_MMS_MSG")
 			}
 			osmmsStrs = nil
 			osmmsValues = nil
@@ -294,7 +294,6 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 				lmscnt++
 			}
 
-			preOshot = oshot.String
 		} else {
 			db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7011', dr.message = concat(dr.message, ',문자 발송 정보 누락'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + userid.String + "' and msgid = '" + msgid.String + "'")
 		}
@@ -321,7 +320,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 				}
 			}
 		} else {
-			stdlog.Println(user_id, "- Lgu SMS Table Insert 처리 : ", len(ossmsStrs), " - ", preOshot)
+			stdlog.Println(user_id, "- Lgu SMS Table Insert 처리 : ", len(ossmsStrs), " - LG_SC_TRAN")
 		}
 
 	}
@@ -346,7 +345,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 				}
 			}
 		} else {
-			stdlog.Println(user_id, "- Lgu MMS Table Insert 처리 : ", len(osmmsStrs), " - ", preOshot)
+			stdlog.Println(user_id, "- Lgu MMS Table Insert 처리 : ", len(osmmsStrs), " - LG_MMS_MSG")
 		}
 	}
 
