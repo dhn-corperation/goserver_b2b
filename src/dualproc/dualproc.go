@@ -476,6 +476,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, rate strin
 	}
 
 	if len(lgmmsStrs) > 0 {
+		stdlog.Println("여기오냐3")
 		stmt := fmt.Sprintf("insert into LG_MMS_MSG(SUBJECT, PHONE, CALLBACK, REQDATE, MSG, FILE_CNT, FILE_PATH1, FILE_PATH2, FILE_PATH3, ETC1, ETC2, ETC3, KISA_ORIGCODE) values %s", s.Join(lgmmsStrs, ","))
 		stdlog.Println(stmt)
 		_, err := db.Exec(stmt, lgmmsValues...)
@@ -529,6 +530,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, rate strin
 	}
 
 	if len(nnmmsStrs) > 0 {
+		stdlog.Println("여기오냐4")
 		stmt := fmt.Sprintf("insert into MMS_MSG(CALLBACK,PHONE,SUBJECT,MSG,REQDATE,STATUS,FILE_CNT,FILE_PATH1,FILE_PATH2,FILE_PATH3,ETC9,ETC10,IDENTIFICATION_CODE,ETC8) values %s", s.Join(nnmmsStrs, ","))
 		stdlog.Println(stmt)
 		_, err := db.Exec(stmt, nnmmsValues...)
