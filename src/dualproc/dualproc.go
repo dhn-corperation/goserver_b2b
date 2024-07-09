@@ -335,6 +335,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, rate strin
 			}
 
 			if seq == 1 {
+				stdlog.Println("여기오냐1")
 				if s.EqualFold(sms_kind.String, "S") {
 					if msgLen.Int64 <= 90 || s.EqualFold(sms_len_check.String, "N") {
 						lgsmsStrs = append(lgsmsStrs, "(?,?,?,?,?,?,?,?)")
@@ -383,6 +384,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, rate strin
 					seq = 2
 				}
 			} else if seq == 2 {
+				stdlog.Println("여기오냐2")
 				if s.EqualFold(sms_kind.String, "S") {
 
 					if msgLen.Int64 <= 90 || s.EqualFold(sms_len_check.String, "N") {
