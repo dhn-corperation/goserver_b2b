@@ -22,6 +22,7 @@ import (
 	"mycs/src/otpproc"
 	"mycs/src/ktproc"
 	"mycs/src/lguproc"
+	"mycs/src/dualproc"
 
 	"strconv"
 	s "strings"
@@ -411,6 +412,35 @@ func resultProc() {
 		allService["otpsms"] = "OTP SMS"
 	}
 
+	dualUser := map[string]string{}
+	dualCtxC := map[string]interface{}{}
+
+	dualUserList, error := databasepool.DB.Query("select distinct user_id, dual_rate from DHN_CLIENT_LIST dcl  where dcl.use_flag   = 'Y' and IFNULL(dcl.dest, '') = 'DUAL'")
+	isDual := true
+	if error != nil {
+		config.Stdlog.Println("Dual 유저 select 오류 ")
+		isDual = false
+	}
+	defer dualUserList.Close()
+
+	if isDual {
+		var user_id, dual_rate sql.NullString
+
+		for dualUserList.Next() {
+			dualUserList.Scan(&user_id, &dual_rate)
+			ctx, cancel := context.WithCancel(context.Background())
+			ctx = context.WithValue(ctx, "user_id", user_id.String)
+			go oshotproc.OshotProcess(user_id.String, dual_rate.String, ctx)
+
+			dualUser[user_id.String] = user_id.String
+			dualCtxC[user_id.String] = cancel
+
+			allCtxC["DL"+user_id.String] = cancel
+			allService["DL"+user_id.String] = user_id.String
+
+		}
+	}
+
 	r := gin.New()
 	r.Use(gin.Recovery())
 	//r := gin.Default()
@@ -706,12 +736,6 @@ Command :
 			allCtxC["KTX"+uid] = cancel
 			allService["KTX"+uid] = uid
 
-			// _, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = 'KTXRO' where user_id = ?", uid)
-				
-			// if err != nil {
-			// 	config.Stdlog.Println(uid," /krun KT크로샷 DHN_CLIENT_LIST 업데이트 실패 : ", err)
-			// }
-
 			c.String(200, uid+" 시작 신호 전달 완료")
 		}
 	})
@@ -722,6 +746,31 @@ Command :
 			key = key + k + "\n"
 		}
 		c.String(200, key)
+	})
+
+	r.GET("/dualrate", func(c *gin.Context) {
+		var uid string
+		uid = c.Query("uid")
+		first := c.Query("first")
+		second := c.Query("second")
+		convFirst, err1 := strconv.Atoi(first)
+		convSecond, err2 := strconv.Atoi(second)
+		if err1 != nil {
+			c.String(200, uid+" 에러입니다. err : ", err1, "  /  first : ", first)
+			return
+		}
+		if err2 != nil {
+			c.String(200, uid+" 에러입니다. err : ", err2, "  /  second : ", second)
+			return
+		}
+		temp := dualCtxC[uid]
+		if temp != nil {
+			dualproc.Rate1 = convFirst
+			dualproc.Rate2 = convSecond
+			c.String(200, uid+" 비율이 변경 되었습니다. first : ", first, ", second : ", second)
+		} else {
+			c.String(200, uid+" dual 실행중이 아닙니다.")
+		}
 	})
 
 	r.GET("/all", func(c *gin.Context) {
