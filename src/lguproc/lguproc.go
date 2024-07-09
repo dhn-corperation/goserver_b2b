@@ -199,7 +199,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 			if err != nil {
 				for i := 0; i < len(ossmsValues); i = i + 7 {
 					eQuery := fmt.Sprintf("insert into LG_SC_TRAN(TR_SENDDATE,TR_PHONE,TR_CALLBACK, TR_MSG, TR_ETC1, TR_ETC2, TR_ETC3, TR_KISAORIGCODE) "+
-						"values('%v','%v','%v','%v','%v','%v','%v')", ossmsValues[i], ossmsValues[i+1], ossmsValues[i+2], ossmsValues[i+3], ossmsValues[i+4], ossmsValues[i+5], ossmsValues[i+6], ossmsValues[i+7])
+						"values('%v','%v','%v','%v','%v','%v','%v', '%v')", ossmsValues[i], ossmsValues[i+1], ossmsValues[i+2], ossmsValues[i+3], ossmsValues[i+4], ossmsValues[i+5], ossmsValues[i+6], ossmsValues[i+7])
 					_, err := db.ExecContext(ctx, eQuery)
 					if err != nil {
 						msgKey := fmt.Sprintf("%v", ossmsValues[i+4])
@@ -307,7 +307,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 		if err != nil {
 			for i := 0; i < len(ossmsValues); i = i + 7 {
 				eQuery := fmt.Sprintf("insert into LG_SC_TRAN(TR_SENDDATE,TR_PHONE,TR_CALLBACK, TR_MSG, TR_ETC1, TR_ETC2, TR_ETC3, TR_KISAORIGCODE) "+
-					"values('%v','%v','%v','%v','%v','%v','%v')", ossmsValues[i], ossmsValues[i+1], ossmsValues[i+2], ossmsValues[i+3], ossmsValues[i+4], ossmsValues[i+5], ossmsValues[i+6], ossmsValues[i+7])
+					"values('%v','%v','%v','%v','%v','%v','%v', '%v')", ossmsValues[i], ossmsValues[i+1], ossmsValues[i+2], ossmsValues[i+3], ossmsValues[i+4], ossmsValues[i+5], ossmsValues[i+6], ossmsValues[i+7])
 				_, err := db.ExecContext(ctx, eQuery)
 				if err != nil {
 					msgKey := fmt.Sprintf("%v", ossmsValues[i+4])

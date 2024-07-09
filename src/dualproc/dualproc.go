@@ -221,7 +221,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, rate strin
 			if err != nil {
 				for i := 0; i < len(lgsmsValues); i = i + 7 {
 					eQuery := fmt.Sprintf("insert into LG_SC_TRAN(TR_SENDDATE,TR_PHONE,TR_CALLBACK, TR_MSG, TR_ETC1, TR_ETC2, TR_ETC3, TR_KISAORIGCODE) "+
-						"values('%v','%v','%v','%v','%v','%v','%v')", lgsmsValues[i], lgsmsValues[i+1], lgsmsValues[i+2], lgsmsValues[i+3], lgsmsValues[i+4], lgsmsValues[i+5], lgsmsValues[i+6], lgsmsValues[i+7])
+						"values('%v','%v','%v','%v','%v','%v','%v', '%v')", lgsmsValues[i], lgsmsValues[i+1], lgsmsValues[i+2], lgsmsValues[i+3], lgsmsValues[i+4], lgsmsValues[i+5], lgsmsValues[i+6], lgsmsValues[i+7])
 					_, err := db.ExecContext(ctx, eQuery)
 					if err != nil {
 						msgKey := fmt.Sprintf("%v", lgsmsValues[i+4])
@@ -450,7 +450,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, rate strin
 		if err != nil {
 			for i := 0; i < len(lgsmsValues); i = i + 7 {
 				eQuery := fmt.Sprintf("insert into LG_SC_TRAN(TR_SENDDATE,TR_PHONE,TR_CALLBACK, TR_MSG, TR_ETC1, TR_ETC2, TR_ETC3, TR_KISAORIGCODE) "+
-					"values('%v','%v','%v','%v','%v','%v','%v')", lgsmsValues[i], lgsmsValues[i+1], lgsmsValues[i+2], lgsmsValues[i+3], lgsmsValues[i+4], lgsmsValues[i+5], lgsmsValues[i+6], lgsmsValues[i+7])
+					"values('%v','%v','%v','%v','%v','%v','%v', '%v')", lgsmsValues[i], lgsmsValues[i+1], lgsmsValues[i+2], lgsmsValues[i+3], lgsmsValues[i+4], lgsmsValues[i+5], lgsmsValues[i+6], lgsmsValues[i+7])
 				_, err := db.ExecContext(ctx, eQuery)
 				if err != nil {
 					msgKey := fmt.Sprintf("%v", lgsmsValues[i+4])
