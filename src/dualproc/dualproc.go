@@ -26,7 +26,7 @@ var seq int
 
 func DualProcess(user_id string, rate string, ctx context.Context) {
 	//var wg sync.WaitGroup
-	config.Stdlog.Println(user_id, " Lgu Process 시작 됨.")
+	config.Stdlog.Println(user_id, " Dual Process 시작 됨.")
 	procCnt = 0
 
 	parts := s.Split(rate, "/")
