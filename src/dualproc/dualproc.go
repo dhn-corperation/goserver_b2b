@@ -274,7 +274,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, rate strin
 				//stdlog.Println("Nano SMS Table Insert 처리 중 오류 발생 " + err.Error())
 				for i := 0; i < len(nnsmsValues); i = i + 8 {
 					eQuery := fmt.Sprintf("insert into SMS_MSG(TR_CALLBACK,TR_PHONE,TR_MSG,TR_SENDDATE,TR_SENDSTAT,TR_MSGTYPE,TR_ETC9,TR_ETC10,TR_IDENTIFICATION_CODE,TR_ETC8) "+
-						"values('%v','%v','%v','%v', '%v', '%v','%v', '%v', 'Y')", nnsmsValues[i], nnsmsValues[i+1], nnsmsValues[i+2], nnsmsValues[i+3], nnsmsValues[i+4], nnsmsValues[i+5], nnsmsValues[i+6], nnsmsValues[i+7], nnsmsValues[i+8])
+						"values('%v','%v','%v','%v','%v','%v','%v','%v', '%v', 'Y')", nnsmsValues[i], nnsmsValues[i+1], nnsmsValues[i+2], nnsmsValues[i+3], nnsmsValues[i+4], nnsmsValues[i+5], nnsmsValues[i+6], nnsmsValues[i+7], nnsmsValues[i+8])
 					_, err := db.Exec(eQuery)
 					if err != nil {
 						msgKey := fmt.Sprintf("%v", nnsmsValues[i+6])
@@ -302,7 +302,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, rate strin
 				//stdlog.Println("Nano SMS Table Insert 처리 중 오류 발생 " + err.Error())
 				for i := 0; i < len(nnmmsValues); i = i + 12 {
 					eQuery := fmt.Sprintf("insert into MMS_MSG(CALLBACK,PHONE,SUBJECT,MSG,REQDATE,STATUS,FILE_CNT,FILE_PATH1,FILE_PATH2,FILE_PATH3,ETC9,ETC10,IDENTIFICATION_CODE,ETC8) "+
-						"values('%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','Y')", nnmmsValues[i], nnmmsValues[i+1], nnmmsValues[i+2], nnmmsValues[i+3], nnmmsValues[i+4], nnmmsValues[i+5], nnmmsValues[i+6], nnmmsValues[i+7], nnmmsValues[i+8], nnmmsValues[i+9], nnmmsValues[i+10], nnmmsValues[i+11], nnmmsValues[i+12])
+						"values('%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','Y')", nnmmsValues[i], nnmmsValues[i+1], nnmmsValues[i+2], nnmmsValues[i+3], nnmmsValues[i+4], nnmmsValues[i+5], nnmmsValues[i+6], nnmmsValues[i+7], nnmmsValues[i+8], nnmmsValues[i+9], nnmmsValues[i+10], nnmmsValues[i+11], nnmmsValues[i+12])
 					_, err := db.Exec(eQuery)
 					if err != nil {
 						msgKey := fmt.Sprintf("%v", nnmmsValues[i+10])
@@ -450,7 +450,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, rate strin
 		if err != nil {
 			for i := 0; i < len(lgsmsValues); i = i + 7 {
 				eQuery := fmt.Sprintf("insert into LG_SC_TRAN(TR_SENDDATE,TR_PHONE,TR_CALLBACK, TR_MSG, TR_ETC1, TR_ETC2, TR_ETC3, TR_KISAORIGCODE) "+
-					"values('%v','%v','%v','%v','%v','%v','%v', '%v')", lgsmsValues[i], lgsmsValues[i+1], lgsmsValues[i+2], lgsmsValues[i+3], lgsmsValues[i+4], lgsmsValues[i+5], lgsmsValues[i+6], lgsmsValues[i+7])
+					"values('%v','%v','%v','%v','%v','%v','%v','%v')", lgsmsValues[i], lgsmsValues[i+1], lgsmsValues[i+2], lgsmsValues[i+3], lgsmsValues[i+4], lgsmsValues[i+5], lgsmsValues[i+6], lgsmsValues[i+7])
 				_, err := db.ExecContext(ctx, eQuery)
 				if err != nil {
 					msgKey := fmt.Sprintf("%v", lgsmsValues[i+4])
@@ -500,7 +500,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, rate strin
 			//stdlog.Println("Nano SMS Table Insert 처리 중 오류 발생 " + err.Error())
 			for i := 0; i < len(nnsmsValues); i = i + 8 {
 				eQuery := fmt.Sprintf("insert into SMS_MSG(TR_CALLBACK,TR_PHONE,TR_MSG,TR_SENDDATE,TR_SENDSTAT,TR_MSGTYPE,TR_ETC9,TR_ETC10,TR_IDENTIFICATION_CODE,TR_ETC8) "+
-					"values('%v','%v','%v','%v', '%v', '%v','%v', '%v', 'Y')", nnsmsValues[i], nnsmsValues[i+1], nnsmsValues[i+2], nnsmsValues[i+3], nnsmsValues[i+4], nnsmsValues[i+5], nnsmsValues[i+6], nnsmsValues[i+7], nnsmsValues[i+8])
+					"values('%v','%v','%v','%v','%v','%v', '%v','%v', '%v', 'Y')", nnsmsValues[i], nnsmsValues[i+1], nnsmsValues[i+2], nnsmsValues[i+3], nnsmsValues[i+4], nnsmsValues[i+5], nnsmsValues[i+6], nnsmsValues[i+7], nnsmsValues[i+8])
 				_, err := db.Exec(eQuery)
 				if err != nil {
 					msgKey := fmt.Sprintf("%v", nnsmsValues[i+6])
@@ -527,7 +527,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, rate strin
 			//stdlog.Println("Nano SMS Table Insert 처리 중 오류 발생 " + err.Error())
 			for i := 0; i < len(nnmmsValues); i = i + 12 {
 				eQuery := fmt.Sprintf("insert into MMS_MSG(CALLBACK,PHONE,SUBJECT,MSG,REQDATE,STATUS,FILE_CNT,FILE_PATH1,FILE_PATH2,FILE_PATH3,ETC9,ETC10,IDENTIFICATION_CODE,ETC8) "+
-					"values('%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','Y')", nnmmsValues[i], nnmmsValues[i+1], nnmmsValues[i+2], nnmmsValues[i+3], nnmmsValues[i+4], nnmmsValues[i+5], nnmmsValues[i+6], nnmmsValues[i+7], nnmmsValues[i+8], nnmmsValues[i+9], nnmmsValues[i+10], nnmmsValues[i+11], nnmmsValues[i+12])
+					"values('%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','Y')", nnmmsValues[i], nnmmsValues[i+1], nnmmsValues[i+2], nnmmsValues[i+3], nnmmsValues[i+4], nnmmsValues[i+5], nnmmsValues[i+6], nnmmsValues[i+7], nnmmsValues[i+8], nnmmsValues[i+9], nnmmsValues[i+10], nnmmsValues[i+11], nnmmsValues[i+12])
 				_, err := db.Exec(eQuery)
 				if err != nil {
 					msgKey := fmt.Sprintf("%v", nnmmsValues[i+10])
