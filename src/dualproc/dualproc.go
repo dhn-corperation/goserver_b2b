@@ -215,7 +215,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, rate strin
 		tcnt++
 
 		if len(lgsmsStrs) > 500 {
-			stmt := fmt.Sprintf("insert into LG_SC_TRAN(TR_SENDDATE,TR_PHONE,TR_CALLBACK, TR_MSG, TR_ETC1, TR_ETC2, TR_ETC2, TR_KISAORIGCODE) values %s", s.Join(lgsmsStrs, ","))
+			stmt := fmt.Sprintf("insert into LG_SC_TRAN(TR_SENDDATE,TR_PHONE,TR_CALLBACK, TR_MSG, TR_ETC1, TR_ETC2, TR_ETC3, TR_KISAORIGCODE) values %s", s.Join(lgsmsStrs, ","))
 			stdlog.Println(stmt)
 			_, err := db.ExecContext(ctx, stmt, lgsmsValues...)
 
@@ -393,7 +393,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, rate strin
 						nnsmsValues = append(nnsmsValues, sms_sender.String)
 						nnsmsValues = append(nnsmsValues, phnstr)
 						nnsmsValues = append(nnsmsValues, msg_sms.String)
-						nnsmsValues = append(nnsmsValues, reserve_dt.String)
+						nnsmsValues = append(nnsmsValues, time.Now().Format("2006-01-02 15:04:05"))
 						nnsmsValues = append(nnsmsValues, "0")
 						nnsmsValues = append(nnsmsValues, "0")
 						nnsmsValues = append(nnsmsValues, msgid.String)
@@ -450,7 +450,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, rate strin
 	}
 
 	if len(lgsmsStrs) > 0 {
-		stmt := fmt.Sprintf("insert into LG_SC_TRAN(TR_SENDDATE,TR_PHONE,TR_CALLBACK, TR_MSG, TR_ETC1, TR_ETC2, TR_ETC2, TR_KISAORIGCODE) values %s", s.Join(lgsmsStrs, ","))
+		stmt := fmt.Sprintf("insert into LG_SC_TRAN(TR_SENDDATE,TR_PHONE,TR_CALLBACK, TR_MSG, TR_ETC1, TR_ETC2, TR_ETC3, TR_KISAORIGCODE) values %s", s.Join(lgsmsStrs, ","))
 		_, err := db.ExecContext(ctx, stmt, lgsmsValues...)
 
 		if err != nil {

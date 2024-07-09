@@ -193,7 +193,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 
 		tcnt++
 		if len(ossmsStrs) > 500 {
-			stmt := fmt.Sprintf("insert into LG_SC_TRAN(TR_SENDDATE,TR_PHONE,TR_CALLBACK, TR_MSG, TR_ETC1, TR_ETC2, TR_ETC2, TR_KISAORIGCODE) values %s", s.Join(ossmsStrs, ","))
+			stmt := fmt.Sprintf("insert into LG_SC_TRAN(TR_SENDDATE,TR_PHONE,TR_CALLBACK, TR_MSG, TR_ETC1, TR_ETC2, TR_ETC3, TR_KISAORIGCODE) values %s", s.Join(ossmsStrs, ","))
 			_, err := db.ExecContext(ctx, stmt, ossmsValues...)
 
 			if err != nil {
@@ -301,7 +301,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	}
 
 	if len(ossmsStrs) > 0 {
-		stmt := fmt.Sprintf("insert into LG_SC_TRAN(TR_SENDDATE,TR_PHONE,TR_CALLBACK, TR_MSG, TR_ETC1, TR_ETC2, TR_ETC2, TR_KISAORIGCODE) values %s", s.Join(ossmsStrs, ","))
+		stmt := fmt.Sprintf("insert into LG_SC_TRAN(TR_SENDDATE,TR_PHONE,TR_CALLBACK, TR_MSG, TR_ETC1, TR_ETC2, TR_ETC3, TR_KISAORIGCODE) values %s", s.Join(ossmsStrs, ","))
 		_, err := db.ExecContext(ctx, stmt, ossmsValues...)
 
 		if err != nil {
