@@ -216,6 +216,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, rate strin
 
 		if len(lgsmsStrs) > 500 {
 			stmt := fmt.Sprintf("insert into LG_SC_TRAN(TR_SENDDATE,TR_PHONE,TR_CALLBACK, TR_MSG, TR_ETC1, TR_ETC2, TR_ETC2, TR_KISAORIGCODE) values %s", s.Join(lgsmsStrs, ","))
+			stdlog.Println(stmt)
 			_, err := db.ExecContext(ctx, stmt, lgsmsValues...)
 
 			if err != nil {
@@ -242,6 +243,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, rate strin
 
 		if len(lgmmsStrs) > 500 {
 			stmt := fmt.Sprintf("insert into LG_MMS_MSG(SUBJECT, PHONE, CALLBACK, REQDATE, MSG, FILE_CNT, FILE_PATH1, FILE_PATH2, FILE_PATH3, ETC1, ETC2, ETC3, KISA_ORIGCODE) values %s", s.Join(lgmmsStrs, ","))
+			stdlog.Println(stmt)
 			_, err := db.Exec(stmt, lgmmsValues...)
 
 			if err != nil {
@@ -268,6 +270,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, rate strin
 
 		if len(nnsmsStrs) > 500 {
 			stmt := fmt.Sprintf("insert into SMS_MSG(TR_CALLBACK,TR_PHONE,TR_MSG,TR_SENDDATE,TR_SENDSTAT,TR_MSGTYPE,TR_ETC9,TR_ETC10,TR_IDENTIFICATION_CODE,TR_ETC8) values %s", s.Join(nnsmsStrs, ","))
+			stdlog.Println(stmt)
 			_, err := db.Exec(stmt, nnsmsValues...)
 
 			if err != nil {
@@ -296,6 +299,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, rate strin
 
 		if len(nnmmsStrs) > 500 {
 			stmt := fmt.Sprintf("insert into MMS_MSG(CALLBACK,PHONE,SUBJECT,MSG,REQDATE,STATUS,FILE_CNT,FILE_PATH1,FILE_PATH2,FILE_PATH3,ETC9,ETC10,IDENTIFICATION_CODE,ETC8) values %s", s.Join(nnmmsStrs, ","))
+			stdlog.Println(stmt)
 			_, err := db.Exec(stmt, nnmmsValues...)
 
 			if err != nil {
