@@ -430,7 +430,7 @@ func resultProc() {
 			dualUserList.Scan(&user_id, &dual_rate)
 			ctx, cancel := context.WithCancel(context.Background())
 			ctx = context.WithValue(ctx, "user_id", user_id.String)
-			go oshotproc.OshotProcess(user_id.String, dual_rate.String, ctx)
+			go dualproc.DualProcess(user_id.String, dual_rate.String, ctx)
 
 			dualUser[user_id.String] = user_id.String
 			dualCtxC[user_id.String] = cancel

@@ -8,11 +8,11 @@ import (
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
 
-	"encoding/hex"
+	// "encoding/hex"
 	"regexp"
 	s "strings"
 	"time"
-	"unicode/utf8"
+	// "unicode/utf8"
 
 	"context"
 )
@@ -267,7 +267,7 @@ func resProcess(ctx context.Context, group_no string, user_id string, rate strin
 		}
 
 		if len(nnsmsStrs) > 500 {
-			stmt := fmt.Sprintf("insert into SMS_MSG(TR_CALLBACK,TR_PHONE,TR_MSG,TR_SENDDATE,TR_SENDSTAT,TR_MSGTYPE,TR_ETC9,TR_ETC10,TR_IDENTIFICATION_CODE,TR_ETC8) values %s", s.Join(ossmsStrs, ","))
+			stmt := fmt.Sprintf("insert into SMS_MSG(TR_CALLBACK,TR_PHONE,TR_MSG,TR_SENDDATE,TR_SENDSTAT,TR_MSGTYPE,TR_ETC9,TR_ETC10,TR_IDENTIFICATION_CODE,TR_ETC8) values %s", s.Join(nnsmsStrs, ","))
 			_, err := db.Exec(stmt, nnsmsValues...)
 
 			if err != nil {
