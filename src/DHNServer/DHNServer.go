@@ -306,8 +306,7 @@ func resultProc() {
 		var nano_tel_seperate sql.NullString
 
 		for nanoUserList.Next() {
-			nanoUserList.Scan(&user_id)
-			nanoUserList.Scan(&nano_tel_seperate)
+			nanoUserList.Scan(&user_id, &nano_tel_seperate)
 
 			if s.EqualFold(nano_tel_seperate.String, "N") { // 기본
 				ctx, cancel := context.WithCancel(context.Background())
