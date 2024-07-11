@@ -152,8 +152,6 @@ func resultProc() {
 		for alim_user_list.Next() {
 
 			alim_user_list.Scan(&user_id, &second_send_flag)
-			config.Stdlog.Println(user_id.String)
-			config.Stdlog.Println(second_send_flag.String)
 
 			ctx, cancel := context.WithCancel(context.Background())
 			go kaosendrequest.AlimtalkProc(user_id.String, second_send_flag.String, ctx)
