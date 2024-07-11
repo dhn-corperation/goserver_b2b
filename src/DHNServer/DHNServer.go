@@ -6,16 +6,12 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	// "time"
 
 	_ "github.com/go-sql-driver/mysql"
 
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
 
-	//"kaoreqreceive"
-
-	//"kaocenter"
 	"mycs/src/kaosendrequest"
 	"mycs/src/nanoproc"
 	"mycs/src/oshotproc"
@@ -31,7 +27,6 @@ import (
 
 	"context"
 	"sort"
-	//"reflect"
 
 )
 
@@ -432,11 +427,14 @@ Command :
 /krun?uid=dhn&acc=0  -> dhn KTXRO process run.
 /klist               -> 실행 중인 KTXRO process User List.
 
+/lgstop?uid=dhn   -> dhn Lgu process stop.
+/lgrun?uid=dhn    -> dhn Lgu process run.
+/lglist           -> 실행 중인 Lgu process User List.
+
 /all             -> DHNServer process list
 /allstop         -> DHNServer process stop
 `
 	r.GET("/", func(c *gin.Context) {
-		//time.Sleep(30 * time.Second)
 		c.String(200, serCmd)
 	})
 
@@ -452,12 +450,6 @@ Command :
 			delete(allService, "OS"+uid)
 			delete(allCtxC, "OS"+uid)
 			c.String(200, uid+" 종료 신호 전달 완료")
-
-			// _, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = NULL, pre_send_type = 1, pre_update_date = ? where user_id = ?", time.Now().Format("2006-01-02 15:04:05"), uid)
-				
-			// if err != nil {
-			// 	config.Stdlog.Println(uid," /ostop 오샷 DHN_CLIENT_LIST 업데이트 실패 : ", err)
-			// }
 		} else {
 			c.String(200, uid+"는 실행 중이지 않습니다.")
 		}
@@ -481,11 +473,11 @@ Command :
 			allCtxC["OS"+uid] = cancel
 			allService["OS"+uid] = uid
 
-			// _, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = 'OSHOT' where user_id = ?", uid)
+			_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = 'OSHOT' where use_flag = 'Y' and user_id = ?", uid)
 				
-			// if err != nil {
-			// 	config.Stdlog.Println(uid," /orun 오샷 DHN_CLIENT_LIST 업데이트 실패 : ", err)
-			// }
+			if err != nil {
+				config.Stdlog.Println(uid," /orun 오샷 DHN_CLIENT_LIST 업데이트 실패 : ", err)
+			}
 
 			c.String(200, uid+" 시작 신호 전달 완료")
 		}
@@ -512,12 +504,6 @@ Command :
 			delete(allService, "AL"+uid)
 			delete(allCtxC, "AL"+uid)
 
-			// _, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set alimtalk = 'N' where user_id = ?", uid)
-				
-			// if err != nil {
-			// 	config.Stdlog.Println(uid," /astop 알림톡 DHN_CLIENT_LIST 업데이트 실패 : ", err)
-			// }
-
 			c.String(200, uid+" 종료 신호 전달 완료")
 		} else {
 			c.String(200, uid+"는 실행 중이지 않습니다.")
@@ -541,12 +527,6 @@ Command :
 
 			allCtxC["AL"+uid] = cancel
 			allService["AL"+uid] = uid
-
-			// _, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set alimtalk = 'Y' where user_id = ?", uid)
-				
-			// if err != nil {
-			// 	config.Stdlog.Println(uid," /arun 알림톡 DHN_CLIENT_LIST 업데이트 실패 : ", err)
-			// }
 
 			c.String(200, uid+" 시작 신호 전달 완료")
 		}
@@ -587,12 +567,6 @@ Command :
 				delete(allCtxC, "NN"+uid+"_Y")
 				delete(allCtxC, "NN"+uid+"_N")
 			}
-
-			// _, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = NULL, pre_send_type = 2, pre_update_date = ? where user_id = ?", time.Now().Format("2006-01-02 15:04:05"), uid)
-				
-			// if err != nil {
-			// 	config.Stdlog.Println(uid," /nstop 나노 DHN_CLIENT_LIST 업데이트 실패 : ", err)
-			// }
 
 			c.String(200, uid+" 종료 신호 전달 완료")
 		} else {
@@ -640,11 +614,11 @@ Command :
 				allService["NN"+uid+"_N"] = "NanoService N"
 			}
 
-			// _, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = 'NANO' where user_id = ?", uid)
+			_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = 'NANO' where use_flag = 'Y' and user_id = ?", uid)
 				
-			// if err != nil {
-			// 	config.Stdlog.Println(uid," /nrun 나노 DHN_CLIENT_LIST 업데이트 실패 : ", err)
-			// }
+			if err != nil {
+				config.Stdlog.Println(uid," /nrun 나노 DHN_CLIENT_LIST 업데이트 실패 : ", err)
+			}
 
 			c.String(200, uid+" 시작 신호 전달 완료")
 
@@ -670,13 +644,8 @@ Command :
 			delete(ktxroUser, uid)
 			delete(allService, "KTX"+uid)
 			delete(allCtxC, "KTX"+uid)
-			c.String(200, uid+" 종료 신호 전달 완료")
 
-			// _, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = NULL, pre_send_type = 1, pre_update_date = ? where user_id = ?", time.Now().Format("2006-01-02 15:04:05"), uid)
-				
-			// if err != nil {
-			// 	config.Stdlog.Println(uid," /kstop KT크로샷 DHN_CLIENT_LIST 업데이트 실패 : ", err)
-			// }
+			c.String(200, uid+" 종료 신호 전달 완료")
 		} else {
 			c.String(200, uid+"는 실행 중이지 않습니다.")
 		}
@@ -706,11 +675,11 @@ Command :
 			allCtxC["KTX"+uid] = cancel
 			allService["KTX"+uid] = uid
 
-			// _, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = 'KTXRO' where user_id = ?", uid)
+			_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = 'KTXRO' where use_flag = 'Y' and user_id = ?", uid)
 				
-			// if err != nil {
-			// 	config.Stdlog.Println(uid," /krun KT크로샷 DHN_CLIENT_LIST 업데이트 실패 : ", err)
-			// }
+			if err != nil {
+				config.Stdlog.Println(uid," /krun KT크로샷 DHN_CLIENT_LIST 업데이트 실패 : ", err)
+			}
 
 			c.String(200, uid+" 시작 신호 전달 완료")
 		}
@@ -719,6 +688,61 @@ Command :
 	r.GET("/klist", func(c *gin.Context) {
 		var key string
 		for k := range ktxroUser {
+			key = key + k + "\n"
+		}
+		c.String(200, key)
+	})
+
+	r.GET("/lgstop", func(c *gin.Context) {
+		var uid string
+		uid = c.Query("uid")
+		temp := lguCtxC[uid]
+		if temp != nil {
+			cancel := lguCtxC[uid].(context.CancelFunc)
+			cancel()
+			delete(lguCtxC, uid)
+			delete(lguUser, uid)
+
+			delete(allService, "LG"+uid)
+			delete(allCtxC, "LG"+uid)
+
+			c.String(200, uid+" 종료 신호 전달 완료")
+		} else {
+			c.String(200, uid+"는 실행 중이지 않습니다.")
+		}
+
+	})
+
+	r.GET("/lgrun", func(c *gin.Context) {
+		var uid string
+		uid = c.Query("uid")
+		temp := lguCtxC[uid]
+		if temp != nil {
+			c.String(200, uid+"이미 실행 중입니다.")
+		} else {
+			ctx, cancel := context.WithCancel(context.Background())
+			ctx = context.WithValue(ctx, "user_id", uid)
+			go lguproc.LguProcess(uid, ctx)
+
+			lguCtxC[uid] = cancel
+			lguUser[uid] = uid
+
+			allCtxC["LG"+uid] = cancel
+			allService["LG"+uid] = uid
+
+			_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = 'LGU' where use_flag = 'Y' and user_id = ?", uid)
+				
+			if err != nil {
+				config.Stdlog.Println(uid," /orun 오샷 DHN_CLIENT_LIST 업데이트 실패 : ", err)
+			}
+
+			c.String(200, uid+" 시작 신호 전달 완료")
+		}
+	})
+
+	r.GET("/lglist", func(c *gin.Context) {
+		var key string
+		for k := range lguUser {
 			key = key + k + "\n"
 		}
 		c.String(200, key)
