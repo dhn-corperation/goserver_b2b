@@ -151,7 +151,7 @@ func resultProc() {
 		var user_id, second_send_flag sql.NullString
 		for alim_user_list.Next() {
 
-			alim_user_list.Scan(&user_id)
+			alim_user_list.Scan(&user_id, &second_send_flag)
 
 			ctx, cancel := context.WithCancel(context.Background())
 			go kaosendrequest.AlimtalkProc(user_id.String, second_send_flag.String, ctx)
@@ -180,7 +180,7 @@ func resultProc() {
 		var user_id, second_send_flag sql.NullString
 		for friend_user_list.Next() {
 
-			friend_user_list.Scan(&user_id)
+			friend_user_list.Scan(&user_id, &second_send_flag)
 
 			ctx, cancel := context.WithCancel(context.Background())
 			go kaosendrequest.FriendtalkProc(user_id.String, second_send_flag.String, ctx)
