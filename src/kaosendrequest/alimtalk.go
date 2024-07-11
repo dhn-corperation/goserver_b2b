@@ -22,7 +22,7 @@ import (
 
 var atprocCnt int
 
-func AlimtalkProc( user_id string, ctx context.Context ) {
+func AlimtalkProc( user_id string, second_send_flag string, ctx context.Context ) {
 	atprocCnt = 1
 	config.Stdlog.Println(user_id, " - 알림톡 프로세스 시작 됨 ") 
 	for {
@@ -61,7 +61,7 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 						if rowcnt > 0 {
 							config.Stdlog.Println(user_id, "알림톡 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ")
 							atprocCnt++
-							go atsendProcess(group_no, user_id)
+							go atsendProcess(group_no, user_id, second_send_flag)
 				
 						}
 					}
@@ -72,7 +72,7 @@ func AlimtalkProc( user_id string, ctx context.Context ) {
 
 }
 
-func atsendProcess(group_no string, user_id string) {
+func atsendProcess(group_no string, user_id string, second_send_flag string) {
 	atColumn := cm.GetResAtColumn()
 	atColumnStr := s.Join(atColumn, ",")
 
@@ -305,7 +305,7 @@ func atsendProcess(group_no string, user_id string) {
 				if s.EqualFold(resCode,"0000") {
 					resinsValues = append(resinsValues, "Y") // 
 				// 1차 카카오 발송 실패 후 2차 발송을 바로 하기 위해서는 이 조건을 맞춰야함
-				} else if len(result["sms_kind"])>=1 && s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
+				} else if len(result["sms_kind"])>=1 && s.EqualFold(second_send_flag, "Y") {
 					resinsValues = append(resinsValues, "P") // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
 				} else {
 					resinsValues = append(resinsValues, "Y") // 
@@ -327,7 +327,7 @@ func atsendProcess(group_no string, user_id string) {
 
 				if s.EqualFold(resCode,"0000") {
 					resinsValues = append(resinsValues, nil) //send_group
-				} else if len(result["sms_kind"])>=1 && s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
+				} else if len(result["sms_kind"])>=1 && s.EqualFold(second_send_flag, "Y") {
 					resinsValues = append(resinsValues, nil) //send_group
 				} else {
 					resinsValues = append(resinsValues, nil) //send_group

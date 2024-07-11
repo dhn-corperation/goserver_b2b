@@ -261,7 +261,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 					ossmsValues = append(ossmsValues, msgid.String)
 					ossmsValues = append(ossmsValues, userid.String)
 					ossmsValues = append(ossmsValues, group_no)
-					ossmsValues = append(ossmsValues, "302190001")
+					ossmsValues = append(ossmsValues, config.Conf.KISA_CODE)
 					smscnt++
 				} else {
 					db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code = '7003', dr.message = '메세지 길이 오류', dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + userid.String + "' and msgid = '" + msgid.String + "'")
@@ -290,7 +290,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 				osmmsValues = append(osmmsValues, msgid.String)
 				osmmsValues = append(osmmsValues, userid.String)
 				osmmsValues = append(osmmsValues, group_no)
-				osmmsValues = append(osmmsValues, "302190001")
+				osmmsValues = append(osmmsValues, config.Conf.KISA_CODE)
 				lmscnt++
 			}
 

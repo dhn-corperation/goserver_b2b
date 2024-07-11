@@ -32,7 +32,7 @@ type resultStr struct {
 	Result     map[string]string
 }
 
-func FriendtalkProc(ctx context.Context) {
+func FriendtalkProc(user_id string, second_send_flag string, ctx context.Context) {
 	ftprocCnt = 1
 	
 	for {
@@ -49,7 +49,7 @@ func FriendtalkProc(ctx context.Context) {
 						
 				var count int
 	
-				cnterr := databasepool.DB.QueryRow("select length(msgid) as cnt from DHN_REQUEST  where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit 1").Scan(&count)
+				cnterr := databasepool.DB.QueryRowContext(ctx, "select length(msgid) as cnt from DHN_REQUEST  where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid = ? limit 1", user_id).Scan(&count)
 	
 				if cnterr != nil {
 					//config.Stdlog.Println("DHN_REQUEST Table - select 오류 : " + cnterr.Error())
@@ -59,18 +59,18 @@ func FriendtalkProc(ctx context.Context) {
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
 				
-						updateRows, err := databasepool.DB.Exec("update DHN_REQUEST set send_group = '" + group_no + "' where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit " + strconv.Itoa(config.Conf.SENDLIMIT))
+						updateRows, err := databasepool.DB.ExecContext(ctx, "update DHN_REQUEST set send_group = ? where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid = ? limit ?", group_no, user_id, strconv.Itoa(config.Conf.SENDLIMIT))
 				
 						if err != nil {
-							config.Stdlog.Println("Request Table - send_group Update 오류")
+							config.Stdlog.Println(user_id, " Request Table - send_group Update 오류")
 						}
 				
 						rowcnt, _ := updateRows.RowsAffected()
 				
 						if rowcnt > 0 {
-							config.Stdlog.Println("친구톡 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ")
+							config.Stdlog.Println(user_id, " 친구톡 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ")
 							ftprocCnt ++
-							go ftsendProcess(group_no)
+							go ftsendProcess(group_no, user_id, second_send_flag)
 						}
 					}
 				}
@@ -80,14 +80,14 @@ func FriendtalkProc(ctx context.Context) {
 
 }
 
-func ftsendProcess(group_no string) {
+func ftsendProcess(group_no string, user_id string, second_send_flag string) {
 
 	var db = databasepool.DB
 	var conf = config.Conf
 	var stdlog = config.Stdlog
 	var errlog = config.Stdlog
 
-	reqsql := "select * from DHN_REQUEST where send_group = '" + group_no + "' and message_type like 'f%' "
+	reqsql := "select * from DHN_REQUEST where send_group = '" + group_no + "' and message_type like 'f%' and userid = '" + user_id + "'"
 
 	reqrows, err := db.Query(reqsql)
 	if err != nil {
@@ -403,7 +403,7 @@ carousel
 
 			if s.EqualFold(kakaoResp.Code,"0000") {
 				resinsValues = append(resinsValues, "Y") // 
-			} else if len(result["sms_kind"])>=1 && s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
+			} else if len(result["sms_kind"])>=1 && s.EqualFold(second_send_flag, "Y") {
 				resinsValues = append(resinsValues, "P") // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
 			} else {
 				resinsValues = append(resinsValues, "Y") // 
@@ -419,7 +419,7 @@ carousel
 			
 			if s.EqualFold(kakaoResp.Code,"0000") {
 				resinsValues = append(resinsValues, nil) // send group
-			} else if len(result["sms_kind"])>=1 && s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
+			} else if len(result["sms_kind"])>=1 && s.EqualFold(second_send_flag, "Y") {
 				resinsValues = append(resinsValues, nil) // send group
 			} else {
 				resinsValues = append(resinsValues, nil) // send group

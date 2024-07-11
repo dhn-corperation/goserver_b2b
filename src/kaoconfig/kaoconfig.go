@@ -16,7 +16,7 @@ import (
 type Config struct {
 	DB               string
 	DBURL            string
-	PORT             string
+	CENTER_PORT      string
 	SERVER_PORT      string
 	PROFILE_KEY      string
 	API_SERVER       string
@@ -25,12 +25,9 @@ type Config struct {
 	CHANNEL          string
 	RESPONSE_METHOD  string
 	SENDLIMIT        int
-	PHONE_MSG_FLAG   string
-	NANO_MSG_FLAG    string
 	OTP_MSG_FLAG     string
 	DEBUG            string
-	NANO_IDENTI_CODE string
-	PHONE_TYPE_FLAG  string
+	KISA_CODE        string
 }
 
 var Conf Config
@@ -90,7 +87,6 @@ func readConfig() Config {
 	}
 
 	var result Config
-	result.PHONE_TYPE_FLAG = "N"
 	_, err1 := ini.DecodeFile(configfile, &result)
 
 	if err1 != nil {

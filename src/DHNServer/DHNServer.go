@@ -130,10 +130,13 @@ func resultProc() {
 		config.Stdlog.Println("DHN_CLIENT_LIST의 pre_send_type, pre_update_date 컬럼 초기화 실패 : ", err)
 	}
 
+	//모든 서비스
 	allService := map[string]string{}
 	allCtxC := map[string]interface{}{}
 
-	alim_user_list, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST where use_flag = 'Y' and alimtalk='Y'")
+
+
+	alim_user_list, error := databasepool.DB.Query("select distinct user_id, second_send_flag from DHN_CLIENT_LIST where use_flag = 'Y' and alimtalk='Y'")
 	isAlim := true
 	if error != nil {
 		config.Stdlog.Println("알림톡 유저 select 오류 ")
@@ -145,13 +148,13 @@ func resultProc() {
 	alimCtxC := map[string]interface{}{}
 
 	if isAlim {
-		var user_id sql.NullString
+		var user_id, second_send_flag sql.NullString
 		for alim_user_list.Next() {
 
 			alim_user_list.Scan(&user_id)
 
 			ctx, cancel := context.WithCancel(context.Background())
-			go kaosendrequest.AlimtalkProc(user_id.String, ctx)
+			go kaosendrequest.AlimtalkProc(user_id.String, second_send_flag.String, ctx)
 
 			alimCtxC[user_id.String] = cancel
 			alimUser[user_id.String] = user_id.String
@@ -162,12 +165,34 @@ func resultProc() {
 		}
 	}
 
-	ftctx, ftcancel := context.WithCancel(context.Background())
+	friend_user_list, error := databasepool.DB.Query("select distinct user_id, second_send_flag from DHN_CLIENT_LIST where use_flag = 'Y' and friendtalk='Y'")
+	isFriend := true
+	if error != nil {
+		config.Stdlog.Println("알림톡 유저 select 오류 ")
+		isFriend = false
+	}
+	defer friend_user_list.Close()
 
-	go kaosendrequest.FriendtalkProc(ftctx)
+	friendUser := map[string]string{}
+	friendCtxC := map[string]interface{}{}
 
-	allCtxC["ft"] = ftcancel
-	allService["ft"] = "ft"
+	if isFriend {
+		var user_id, second_send_flag sql.NullString
+		for friend_user_list.Next() {
+
+			friend_user_list.Scan(&user_id)
+
+			ctx, cancel := context.WithCancel(context.Background())
+			go kaosendrequest.FriendtalkProc(user_id.String, second_send_flag.String, ctx)
+
+			friendCtxC[user_id.String] = cancel
+			friendUser[user_id.String] = user_id.String
+
+			allCtxC["FR"+user_id.String] = cancel
+			allService["FR"+user_id.String] = user_id.String
+
+		} 
+	}
 
 	if s.EqualFold(config.Conf.RESPONSE_METHOD, "polling") {
 
@@ -190,7 +215,7 @@ func resultProc() {
 	oshotUser := map[string]string{}
 	oshotCtxC := map[string]interface{}{}
 
-	oshotUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl  where dcl.use_flag   = 'Y' and IFNULL(dcl.dest, '') = 'OSHOT'")
+	oshotUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl where dcl.use_flag = 'Y' and upper(ifnull(dcl.dest, '')) = 'OSHOT'")
 	isOshot := true
 	if error != nil {
 		config.Stdlog.Println("Oshot 유저 select 오류 ")
@@ -229,7 +254,7 @@ func resultProc() {
 	ktxroUser := map[string]string{}
 	ktxroCtxC := map[string]interface{}{}
 
-	ktxroUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl  where dcl.use_flag   = 'Y' and IFNULL(dcl.dest, '') = 'KTXRO'")
+	ktxroUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl where dcl.use_flag = 'Y' and upper(ifnull(dcl.dest, '')) = 'KTXRO'")
 	isKtxro := true
 	if error != nil {
 		config.Stdlog.Println("KT 크로샷 유저 select 오류 ")
@@ -268,7 +293,7 @@ func resultProc() {
 	nanoUser := map[string]string{}
 	nanoCtxC := map[string]interface{}{}
 
-	nanoUserList, error := databasepool.DB.Query("select distinct user_id, nano_tel_seperate from DHN_CLIENT_LIST dcl  where dcl.use_flag   = 'Y' and IFNULL(dcl.dest, '') = 'NANO'")
+	nanoUserList, error := databasepool.DB.Query("select distinct user_id, nano_tel_seperate from DHN_CLIENT_LIST dcl where dcl.use_flag = 'Y' and upper(ifnull(dcl.dest, '')) = 'NANO'")
 	isNano := true
 	if error != nil {
 		config.Stdlog.Println("Nano 유저 select 오류 ")
@@ -295,7 +320,7 @@ func resultProc() {
 
 				allCtxC["NN"+user_id.String] = cancel
 				allService["NN"+user_id.String] = user_id.String
-			} else if s.EqualFold(nano_tel_seperate.String, "Y") { // 콜비서
+			} else if s.EqualFold(nano_tel_seperate.String, "Y") { // 저가
 
 				ctxY, cancelY := context.WithCancel(context.Background())
 				ctxY = context.WithValue(ctxY, "user_id", user_id.String)
@@ -352,7 +377,7 @@ func resultProc() {
 	lguUser := map[string]string{}
 	lguCtxC := map[string]interface{}{}
 
-	lguUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl  where dcl.use_flag   = 'Y' and IFNULL(dcl.dest, '') = 'LGU'")
+	lguUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl where dcl.use_flag = 'Y' and upper(ifnull(dcl.dest, '')) = 'LGU'")
 	isLgu := true
 	if error != nil {
 		config.Stdlog.Println("Lgu 유저 select 오류 ")
@@ -518,9 +543,20 @@ Command :
 		if temp != nil {
 			c.String(200, uid+"이미 실행 중입니다.")
 		} else {
+			var second_send_flag sql.NullString
+			var ssf string
+
+			ssferr := databasepool.DB.QueryRow("select distinct second_send_flag from DHN_CLIENT_LIST where userid = ?", uid).Scan(&second_send_flag)
+			if ssferr != nil && ssferr != sql.ErrNoRows {
+				config.Stdlog.Println(uid," /arun 알림톡 second_send_flag 습득 실패 : ", err)
+				ssf = "N"
+			} else {
+				ssf = second_send_flag.String
+			}
+
 			ctx, cancel := context.WithCancel(context.Background())
 			ctx = context.WithValue(ctx, "user_id", uid)
-			go kaosendrequest.AlimtalkProc(uid, ctx)
+			go kaosendrequest.AlimtalkProc(uid, ssf, ctx)
 
 			alimCtxC[uid] = cancel
 			alimUser[uid] = uid
@@ -545,16 +581,27 @@ Command :
 		uid = c.Query("uid")
 		temp := nanoCtxC[uid]
 		if temp != nil {
+			var nano_tel_seperate sql.NullString
+			var nts string
+
+			seperr := databasepool.DB.QueryRow("select distinct nano_tel_seperate from DHN_CLIENT_LIST where userid = ?", uid).Scan(&nano_tel_seperate)
+			if seperr != nil && seperr != sql.ErrNoRows {
+				config.Stdlog.Println(uid," /nrun 나노 nano_tel_seperate 습득 실패 : ", err)
+				nts = "N"
+			} else {
+				nts = nano_tel_seperate.String
+			}
+
 			cancel := nanoCtxC[uid].(context.CancelFunc)
 			cancel()
 			
-			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "N") { // 기본
+			if s.EqualFold(nts, "N") { // 기본
 				delete(nanoCtxC, uid)
 				delete(nanoUser, uid)
 
 				delete(allService, "NN"+uid)
 				delete(allCtxC, "NN"+uid)
-			} else if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
+			} else if s.EqualFold(nts, "Y") { // 콜비서
 				delete(nanoUser, uid+"_Y")
 				delete(nanoUser, uid+"_N")
 
@@ -582,9 +629,20 @@ Command :
 		if temp != nil {
 			c.String(200, uid+"이미 실행 중입니다.")
 		} else {
+			var nano_tel_seperate sql.NullString
+			var nts string
+
+			seperr := databasepool.DB.QueryRow("select distinct nano_tel_seperate from DHN_CLIENT_LIST where userid = ?", uid).Scan(&nano_tel_seperate)
+			if seperr != nil && seperr != sql.ErrNoRows {
+				config.Stdlog.Println(uid," /nrun 나노 nano_tel_seperate 습득 실패 : ", err)
+				nts = "N"
+			} else {
+				nts = nano_tel_seperate.String
+			}
+
 			nanoUser[uid] = uid
 
-			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "N") { // 기본
+			if s.EqualFold(nts, "N") { // 기본
 				ctx, cancel := context.WithCancel(context.Background())
 				ctx = context.WithValue(ctx, "user_id", uid)
 
@@ -594,7 +652,7 @@ Command :
 
 				allCtxC["NN"+uid] = cancel
 				allService["NN"+uid] = uid
-			} else if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "Y") { // 콜비서
+			} else if s.EqualFold(nts, "Y") { // 콜비서
 
 				ctxY, cancelY := context.WithCancel(context.Background())
 				ctxY = context.WithValue(ctxY, "user_id", uid)

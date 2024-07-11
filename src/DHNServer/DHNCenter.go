@@ -461,7 +461,7 @@ func resultProc() {
 
 	r.GET("/get_crypto", kaocenter.Get_crypto)
 
-	r.Run(":" + config.Conf.PORT)
+	r.Run(":" + config.Conf.CENTER_PORT)
 }
 
 func test(c *gin.Context) {

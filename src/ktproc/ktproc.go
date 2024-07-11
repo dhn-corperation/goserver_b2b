@@ -12,6 +12,7 @@ import (
 	s "strings"
 	"time"
 	"io/ioutil"
+	"strconv"
 
 	"context"
 )
@@ -182,6 +183,10 @@ func resProcess(group_no string, user_id string, acc int) {
 	smsSeq := 1
 	mmsSeq := 1
 
+	kisaCode, converr := strconv.ParseUint(config.Conf.KISA_CODE, 10, 64)
+	if converr != nil {
+		kisaCode = 302190001
+	}
 	
 	for resrows.Next() {
 		resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check)
@@ -202,7 +207,7 @@ func resProcess(group_no string, user_id string, acc int) {
 						MessageSubType : 1,
 						CallbackNumber : s.ReplaceAll(sms_sender.String, "-", ""),
 						CustomMessageID : msgid.String,
-						KisaOrigCode : 302190001,
+						KisaOrigCode : kisaCode,
 						Bundle : []Bundle{
 							{
 								Seq : 1,
@@ -275,7 +280,7 @@ func resProcess(group_no string, user_id string, acc int) {
 					MessageSubType : subType,
 					CallbackNumber : s.ReplaceAll(sms_sender.String, "-", ""),
 					CustomMessageID : msgid.String,
-					KisaOrigCode : 302190001,
+					KisaOrigCode : kisaCode,
 					Bundle : []Bundle{
 						{
 							Seq : 1,
