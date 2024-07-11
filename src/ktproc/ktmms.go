@@ -114,7 +114,7 @@ func mmsProcess(wg *sync.WaitGroup, table string, seq int, acc int) {
 			}
 
 			if resp.StatusCode != 200 {
-				errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조회 API 발송 중 오류 발생 : statusCode : ", resp.StatusCode)
+				// errlog.Println(userid.String, "- msgid : ", msgid.String, " KT크로샷 결과조회 API 발송 중 오류 발생 : statusCode : ", resp.StatusCode)
 				continue
 			}
 
