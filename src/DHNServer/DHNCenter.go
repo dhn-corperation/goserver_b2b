@@ -461,7 +461,13 @@ func resultProc() {
 
 	r.GET("/get_crypto", kaocenter.Get_crypto)
 
-	r.Run(":" + config.Conf.CENTER_PORT)
+	certFile := "etc/letsencrypt/live/dhntest.dhn.kr/fullchain.pem"
+	keyFile := "etc/letsencrypt/live/dhntest.dhn.kr/privkey.pem"
+
+	err := r.RunTLS(":433", certFile, keyFile)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func test(c *gin.Context) {
