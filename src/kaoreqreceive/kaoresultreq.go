@@ -233,3 +233,21 @@ func Resultreq(c *gin.Context) {
 		})
 	}
 }
+
+func checkTableExists(db *sql.DB, tableName string) (bool, error) {
+	var name string
+	query := `
+		SELECT table_name
+		FROM information_schema.tables
+		WHERE table_schema = DATABASE() AND table_name = ?
+		LIMIT 1;
+	`
+	err := db.QueryRow(query, tableName).Scan(&name)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
