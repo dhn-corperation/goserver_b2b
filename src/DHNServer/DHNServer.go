@@ -31,11 +31,11 @@ import (
 )
 
 const (
-	name        = "DHNServer"
+	name        = "DHNServer_hira"
 	description = "대형네트웍스 카카오 발송 서버"
 )
 
-var dependencies = []string{"DHNServer.service"}
+var dependencies = []string{"DHNServer_hira.service"}
 
 var resultTable string
 
@@ -45,7 +45,7 @@ type Service struct {
 
 func (service *Service) Manage() (string, error) {
 
-	usage := "Usage: DHNServer install | remove | start | stop | status"
+	usage := "Usage: DHNServer_hira install | remove | start | stop | status"
 
 	if len(os.Args) > 1 {
 		command := os.Args[1]
