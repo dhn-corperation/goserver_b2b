@@ -246,6 +246,8 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 
 		// 알림톡 발송 성공 혹은 문자 발송이 아니면
 		// API_RESULT 성공 처리 함.
+		stdlog.Println(len(msg_sms.String))
+		stdlog.Println(len(sms_sender.String))
 		if len(msg_sms.String) > 0 && len(sms_sender.String) > 0 { // msg_sms 가 와 sms_sender 에 값이 있으면 LG 발송 함.
 			phnstr = reg.ReplaceAllString(phnstr, "")
 			if s.HasPrefix(phnstr, "82") {
@@ -295,6 +297,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 			}
 
 		} else {
+			stdlog.Println("여기 들어오냐?")
 			db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7011', dr.message = concat(dr.message, ',문자 발송 정보 누락'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + userid.String + "' and msgid = '" + msgid.String + "'")
 		}
 
