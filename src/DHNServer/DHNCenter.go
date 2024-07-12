@@ -5,6 +5,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"crypto/tls"
+	"net/http"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 
@@ -13,9 +16,6 @@ import (
 	"mycs/src/kaoreqreceive"
 
 	"mycs/src/kaocenter"
-	//"kaosendrequest"
-	//"strconv"
-	//"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/takama/daemon"
@@ -71,6 +71,14 @@ func (service *Service) Manage() (string, error) {
 			return "Daemon was killed", nil
 		}
 	}
+}
+
+func loadTLSConfig(certFile, keyFile string) (*tls.Config, error) {
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return nil, err
+	}
+	return &tls.Config{Certificates: []tls.Certificate{cert}}, nil
 }
 
 func main() {
@@ -464,10 +472,40 @@ func resultProc() {
 	certFile := "etc/letsencrypt/live/dhntest.dhn.kr/fullchain.pem"
 	keyFile := "etc/letsencrypt/live/dhntest.dhn.kr/privkey.pem"
 
-	err := r.RunTLS(":443", certFile, keyFile)
+	tlsConfig, err := loadTLSConfig(certFile, keyFile)
 	if err != nil {
-		panic(err)
+		config.Stdlog.Println("SSL 인증 실패 err : ", err)
+		return
 	}
+
+	server := &http.Server{
+		Addr: ":443",
+		Handler: r,
+		TLSConfig: tlsConfig,
+	}
+
+	go func() {
+		for {
+			time.Sleep(24 * time.Hour)
+			config.Stdlog.Println("자동 SSL 인증 갱신 시작")
+			newTLSConfig, err := loadTLSConfig(certFile, keyFile)
+			if err != nil {
+				config.Stdlog.Println("자동 SSL 인증 갱신 실패 err : ", err)
+				continue
+			}
+			server.TLSConfig = newTLSConfig
+			config.Stdlog.Println("자동 SSL 인증 갱신 성공")
+		}
+	}()
+
+	server.ListenAndServeTLS(certFile, keyFile)
+
+	// r.Run(":" + )
+
+	// err := r.RunTLS(":443", certFile, keyFile)
+	// if err != nil {
+	// 	panic(err)
+	// }
 }
 
 func test(c *gin.Context) {
