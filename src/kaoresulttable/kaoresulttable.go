@@ -1,6 +1,6 @@
 package kaoresulttable
 
 type ResultTable struct {
-	msgid       []string `json:"msgid"`
-	regdt       string   `json:"regdt"`
+	Msgid       []string `json:"msgid"`
+	Regdt       string   `json:"regdt"`
 }
