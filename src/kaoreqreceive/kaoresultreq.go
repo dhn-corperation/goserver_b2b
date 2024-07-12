@@ -1,26 +1,21 @@
 package kaoreqreceive
 
 import (
-	//"encoding/json"
 	"database/sql"
-	//"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
 
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
 
-	//"kaoreqtable"
 
 	"github.com/gin-gonic/gin"
 
-	//"strconv"
 	s "strings"
 )
 
 func Resultreq(c *gin.Context) {
 
-	//stdlog := config.Stdlog
 	errlog := config.Stdlog
 	db := databasepool.DB
 

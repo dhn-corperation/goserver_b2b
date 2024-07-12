@@ -125,6 +125,8 @@ func resultProc() {
 
 	r.POST("/result", kaoreqreceive.Resultreq)
 
+	r.POST("/sresult", kaoreqreceive.SearchResultReq)
+
 	// 카카오톡 채널 인증 토큰 요청
 	// GET /api/v1/{partner_key}/sender/token
 	r.GET("/sender/token", kaocenter.Sender_token)
@@ -469,6 +471,7 @@ func resultProc() {
 
 	r.GET("/get_crypto", kaocenter.Get_crypto)
 
+	// SSL 사용 시 --- 시작
 	certFile := "etc/letsencrypt/live/dhntest.dhn.kr/fullchain.pem"
 	keyFile := "etc/letsencrypt/live/dhntest.dhn.kr/privkey.pem"
 
@@ -499,13 +502,11 @@ func resultProc() {
 	}()
 
 	server.ListenAndServeTLS(certFile, keyFile)
+	// SSL 사용 시 --- 끝
 
-	// r.Run(":" + )
-
-	// err := r.RunTLS(":443", certFile, keyFile)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	// SSL 미사용 시 --- 시작
+	// r.Run(":" + config.Conf.CENTER_PORT)
+	// SSL 미사용 시 --- 끝
 }
 
 func test(c *gin.Context) {
