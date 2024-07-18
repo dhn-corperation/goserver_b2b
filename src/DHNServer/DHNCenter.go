@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"net/http"
 	"time"
+	"runtime/debug"
 
 	_ "github.com/go-sql-driver/mysql"
 
@@ -113,7 +114,7 @@ func resultProc() {
 	//go kaosendrequest.PollingProc()
 	go kaoreqreceive.TempCopyProc()
 	r := gin.New()
-	r.Use(gin.Recovery())
+	r.Use(customRecovery())
 	//r := gin.Default()
 
 	r.GET("/", func(c *gin.Context) {
@@ -507,6 +508,26 @@ func resultProc() {
 	// SSL 미사용 시 --- 시작
 	// r.Run(":" + config.Conf.CENTER_PORT)
 	// SSL 미사용 시 --- 끝
+}
+
+func customRecovery() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        defer func() {
+            if r := recover(); r != nil {
+                // panic 로그 기록
+                config.Stdlog.Println("Recovered from panic : ", r)
+                config.Stdlog.Println("Stack trace: ", debug.Stack())
+                
+                // 500 Internal Server Error 반환
+                c.JSON(http.StatusInternalServerError, gin.H{
+                    "code": "error",
+                    "message": "panic",
+                })
+                c.Abort() // 미들웨어 체인의 나머지를 중단
+            }
+        }()
+        c.Next() // 다음 미들웨어 또는 핸들러로 넘김
+    }
 }
 
 func test(c *gin.Context) {
