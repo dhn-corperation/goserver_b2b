@@ -516,7 +516,7 @@ func customRecovery() gin.HandlerFunc {
             if r := recover(); r != nil {
                 // panic 로그 기록
                 config.Stdlog.Println("Recovered from panic : ", r)
-                config.Stdlog.Println("Stack trace: ", debug.Stack())
+                config.Stdlog.Println("Stack trace: ", string(debug.Stack()))
                 
                 // 500 Internal Server Error 반환
                 c.JSON(http.StatusInternalServerError, gin.H{
