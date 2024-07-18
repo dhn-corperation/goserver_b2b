@@ -48,8 +48,6 @@ func ReqReceive(c *gin.Context) {
 	err := databasepool.DB.QueryRowContext(ctx, sqlstr, userid, userip).Scan(&cnt)
 	if err != nil { errlog.Println(err) }
 
-	panic("panic이다")
-
 	if cnt > 0 { 
 		isValidation = true 
 	} else {
