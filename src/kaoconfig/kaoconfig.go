@@ -14,23 +14,24 @@ import (
 )
 
 type Config struct {
-	DB               string
-	DBURL            string
-	PORT             string
-	SERVER_PORT      string
-	PROFILE_KEY      string
-	API_SERVER       string
-	CENTER_SERVER    string
-	IMAGE_SERVER     string
-	CHANNEL          string
-	RESPONSE_METHOD  string
-	SENDLIMIT        int
-	PHONE_MSG_FLAG   string
-	NANO_MSG_FLAG    string
-	OTP_MSG_FLAG     string
-	DEBUG            string
-	NANO_IDENTI_CODE string
-	PHONE_TYPE_FLAG  string
+	DB                 string
+	DBURL              string
+	PORT               string
+	SERVER_PORT        string
+	PROFILE_KEY        string
+	API_SERVER         string
+	CENTER_SERVER      string
+	IMAGE_SERVER       string
+	CHANNEL            string
+	RESPONSE_METHOD    string
+	AT_RESPONSE_METHOD string
+	SENDLIMIT          int
+	PHONE_MSG_FLAG     string
+	NANO_MSG_FLAG      string
+	OTP_MSG_FLAG       string
+	DEBUG              string
+	NANO_IDENTI_CODE   string
+	PHONE_TYPE_FLAG    string
 }
 
 var Conf Config
