@@ -127,9 +127,9 @@ func ReqReceive(c *gin.Context) {
 				}
 				reqinsValues = append(reqinsValues, msg[i].Onlysms)
 				if msg[i].Phn == nil || *msg[i].Phn == "" {
-					msg[i].Phn = ""
+					*msg[i].Phn = ""
 				} else {
-					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
+					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), *msg[i].Phn, nonce))
 				}
 				
 				if s.Contains(s.ToLower(msg[i].Crypto), "profile") && len(msg[i].Profile) > 0 {
@@ -208,9 +208,9 @@ func ReqReceive(c *gin.Context) {
 				resinsValues = append(resinsValues, msg[i].Pcom)
 				resinsValues = append(resinsValues, msg[i].Pinvoice)
 				if msg[i].Phn == nil || *msg[i].Phn == "" {
-					msg[i].Phn = ""
+					*msg[i].Phn = ""
 				} else {
-					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
+					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), *msg[i].Phn, nonce))
 				}
 				if s.Contains(s.ToLower(msg[i].Crypto), "profile") && len(msg[i].Profile) > 0 {
 					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
@@ -275,9 +275,9 @@ func ReqReceive(c *gin.Context) {
 				}
 				atreqinsValues = append(atreqinsValues, msg[i].Onlysms)
 				if msg[i].Phn == nil || *msg[i].Phn == "" {
-					msg[i].Phn = ""
+					*msg[i].Phn = ""
 				} else {
-					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
+					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), *msg[i].Phn, nonce))
 				}
 				// atreqinsValues = append(atreqinsValues, msg[i].Phn)
 				if s.Contains(s.ToLower(msg[i].Crypto), "profile") && len(msg[i].Profile) > 0 {

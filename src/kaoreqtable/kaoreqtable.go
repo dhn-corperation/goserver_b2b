@@ -18,7 +18,7 @@ type Reqtable struct {
 	Onlysms      string `json:"onlysms"`
 	Pcom         string `json:"pcom"`
 	Pinvoice     string `json:"pinvoice"`
-	Phn          string `json:"phn"`
+	Phn          *string `json:"phn"`
 	Profile      string `json:"profile"`
 	Regdt        string `json:"regdt"`
 	Remark1      string `json:"remark1"`
