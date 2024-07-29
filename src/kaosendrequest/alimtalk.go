@@ -221,7 +221,7 @@ func atsendProcess(group_no string, user_id string, second_send_flag string) {
 		}
 
 		if s.EqualFold(result["message_type"], "at") {
-			alimtalk.Response_method = "push"
+			alimtalk.Response_method = "realtime"
 		} else if s.EqualFold(result["message_type"], "ai") {
 			
 			alimtalk.Response_method = conf.RESPONSE_METHOD
