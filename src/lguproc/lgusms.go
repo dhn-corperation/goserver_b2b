@@ -77,7 +77,7 @@ func smsProcess(wg *sync.WaitGroup) {
 	var SMSTable = "LG_SC_LOG_" + monthStr
 
 	//발송 6시간 지난 메세지는 응답과 상관 없이 성공 처리 함.
-	// db.Exec("update LG_SC_TRAN set TR_SENDSTAT='2', TR_RSLTSTAT='98', TR_RSLTDATE=now() where TR_SENDDATE < DATE_SUB(now(), INTERVAL 6 HOUR)")
+	db.Exec("update LG_SC_TRAN set TR_SENDSTAT='2', TR_RSLTSTAT='98', TR_RSLTDATE=now() where TR_SENDDATE < DATE_SUB(now(), INTERVAL 6 HOUR)")
 
 	var groupQuery = "select TR_ETC1 as cb_msg_id, TR_RSLTDATE as sendResult, TR_REALSENDDATE as senddt, TR_NUM as msgid, TR_NET as telecom, a.TR_ETC2 as userid  from " + SMSTable + " a where a.TR_SENDSTAT = '2' and  a.TR_ETC4 is null"
 
