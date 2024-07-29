@@ -76,6 +76,7 @@ func mmsProcess(wg *sync.WaitGroup) {
 	var MMSTable = "LG_MMS_LOG_" + monthStr
 
 	//발송 6시간 지난 메세지는 응답과 상관 없이 성공 처리 함.
+	db.Exec("update LG_MMS_MSG set STATUS='3', RSLT='9018', RSLTDATE=now() where REQDATE >= DATE_SUB(now(), INTERVAL 1 MINUTE)")
 
 	var groupQuery = "select ETC1 as cb_msg_id, RSLT as sendresult, SENTDATE as senddt, MSGKEY as msgid, TELCOINFO as telecom, ETC2 as userid  from " + MMSTable + " a where a.status = '3' and a.ETC4 is null "
 
@@ -133,6 +134,7 @@ func pre_mmsProcess(wg *sync.WaitGroup) {
 	var MMSTable = "MMS_LOG_" + monthStr
 
 	//발송 6시간 지난 메세지는 응답과 상관 없이 성공 처리 함.
+	db.Exec("update LG_MMS_MSG set STATUS='3', RSLT='9018', RSLTDATE=now() where REQDATE >= DATE_SUB(now(), INTERVAL 1 MINUTE)")
 
 	var groupQuery = "select ETC1 as cb_msg_id, RSLT as sendresult, SENTDATE as senddt, MSGKEY as msgid, TELCOINFO as telecom, ETC2 as userid  from " + MMSTable + " a where a.status = '3' and a.ETC4 is null "
 

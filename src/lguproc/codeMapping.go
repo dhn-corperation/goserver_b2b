@@ -139,6 +139,7 @@ func LguCode(code string) string {
 		"9011" : "7075",
 		"9012" : "7079",
 		"9017" : "7077",
+		"9018" : "7090",
 	}
 	val, ex := mapTable[code]
 	if !ex {
