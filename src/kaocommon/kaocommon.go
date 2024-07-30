@@ -9,10 +9,62 @@ import(
 	s "strings"
 	"strconv"
 	"database/sql"
+	"encoding/hex"
+	"golang.org/x/text/encoding/korean"
+	"golang.org/x/text/transform"
 )
 
+type SpecialCharacter struct {
+	OriginHex string
+	DestStr string
+}
+
+var specialCharacters []SpecialCharacter
+
 func init(){
-	
+	rows, err := databasepool.DB.Query("select orgin_hex_code, dest_str from SPECIAL_CHARACTER where enabled = 'Y'")
+	if err != nil {
+		config.Stdlog.Println("특수단어 습득 쿼리 에러1")
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var sc SpecialCharacter
+		err := rows.Scan(&sc.OriginHex, &sc.DestStr)
+		if err != nil {
+			config.Stdlog.Println("특수단어 습득 쿼리 에러2")
+		}
+		specialCharacters = append(specialCharacters, sc)
+	}
+}
+
+func RemoveWs(msg string) (string, error){
+	vMsg := msg
+
+	for _, sc := range specialCharacters {
+		decodedOriginHex, err := hexToUTF8(sc.OriginHex)
+		if err != nil {
+			return "", err
+		}
+		vMsg = s.ReplaceAll(vMsg, decodedOriginHex, sc.DestStr)
+	}
+	return vMsg, nil
+}
+
+func hexToUTF8(hexStr string) (string, error) {
+	bytes, err := hex.DecodeString(hexStr)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
+}
+
+func LengthInEUCKR(msg string) (int, error){
+	encoder := korean.EUCKR.NewEncoder()
+	euckrBytes, _, err := transform.String(encoder, msg)
+	if err != nil {
+		return 0, err
+	}
+	return len(euckrBytes), nil
 }
 
 //발송 전 친구톡, 알림톡 공통 컬럼(알림톡 칼럼, 알림톡의 삽입 테이블 DHN_REQUEST_AT)

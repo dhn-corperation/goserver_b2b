@@ -97,10 +97,36 @@ func ReqReceive(c *gin.Context) {
 
 		//맵핑한 데이터 row 처리
 		for i, _ := range msg {
+
 			var nonce string
 			if len(msg[i].Crypto) > 0 {
 				nonce = s.Split(msg[i].Crypto, ",")[0]
 			}
+
+			var processedMsg string
+			var err error
+			var smsKind = msg[i].Smskind
+			if s.Contains(s.ToLower(msg[i].Crypto), "msg") && len(msg[i].Msgsms) > 0 {
+				processedMsg, err = cm.RemoveWs(cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
+			} else {
+				processedMsg, err = cm.RemoveWs(msg[i].Msgsms)
+			}
+			if err != nil {
+				errlog.Println("RemoveWs 에러 : ", err)
+			} else {
+				euckrLength, err := cm.LengthInEUCKR(processedMsg)
+				if err != nil {
+					errlog.Println("LengthInEUCKR 에러 : ", err)
+				}
+				if euckrLength <= 90 {
+					smsKind = "S"
+				} else if euckrLength > 90 && msg[i].Pinvoice == "" {
+					smsKind = "L"
+				} else {
+					smsKind = "M"
+				}
+			}
+
 			//친구톡 insert values 만들기
 			if s.HasPrefix(s.ToUpper(msg[i].Messagetype), "F") {
 				reqinsStrs = append(reqinsStrs, "("+ftQmarkStr+")")
@@ -146,7 +172,7 @@ func ReqReceive(c *gin.Context) {
 				reqinsValues = append(reqinsValues, msg[i].Remark4)
 				reqinsValues = append(reqinsValues, msg[i].Remark5)
 				reqinsValues = append(reqinsValues, msg[i].Reservedt)
-				reqinsValues = append(reqinsValues, msg[i].Smskind)
+				reqinsValues = append(reqinsValues, smsKind)
 				if s.Contains(s.ToLower(msg[i].Crypto), "smslmstit") && len(msg[i].Smslmstit) > 0 {
 					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
 				} else {
@@ -227,7 +253,7 @@ func ReqReceive(c *gin.Context) {
 				resinsValues = append(resinsValues, msg[i].Reservedt)
 				resinsValues = append(resinsValues, "P") // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
 				resinsValues = append(resinsValues, msg[i].Scode)
-				resinsValues = append(resinsValues, msg[i].Smskind)
+				resinsValues = append(resinsValues, smsKind)
 				if s.Contains(s.ToLower(msg[i].Crypto), "smslmstit") && len(msg[i].Smslmstit) > 0 {
 					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
 				} else {
@@ -293,7 +319,7 @@ func ReqReceive(c *gin.Context) {
 				atreqinsValues = append(atreqinsValues, msg[i].Remark4)
 				atreqinsValues = append(atreqinsValues, msg[i].Remark5)
 				atreqinsValues = append(atreqinsValues, msg[i].Reservedt)
-				atreqinsValues = append(atreqinsValues, msg[i].Smskind)
+				atreqinsValues = append(atreqinsValues, smsKind)
 				if s.Contains(s.ToLower(msg[i].Crypto), "smslmstit") && len(msg[i].Smslmstit) > 0 {
 					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
 				} else {
