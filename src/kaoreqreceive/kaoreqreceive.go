@@ -115,11 +115,6 @@ func ReqReceive(c *gin.Context) {
 				errlog.Println("RemoveWs 에러 : ", err)
 			} else {
 				euckrLength, err := cm.LengthInEUCKR(processedMsg)
-				// euckrLength := cm.LengthInUTF16(processedMsg)
-				errlog.Println(euckrLength)
-				errlog.Println(msg[i].Msgsms)
-				
-				errlog.Println(processedMsg)
 				if err != nil {
 					errlog.Println("LengthInEUCKR 에러 : ", err)
 				}
