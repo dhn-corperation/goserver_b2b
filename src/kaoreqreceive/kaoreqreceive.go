@@ -29,6 +29,8 @@ func ReqReceive(c *gin.Context) {
 	ctx := c.Request.Context()
 	errlog := config.Stdlog
 
+	errlog.Println("여기오냐0")
+
 	userid := c.Request.Header.Get("userid")
 	userip := c.ClientIP()
 	isValidation := false
