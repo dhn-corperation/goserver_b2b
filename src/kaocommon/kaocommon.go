@@ -12,6 +12,7 @@ import(
 	"encoding/hex"
 	"golang.org/x/text/encoding/korean"
 	"golang.org/x/text/transform"
+	"io/ioutil"
 )
 
 type SpecialCharacter struct {
@@ -63,7 +64,7 @@ func hexToUTF8(hexStr string) (string, error) {
 
 func LengthInEUCKR(msg string) (int, error){
 	encoder := korean.EUCKR.NewEncoder()
-	euckrBytes, _, err := transform.String(encoder, msg)
+	euckrBytes, err := ioutil.ReadAll(transform.NewReader(s.NewReader(msg), encoder))
 	if err != nil {
 		return 0, err
 	}
