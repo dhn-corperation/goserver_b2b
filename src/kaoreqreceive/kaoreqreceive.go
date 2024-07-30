@@ -29,8 +29,6 @@ func ReqReceive(c *gin.Context) {
 	ctx := c.Request.Context()
 	errlog := config.Stdlog
 
-	errlog.Println("여기오냐0")
-
 	userid := c.Request.Header.Get("userid")
 	userip := c.ClientIP()
 	isValidation := false
@@ -108,19 +106,15 @@ func ReqReceive(c *gin.Context) {
 			var processedMsg string
 			var err error
 			var smsKind = msg[i].Smskind
-			errlog.Println("여기오냐1")
 			if s.Contains(s.ToLower(msg[i].Crypto), "msg") && len(msg[i].Msgsms) > 0 {
 				processedMsg, err = cm.RemoveWs(cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
 			} else {
 				processedMsg, err = cm.RemoveWs(msg[i].Msgsms)
 			}
-			errlog.Println("여기오냐2")
 			if err != nil {
 				errlog.Println("RemoveWs 에러 : ", err)
 			} else {
-				errlog.Println("여기오냐3")
 				euckrLength, err := cm.LengthInEUCKR(processedMsg)
-				errlog.Println(euckrLength)
 				if err != nil {
 					errlog.Println("LengthInEUCKR 에러 : ", err)
 				}
