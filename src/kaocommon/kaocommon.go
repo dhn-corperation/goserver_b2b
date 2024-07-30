@@ -29,14 +29,14 @@ func RemoveWs(msg string) (string, error){
 	if specialCharacters == nil {
 		rows, err := databasepool.DB.Query("select orgin_hex_code, dest_str from SPECIAL_CHARACTER where enabled = 'Y'")
 		if err != nil {
-			config.Stdlog.Println("특수단어 습득 쿼리 에러1")
+			config.Stdlog.Println("특수단어 습득 쿼리 에러1 err : ", err)
 		}
 		defer rows.Close()
 		for rows.Next() {
 			var sc SpecialCharacter
 			err := rows.Scan(&sc.OriginHex, &sc.DestStr)
 			if err != nil {
-				config.Stdlog.Println("특수단어 습득 쿼리 에러2")
+				config.Stdlog.Println("특수단어 습득 쿼리 에러2 err : ", err)
 			}
 			specialCharacters = append(specialCharacters, sc)
 		}
