@@ -22,22 +22,25 @@ type SpecialCharacter struct {
 var specialCharacters []SpecialCharacter
 
 func init(){
-	rows, err := databasepool.DB.Query("select orgin_hex_code, dest_str from SPECIAL_CHARACTER where enabled = 'Y'")
-	if err != nil {
-		config.Stdlog.Println("특수단어 습득 쿼리 에러1")
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var sc SpecialCharacter
-		err := rows.Scan(&sc.OriginHex, &sc.DestStr)
-		if err != nil {
-			config.Stdlog.Println("특수단어 습득 쿼리 에러2")
-		}
-		specialCharacters = append(specialCharacters, sc)
-	}
+	
 }
 
 func RemoveWs(msg string) (string, error){
+	if specialCharacters == nil {
+		rows, err := databasepool.DB.Query("select orgin_hex_code, dest_str from SPECIAL_CHARACTER where enabled = 'Y'")
+		if err != nil {
+			config.Stdlog.Println("특수단어 습득 쿼리 에러1")
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var sc SpecialCharacter
+			err := rows.Scan(&sc.OriginHex, &sc.DestStr)
+			if err != nil {
+				config.Stdlog.Println("특수단어 습득 쿼리 에러2")
+			}
+			specialCharacters = append(specialCharacters, sc)
+		}
+	}
 	vMsg := msg
 
 	for _, sc := range specialCharacters {
