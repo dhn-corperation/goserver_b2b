@@ -13,6 +13,7 @@ import(
 	"golang.org/x/text/encoding/korean"
 	"golang.org/x/text/transform"
 	"io/ioutil"
+	"unicode/utf16"
 )
 
 type SpecialCharacter struct {
@@ -69,6 +70,13 @@ func LengthInEUCKR(msg string) (int, error){
 		return 0, err
 	}
 	return len(euckrBytes), nil
+}
+
+func LengthInUTF16(msg string) int {
+	runes := []rune(msg)
+	utf16Encoded := utf16.Encode(runes)
+
+	return len(utf16Encoded) * 2
 }
 
 //발송 전 친구톡, 알림톡 공통 컬럼(알림톡 칼럼, 알림톡의 삽입 테이블 DHN_REQUEST_AT)
