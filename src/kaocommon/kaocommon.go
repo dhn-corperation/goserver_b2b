@@ -27,7 +27,7 @@ func init(){
 
 func RemoveWs(msg string) (string, error){
 	if specialCharacters == nil {
-		rows, err := databasepool.DB.Query("select orgin_hex_code, dest_str from SPECIAL_CHARACTER where enabled = 'Y'")
+		rows, err := databasepool.DB.Query("select orgin_hex_code, dest_str from SPECIAL_CHARACTER where enabled = 'Y' and dest_str is not null")
 		if err != nil {
 			config.Stdlog.Println("특수단어 습득 쿼리 에러1 err : ", err)
 		}
