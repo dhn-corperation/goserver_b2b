@@ -121,7 +121,7 @@ func smsProcess(wg *sync.WaitGroup) {
 				db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.message_type = 'PH', dr.code = '0000', dr.message = '', dr.remark1 = '" + tr_net + "', dr.remark2 = '" + senddt.String + "' where  userid='" + userid.String + "' and msgid = '" + cb_msg_id.String + "'")
 			}
 
-			db.Exec("update " + SMSTable + " set TR_ETC = '1' where TR_NUM = '" + msgid.String + "'")
+			db.Exec("update " + SMSTable + " set TR_ETC4 = '1' where TR_NUM = '" + msgid.String + "'")
 		}
 	}
 }
