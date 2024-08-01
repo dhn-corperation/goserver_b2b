@@ -502,7 +502,10 @@ func resultProc() {
 		}
 	}()
 
-	server.ListenAndServeTLS(certFile, keyFile)
+	err = server.ListenAndServeTLS(certFile, keyFile)
+	if err != nil {
+		config.Stdlog.Println("서버 실행 실패")
+	}
 	// SSL 사용 시 --- 끝
 
 	// SSL 미사용 시 --- 시작
