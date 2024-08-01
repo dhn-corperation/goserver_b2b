@@ -19,6 +19,13 @@ import (
 var SecretKey = "9b4dabe9d4fed126a58f8639846143c7"
 
 func ReqReceive(c *gin.Context) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			config.Stdlog.Println("kaoreqreceive.go / ReqReceive / 처리 중 패닉 발생 : ", err)
+		}
+	}()
+
 	ftColumn := cm.GetReqFtColumn()
 	atColumn := cm.GetReqAtColumn()
 	msgColumn := cm.GetReqMsgColumn()
@@ -63,7 +70,16 @@ func ReqReceive(c *gin.Context) {
 		//전달온 데이터 kaoreqtable.Reqtable에 맵핑
 		err1 := c.ShouldBindJSON(&msg)
 
-		if err1 != nil { errlog.Println(err1) }
+		if err1 != nil {
+			errlog.Println(err1)
+			c.JSON(404, gin.H{
+				"code":    "error",
+				"message": err1,
+				"userid":  userid,
+				"ip":      userip,
+			})
+			return
+		}
 
 		errlog.Println("발송 메세지 수신 시작 ( ", userid, ") : ", len(msg), startTime)
 
