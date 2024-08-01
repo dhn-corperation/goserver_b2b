@@ -19,13 +19,6 @@ import (
 var SecretKey = "9b4dabe9d4fed126a58f8639846143c7"
 
 func ReqReceive(c *gin.Context) {
-
-	defer func() {
-		if err := recover(); err != nil {
-			config.Stdlog.Println("kaoreqreceive.go / ReqReceive / 처리 중 패닉 발생 : ", err)
-		}
-	}()
-
 	ftColumn := cm.GetReqFtColumn()
 	atColumn := cm.GetReqAtColumn()
 	msgColumn := cm.GetReqMsgColumn()
