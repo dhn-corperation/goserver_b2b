@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"crypto/tls"
 	"net/http"
-	"time"
+	// "time"
 	"runtime/debug"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -473,43 +473,43 @@ func resultProc() {
 	r.GET("/get_crypto", kaocenter.Get_crypto)
 
 	// SSL 사용 시 --- 시작
-	certFile := "etc/letsencrypt/live/dhntest.dhn.kr/fullchain.pem"
-	keyFile := "etc/letsencrypt/live/dhntest.dhn.kr/privkey.pem"
+	// certFile := "etc/letsencrypt/live/dhntest.dhn.kr/fullchain.pem"
+	// keyFile := "etc/letsencrypt/live/dhntest.dhn.kr/privkey.pem"
 
-	tlsConfig, err := loadTLSConfig(certFile, keyFile)
-	if err != nil {
-		config.Stdlog.Println("SSL 인증 실패 err : ", err)
-		return
-	}
+	// tlsConfig, err := loadTLSConfig(certFile, keyFile)
+	// if err != nil {
+	// 	config.Stdlog.Println("SSL 인증 실패 err : ", err)
+	// 	return
+	// }
 
-	server := &http.Server{
-		Addr: ":443",
-		Handler: r,
-		TLSConfig: tlsConfig,
-	}
+	// server := &http.Server{
+	// 	Addr: ":443",
+	// 	Handler: r,
+	// 	TLSConfig: tlsConfig,
+	// }
 
-	go func() {
-		for {
-			time.Sleep(24 * time.Hour)
-			config.Stdlog.Println("자동 SSL 인증 갱신 시작")
-			newTLSConfig, err := loadTLSConfig(certFile, keyFile)
-			if err != nil {
-				config.Stdlog.Println("자동 SSL 인증 갱신 실패 err : ", err)
-				continue
-			}
-			server.TLSConfig = newTLSConfig
-			config.Stdlog.Println("자동 SSL 인증 갱신 성공")
-		}
-	}()
+	// go func() {
+	// 	for {
+	// 		time.Sleep(24 * time.Hour)
+	// 		config.Stdlog.Println("자동 SSL 인증 갱신 시작")
+	// 		newTLSConfig, err := loadTLSConfig(certFile, keyFile)
+	// 		if err != nil {
+	// 			config.Stdlog.Println("자동 SSL 인증 갱신 실패 err : ", err)
+	// 			continue
+	// 		}
+	// 		server.TLSConfig = newTLSConfig
+	// 		config.Stdlog.Println("자동 SSL 인증 갱신 성공")
+	// 	}
+	// }()
 
-	err = server.ListenAndServeTLS(certFile, keyFile)
-	if err != nil {
-		config.Stdlog.Println("서버 실행 실패")
-	}
+	// err = server.ListenAndServeTLS(certFile, keyFile)
+	// if err != nil {
+	// 	config.Stdlog.Println("서버 실행 실패")
+	// }
 	// SSL 사용 시 --- 끝
 
 	// SSL 미사용 시 --- 시작
-	// r.Run(":" + config.Conf.CENTER_PORT)
+	r.Run(":" + config.Conf.CENTER_PORT)
 	// SSL 미사용 시 --- 끝
 }
 
