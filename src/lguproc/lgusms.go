@@ -106,7 +106,15 @@ func smsProcess(wg *sync.WaitGroup) {
 
 			groupRows.Scan(&cb_msg_id, &sendresult, &senddt, &msgid, &telecom, &userid)
 
-			tr_net := telecom.String
+			tr_net := "ETC"
+			
+			if s.EqualFold(telecom.String, "011") {
+				tr_net = "SKT"
+			} else if s.EqualFold(telecom.String, "016") {
+				tr_net = "KTF"
+			} else if s.EqualFold(telecom.String, "019") {
+				tr_net = "LGT"
+			}
 
 			resultCode := LguCode(sendresult.String)
 
@@ -155,7 +163,15 @@ func pre_smsProcess(wg *sync.WaitGroup) {
 
 			groupRows.Scan(&cb_msg_id, &sendresult, &senddt, &msgid, &telecom, &userid)
 
-			tr_net := telecom.String
+			tr_net := "ETC"
+			
+			if s.EqualFold(telecom.String, "011") {
+				tr_net = "SKT"
+			} else if s.EqualFold(telecom.String, "016") {
+				tr_net = "KTF"
+			} else if s.EqualFold(telecom.String, "019") {
+				tr_net = "LGT"
+			}
 
 			resultCode := LguCode(sendresult.String)
 

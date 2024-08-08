@@ -103,6 +103,10 @@ func mmsProcess(wg *sync.WaitGroup) {
 			groupRows.Scan(&cb_msg_id, &sendresult, &senddt, &msgid, &telecom, &userid)
 
 			tr_net := telecom.String
+			
+			if s.EqualFold(tr_net, "KT") {
+				tr_net = "KTF"
+			}
  
 			resultCode := LguCode(sendresult.String)
 
