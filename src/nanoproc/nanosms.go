@@ -18,25 +18,6 @@ import (
 func NanoSMSProcess(ctx context.Context) {
 	var wg sync.WaitGroup
 
-	var db = databasepool.DB
-	var errlog = config.Stdlog
-	var oshotTable [][]string
-	var otable sql.NullString
-
-	var OshotQuery = "select distinct ifnull(a.oshot, '') as table_name from DHN_CLIENT_LIST a where a.use_flag = 'Y' and ifnull(a.dest,'OSHOT') = 'NANO' "
-
-	OshotTable, err := db.Query(OshotQuery)
-
-	if err != nil {
-		errlog.Fatal("DHN CLIENT LIST 조회 오류 ")
-	}
-	defer OshotTable.Close()
-
-	for OshotTable.Next() {
-		OshotTable.Scan(&otable)
-		oshotTable = append(oshotTable, []string{otable.String})
-	}
-	errlog.Println("Nano SMS length : ", len(oshotTable))
 	for {
 			select {
 				case <- ctx.Done():
@@ -45,19 +26,16 @@ func NanoSMSProcess(ctx context.Context) {
 			    time.Sleep(20 * time.Second)
 			    config.Stdlog.Println("Nano SMS process 종료 완료")
 			    return
-			default:	
-			
-				for _, tableName := range oshotTable {
-					var t = time.Now()
-		
-					if t.Day() < 3 {
-						wg.Add(1)
-						go pre_smsProcess(&wg, tableName[0])
-					}
-		
+			default:
+				var t = time.Now()
+	
+				if t.Day() < 3 {
 					wg.Add(1)
-					go smsProcess(&wg, tableName[0])
+					go pre_smsProcess(&wg)
 				}
+	
+				wg.Add(1)
+				go smsProcess(&wg)
 		
 				wg.Wait()
 			}
@@ -65,7 +43,7 @@ func NanoSMSProcess(ctx context.Context) {
 
 }
 
-func smsProcess(wg *sync.WaitGroup, tablename string) {
+func smsProcess(wg *sync.WaitGroup) {
 
 	defer wg.Done()
 	var db = databasepool.DB
@@ -126,7 +104,7 @@ func smsProcess(wg *sync.WaitGroup, tablename string) {
 	}
 }
 
-func pre_smsProcess(wg *sync.WaitGroup, tablename string) {
+func pre_smsProcess(wg *sync.WaitGroup) {
 
 	defer wg.Done()
 	var db = databasepool.DB
