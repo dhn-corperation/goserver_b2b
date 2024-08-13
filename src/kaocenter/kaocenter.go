@@ -1830,7 +1830,7 @@ func Template_request_with_file(c *gin.Context) {
 	}
 
 	file, err := c.FormFile("attachment")
-	if err == nil { {
+	if err == nil { 
 		extension := filepath.Ext(file.Filename)
 		newFileName := uuid.New().String() + extension
 

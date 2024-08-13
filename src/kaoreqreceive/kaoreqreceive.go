@@ -390,7 +390,7 @@ func ReqReceive(c *gin.Context) {
 		errlog.Println("발송 메세지 수신 끝 ( ", userid, ") : ", len(msg), startTime)
 
 		c.JSON(200, gin.H{
-			"code": "success"
+			"code": "success",
 			"message": "발송 요청이 완료되었습니다.",
 		})
 	} else {
