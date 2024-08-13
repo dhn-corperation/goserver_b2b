@@ -2,8 +2,8 @@ package otpproc
 
 import (
 	"database/sql"
-	config "mycs/src/kaoconfig"
-	databasepool "mycs/src/kaodatabasepool"
+	config "kaoconfig"
+	databasepool "kaodatabasepool"
 	"fmt"
 
 	"strconv"
@@ -12,31 +12,20 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"context"
 )
 
-func OTPSMSProcess(ctx context.Context) {
+func OTPSMSProcess() {
 	var wg sync.WaitGroup
 	for {
-			select {
-				case <- ctx.Done():
-			
-			    config.Stdlog.Println("OTP SMS process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println("OTP SMS process 종료 완료")
-			    return
-			default:	
-			
-				var t = time.Now()
-				if t.Day() < 3 {
-					wg.Add(1)
-					go pre_mmsProcess(&wg)
-				}
-				
-				wg.Add(1)
-				go smsProcess(&wg)
-				wg.Wait()
-			}
+		var t = time.Now()
+		if t.Day() < 3 {
+			wg.Add(1)
+			go pre_mmsProcess(&wg)
+		}
+		
+		wg.Add(1)
+		go smsProcess(&wg)
+		wg.Wait()
 	}
 
 }
@@ -251,7 +240,7 @@ func pre_smsProcess(wg *sync.WaitGroup) {
 
 	groupRows, err := db.Query(groupQuery)
 	if err != nil {
-		errlog.Println("스마트미 TOP SMS Pre Month 조회 중 오류 발생")
+		errlog.Println("스마트미 OTP SMS Pre Month 조회 중 오류 발생")
 		errcode := err.Error()
 
 		if s.Index(errcode, "1146") > 0 {

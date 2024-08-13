@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	kakao "mycs/src/kakaojson"
-	config "mycs/src/kaoconfig"
-	databasepool "mycs/src/kaodatabasepool"
+	kakao "kakaojson"
+	config "kaoconfig"
+	databasepool "kaodatabasepool"
 
 	//"io/ioutil"
 	//"net"
@@ -17,13 +17,15 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
 	//"github.com/go-resty/resty"
-	"context"
+	r "reflect"
 )
 
 var ftprocCnt int
 var FisRunning bool
 var isStoping bool
+
 //var limitcnt int = config.Conf.SENDLIMIT
 
 type resultStr struct {
@@ -32,46 +34,35 @@ type resultStr struct {
 	Result     map[string]string
 }
 
-func FriendtalkProc(ctx context.Context) {
+func FriendtalkProc() {
 	ftprocCnt = 1
-	
+
 	for {
-		if ftprocCnt <=5 {
-		
-			select {
-				case <- ctx.Done():
-			
-			    config.Stdlog.Println("Friendtalk process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println("Friendtalk process 종료 완료")
-			    return
-			default:
-						
-				var count int
-	
-				cnterr := databasepool.DB.QueryRow("select length(msgid) as cnt from DHN_REQUEST  where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit 1").Scan(&count)
-	
-				if cnterr != nil {
-					//config.Stdlog.Println("DHN_REQUEST Table - select 오류 : " + cnterr.Error())
-				} else {
-	
-					if count > 0 {
-						var startNow = time.Now()
-						var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
-				
-						updateRows, err := databasepool.DB.Exec("update DHN_REQUEST set send_group = '" + group_no + "' where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit " + strconv.Itoa(config.Conf.SENDLIMIT))
-				
-						if err != nil {
-							config.Stdlog.Println("Request Table - send_group Update 오류")
-						}
-				
-						rowcnt, _ := updateRows.RowsAffected()
-				
-						if rowcnt > 0 {
-							config.Stdlog.Println("친구톡 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ")
-							ftprocCnt ++
-							go ftsendProcess(group_no)
-						}
+		if ftprocCnt <= 5 {
+			var count int
+
+			cnterr := databasepool.DB.QueryRow("select length(msgid) as cnt from DHN_REQUEST  where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit 1").Scan(&count)
+
+			if cnterr != nil {
+				//config.Stdlog.Println("DHN_REQUEST Table - select 오류 : " + cnterr.Error())
+			} else {
+
+				if count > 0 {
+					var startNow = time.Now()
+					var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
+
+					updateRows, err := databasepool.DB.Exec("update DHN_REQUEST set send_group = '" + group_no + "' where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit " + strconv.Itoa(config.Conf.SENDLIMIT))
+
+					if err != nil {
+						config.Stdlog.Println("Request Table - send_group Update 오류")
+					}
+
+					rowcnt, _ := updateRows.RowsAffected()
+
+					if rowcnt > 0 {
+						config.Stdlog.Println("친구톡 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ")
+						ftprocCnt++
+						go ftsendProcess(group_no)
 					}
 				}
 			}
@@ -150,7 +141,8 @@ supplement ,
 price ,
 currency_type,
 header,
-carousel      
+carousel,
+attachments      
 ) values %s`
 
 	// friendClient := &http.Client{
@@ -186,13 +178,10 @@ carousel
 		}
 
 		var friendtalk kakao.Friendtalk
-		var attache kakao.Attachment
-		var tcarousel kakao.TCarousel
-		var carousel kakao.FCarousel
-		var button []kakao.Button
-		var image kakao.Image
-		var coupon kakao.AttCoupon
-		var itemList kakao.AttItem
+
+		var attachment kakao.FTAttachment
+		var carousel kakao.FTCarousel
+
 		result := map[string]string{}
 
 		for i, v := range columnTypes {
@@ -233,73 +222,39 @@ carousel
 					friendtalk.Header = z.String
 				}
 
+			case "user_key":
+				if z, ok := (scanArgs[i]).(*sql.NullString); ok {
+					friendtalk.User_key = z.String
+				}
+
 			case "carousel":
 				if z, ok := (scanArgs[i]).(*sql.NullString); ok {
-				    
-					json.Unmarshal([]byte(z.String), &tcarousel)
-					carousel.Tail = tcarousel.Tail
-					  
-					for ci, _ := range tcarousel.List {
-						var catt kakao.CarouselAttachment
-						var tcarlist kakao.CarouselList
-						
-						json.Unmarshal([]byte(tcarousel.List[ci].Attachment), &catt)
-						
-						tcarlist.Header = tcarousel.List[ci].Header
-						tcarlist.Message = tcarousel.List[ci].Message
-						tcarlist.Attachment = catt
-						carousel.List = append(carousel.List, tcarlist)
-					}
-					//fmt.Println(len(carousel.List))
-					if len(carousel.List) > 0 {
-						//fmt.Println(carousel)
-						friendtalk.Carousel = &carousel
-					}  
-				}
 
-			case "image_url":
-				if z, ok := (scanArgs[i]).(*sql.NullString); ok {
-					image.Img_url = z.String
-				}
-
-			case "image_link":
-				if z, ok := (scanArgs[i]).(*sql.NullString); ok {
-					image.Img_link = z.String
-				}
-
-			case "att_items":
-				if z, ok := (scanArgs[i]).(*sql.NullString); ok {
-					error := json.Unmarshal([]byte(z.String), &itemList)
-					if error == nil {
-						attache.Item    = &itemList
-					}
-				}
-
-			case "att_coupon":
-				if z, ok := (scanArgs[i]).(*sql.NullString); ok {
-					error := json.Unmarshal([]byte(z.String), &coupon)
-					if error == nil {
-						attache.Coupon    = &coupon
-					}
-				}
-
-			case "button1":
-				fallthrough
-			case "button2":
-				fallthrough
-			case "button3":
-				fallthrough
-			case "button4":
-				fallthrough
-			case "button5":
-				if z, ok := (scanArgs[i]).(*sql.NullString); ok {
 					if len(z.String) > 0 {
-						var btn kakao.Button
-
-						json.Unmarshal([]byte(z.String), &btn)
-						button = append(button, btn)
+						json.Unmarshal([]byte(z.String), &carousel)
+						if s.EqualFold(conf.DEBUG, "Y") {
+							jsonstr, _ := json.Marshal(carousel)
+							stdlog.Println("Carousel")
+							stdlog.Println(z.String)
+							stdlog.Println(string(jsonstr))
+						}
 					}
 				}
+			case "attachments":
+				if z, ok := (scanArgs[i]).(*sql.NullString); ok {
+
+					if len(z.String) > 0 {
+						json.Unmarshal([]byte(z.String), &attachment)
+
+						if s.EqualFold(conf.DEBUG, "Y") {
+							jsonstr, _ := json.Marshal(attachment)
+							stdlog.Println("Attachment")
+							stdlog.Println(z.String)
+							stdlog.Println(string(jsonstr))
+						}
+					}
+				}
+
 			}
 
 			if z, ok := (scanArgs[i]).(*sql.NullString); ok {
@@ -316,42 +271,34 @@ carousel
 
 		}
 
-		if len(result["image_url"]) > 0 && s.EqualFold(result["message_type"], "FT") {
-			friendtalk.Message_type = "FI"
+		if !r.ValueOf(attachment).IsZero() && attachment.Image != nil && len(attachment.Image.ImgURL) > 0 {
 			if s.EqualFold(result["wide"], "Y") {
 				friendtalk.Message_type = "FW"
+			} else {
+				friendtalk.Message_type = "FI"
 			}
+		} else {
+			friendtalk.Message_type = "FT"
 		}
 
-		//result["message_type"] = friendtalk.Message_type
+		result["message_type"] = friendtalk.Message_type
 
-		attache.Buttons = button
-		if len(image.Img_url) > 0 {
-			attache.Ftimage = &image
+		if !r.ValueOf(attachment).IsZero() {
+			friendtalk.Attachment = &attachment
 		}
-		friendtalk.Attachment = attache
-		
-		if s.EqualFold(conf.DEBUG,"Y") {
-		  	jsonstr, _ := json.Marshal(friendtalk)
+
+		if !r.ValueOf(carousel).IsZero() {
+			friendtalk.Carousel = &carousel
+		}
+
+		if s.EqualFold(conf.DEBUG, "Y") {
+			jsonstr, _ := json.Marshal(friendtalk)
 			stdlog.Println(string(jsonstr))
-		  //fmt.Println(string(jsonstr))
 		}
-		//buff := bytes.NewBuffer(jsonstr)
 
-		//restReq, err := http.NewRequest("POST", conf.API_SERVER+"v3/"+conf.PROFILE_KEY+"/friendtalk/send", buff)
-		// if err != nil {
-		// 	errlog.Println(err)
-		// 	errlog.Println("메시지 서버 호출 오류")
-		// } else {
-
-		//restReq.Header.Add("Content-Type", "application/json")
-
-		//resp, err := friendClient.Do(restReq)
 		var temp resultStr
 		temp.Result = result
-		
-		//return
-		
+
 		reswg.Add(1)
 		go sendKakao(&reswg, resultChan, friendtalk, temp)
 
@@ -370,7 +317,17 @@ carousel
 			json.Unmarshal(resChan.BodyData, &kakaoResp)
 			var resdt = time.Now()
 			var resdtstr = fmt.Sprintf("%4d-%02d-%02d %02d:%02d:%02d", resdt.Year(), resdt.Month(), resdt.Day(), resdt.Hour(), resdt.Minute(), resdt.Second())
-			resinsStrs = append(resinsStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+
+			var code_ string
+
+			if errcode, ok := config.ErrCode[kakaoResp.Code]; ok {
+				code_ = errcode.Key
+			} else {
+
+				code_ = "7300"
+			}
+
+			resinsStrs = append(resinsStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 			resinsValues = append(resinsValues, result["msgid"])
 			resinsValues = append(resinsValues, result["userid"])
 			resinsValues = append(resinsValues, result["ad_flag"])
@@ -379,7 +336,7 @@ carousel
 			resinsValues = append(resinsValues, result["button3"])
 			resinsValues = append(resinsValues, result["button4"])
 			resinsValues = append(resinsValues, result["button5"])
-			resinsValues = append(resinsValues, kakaoResp.Code) // 결과 code
+			resinsValues = append(resinsValues, code_) // 결과 code 매핑값
 			resinsValues = append(resinsValues, result["image_link"])
 			resinsValues = append(resinsValues, result["image_url"])
 			resinsValues = append(resinsValues, nil)               // kind
@@ -393,7 +350,7 @@ carousel
 			resinsValues = append(resinsValues, result["phn"])
 			resinsValues = append(resinsValues, result["profile"])
 			resinsValues = append(resinsValues, result["reg_dt"])
-			resinsValues = append(resinsValues, result["remark1"])
+			resinsValues = append(resinsValues, "KKO")
 			resinsValues = append(resinsValues, result["remark2"])
 			resinsValues = append(resinsValues, result["remark3"])
 			resinsValues = append(resinsValues, result["remark4"])
@@ -401,35 +358,28 @@ carousel
 			resinsValues = append(resinsValues, resdtstr) // res_dt
 			resinsValues = append(resinsValues, result["reserve_dt"])
 
-			if s.EqualFold(kakaoResp.Code,"0000") {
-				resinsValues = append(resinsValues, "Y") // 
-			} else if len(result["sms_kind"])>=1 && s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
+			if s.EqualFold(kakaoResp.Code, "0000") {
+				resinsValues = append(resinsValues, "Y") //
+			} else if len(result["sms_kind"]) >= 1 && s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
 				resinsValues = append(resinsValues, "P") // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
 			} else {
-				resinsValues = append(resinsValues, "Y") // 
-			} 
+				resinsValues = append(resinsValues, "Y") //
+			}
 
-			resinsValues = append(resinsValues, kakaoResp.Code)
+			resinsValues = append(resinsValues, kakaoResp.Code) // API Response Code
 			resinsValues = append(resinsValues, result["sms_kind"])
 			resinsValues = append(resinsValues, result["sms_lms_tit"])
 			resinsValues = append(resinsValues, result["sms_sender"])
 			resinsValues = append(resinsValues, "N")
 			resinsValues = append(resinsValues, result["tmpl_id"])
 			resinsValues = append(resinsValues, result["wide"])
-			
-			if s.EqualFold(kakaoResp.Code,"0000") {
-				resinsValues = append(resinsValues, nil) // send group
-			} else if len(result["sms_kind"])>=1 && s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
-				resinsValues = append(resinsValues, nil) // send group
-			} else {
-				resinsValues = append(resinsValues, nil) // send group
-			} 
-			
+			resinsValues = append(resinsValues, nil) // send group
 			resinsValues = append(resinsValues, result["supplement"])
 			resinsValues = append(resinsValues, result["price"])
 			resinsValues = append(resinsValues, result["currency_type"])
 			resinsValues = append(resinsValues, result["header"])
 			resinsValues = append(resinsValues, result["carousel"])
+			resinsValues = append(resinsValues, result["attachments"])
 
 			if len(resinsStrs) >= 500 {
 				stmt := fmt.Sprintf(resinsquery, s.Join(resinsStrs, ","))
@@ -457,10 +407,15 @@ carousel
 
 	if len(resinsStrs) > 0 {
 		stmt := fmt.Sprintf(resinsquery, s.Join(resinsStrs, ","))
-		//fmt.Println(stmt)
+
 		_, err := databasepool.DB.Exec(stmt, resinsValues...)
 
 		if err != nil {
+			if s.EqualFold(conf.DEBUG, "Y") {
+				stdlog.Println(string(stmt))
+				jsonstr, _ := json.Marshal(resinsValues)
+				stdlog.Println(string(jsonstr))
+			}
 			stdlog.Println("Result Table Insert 처리 중 오류 발생 ", err)
 		}
 
@@ -469,8 +424,8 @@ carousel
 	}
 
 	db.Exec("delete from DHN_REQUEST where send_group = '" + group_no + "'")
-	stdlog.Println("친구톡 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건  ( Proc Cnt :", ftprocCnt, ")" )
-	
+	stdlog.Println("친구톡 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건  ( Proc Cnt :", ftprocCnt, ")")
+
 	ftprocCnt--
 
 }

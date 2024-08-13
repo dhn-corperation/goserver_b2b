@@ -7,8 +7,8 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	config "mycs/src/kaoconfig"
-	databasepool "mycs/src/kaodatabasepool"
+	config "kaoconfig"
+	databasepool "kaodatabasepool"
 
 	//"kaoreqtable"
 

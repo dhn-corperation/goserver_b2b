@@ -2,8 +2,8 @@ package otpproc
 
 import (
 	"database/sql"
-	config "mycs/src/kaoconfig"
-	databasepool "mycs/src/kaodatabasepool"
+	config "kaoconfig"
+	databasepool "kaodatabasepool"
 	"fmt"
 	"strconv" 
 	//	"log"
@@ -12,31 +12,20 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"context"
 )
 
-func OTPLMSProcess(ctx context.Context) {
+func OTPLMSProcess() {
 	var wg sync.WaitGroup
 	for {
-			select {
-				case <- ctx.Done():
-			
-			    config.Stdlog.Println("OTP LMS process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println("OTP LMS process 종료 완료")
-			    return
-			default:	
-			
-				var t = time.Now()
-				if t.Day() < 3 {
-					wg.Add(1)
-					go pre_mmsProcess(&wg)
-				}
-			
-				wg.Add(1)
-				go mmsProcess(&wg)
-				wg.Wait()
-			}
+		var t = time.Now()
+		if t.Day() < 3 {
+			wg.Add(1)
+			go pre_mmsProcess(&wg)
+		}
+	
+		wg.Add(1)
+		go mmsProcess(&wg)
+		wg.Wait()
 	}
 
 }

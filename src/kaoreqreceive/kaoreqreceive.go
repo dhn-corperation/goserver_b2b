@@ -2,138 +2,296 @@ package kaoreqreceive
 
 import (
 	//"encoding/json"
+	"crypto/aes"
+	"crypto/cipher"
+	"encoding/json"
 	"fmt"
-	config "mycs/src/kaoconfig"
-	databasepool "mycs/src/kaodatabasepool"
-	"mycs/src/kaoreqtable"
-	cm "mycs/src/kaocommon"
+	config "kaoconfig"
+	databasepool "kaodatabasepool"
+	"kaoreqtable"
+	r "reflect"
 	"strconv"
 	s "strings"
 	"time"
+
+	//"crypto/rand"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 )
 
-//언젠가는 다른곳으로 위치를 옮겨야 함
 var SecretKey = "9b4dabe9d4fed126a58f8639846143c7"
 
 func ReqReceive(c *gin.Context) {
-	ftColumn := cm.GetReqFtColumn()
-	atColumn := cm.GetReqAtColumn()
-	msgColumn := cm.GetReqMsgColumn()
-	ftColumnStr := s.Join(ftColumn, ",")
-	atColumnStr := s.Join(atColumn, ",")
-	msgColumnStr := s.Join(msgColumn, ",")
 
-	ctx := c.Request.Context()
 	errlog := config.Stdlog
 
 	userid := c.Request.Header.Get("userid")
 	userip := c.ClientIP()
 	isValidation := false
-
-	// 허가된 userid 인지 테이블에서 확인
-	sqlstr := `
-		select 
-			count(1) as cnt 
-		from
-			DHN_CLIENT_LIST
-		where
-			user_id = ?
-			and ip = ?
-			and use_flag = 'Y'`
+	sqlstr := "select count(1) as cnt from DHN_CLIENT_LIST where user_id = '" + userid + "' and ip ='" + userip + "' and use_flag = 'Y'  "
+	val, verr := databasepool.DB.Query(sqlstr)
+	if verr != nil {
+		errlog.Println(verr)
+	}
+	defer val.Close()
 
 	var cnt int
-	err := databasepool.DB.QueryRowContext(ctx, sqlstr, userid, userip).Scan(&cnt)
-	if err != nil { errlog.Println(err) }
+	val.Next()
+	val.Scan(&cnt)
 
-	
-
-	if cnt > 0 { 
-		isValidation = true 
-	} else {
-		errlog.Println("허용되지 않은 사용자 및 아이피에서 발송 요청!! (userid : ", userid, "/ ip : ", userip, ")")
+	if cnt > 0 {
+		isValidation = true
 	}
 
 	var startNow = time.Now()
 	var startTime = fmt.Sprintf("%02d:%02d:%02d", startNow.Hour(), startNow.Minute(), startNow.Second())
 
+	errlog.Println("메세지 발송 정보 수신 시작!!", startTime)
 	if isValidation {
 
-		var msg []kaoreqtable.Reqtable
-		//전달온 데이터 kaoreqtable.Reqtable에 맵핑
+		var msg []kaoreqtable.NanoReqTable
+
 		err1 := c.ShouldBindJSON(&msg)
+		if err1 != nil {
+			panic(err1)
+		}
 
-		if err1 != nil { errlog.Println(err1) }
+		//attjson, _ := json.Marshal(msg)
+		//fmt.Println(string(attjson))
 
-		errlog.Println("발송 메세지 수신 시작 ( ", userid, ") : ", len(msg), startTime)
-
+		errlog.Println("발송 메세지 수신 ( ", userid, ") : ", len(msg), startTime)
 		reqinsStrs := []string{}
-		//친구톡 value interface 배열 생성
 		reqinsValues := []interface{}{}
 
 		atreqinsStrs := []string{}
-		//알림톡 value interface 배열 생성
 		atreqinsValues := []interface{}{}
 
+		reqinsQuery := `insert IGNORE into DHN_REQUEST(
+  msgid,             
+  userid,            
+  ad_flag,           
+  button1,           
+  button2,           
+  button3,           
+  button4,           
+  button5,           
+  image_link,        
+  image_url,         
+  message_type,      
+  msg,               
+  msg_sms,           
+  only_sms,          
+  phn,               
+  profile,           
+  p_com,             
+  p_invoice,         
+  reg_dt,            
+  remark1,           
+  remark2,           
+  remark3,           
+  remark4,           
+  remark5,           
+  reserve_dt,        
+  sms_kind,          
+  sms_lms_tit,       
+  sms_sender,        
+  s_code,            
+  tmpl_id,           
+  wide,              
+  send_group,        
+  supplement,        
+  price,             
+  currency_type,
+  title,
+  header,
+  carousel,
+  att_items,
+  att_coupon,
+  attachments,
+  user_key
+) values %s
+	`
+		atreqinsQuery := `insert IGNORE into DHN_REQUEST_AT(
+  msgid,             
+  userid,            
+  ad_flag,           
+  button1,           
+  button2,           
+  button3,           
+  button4,           
+  button5,           
+  image_link,        
+  image_url,         
+  message_type,      
+  msg,               
+  msg_sms,           
+  only_sms,          
+  phn,               
+  profile,           
+  p_com,             
+  p_invoice,         
+  reg_dt,            
+  remark1,           
+  remark2,           
+  remark3,           
+  remark4,           
+  remark5,           
+  reserve_dt,        
+  sms_kind,          
+  sms_lms_tit,       
+  sms_sender,        
+  s_code,            
+  tmpl_id,           
+  wide,              
+  send_group,        
+  supplement,        
+  price,             
+  currency_type,
+  title,
+  header,
+  carousel,
+  attachments,
+  user_key,
+  response_method,
+  timeout,
+  link
+) values %s
+	`
+
 		resinsStrs := []string{}
-		//문자 value interface 배열 생성
 		resinsValues := []interface{}{}
+		resinsquery := `insert IGNORE into DHN_RESULT(
+msgid ,
+userid ,
+ad_flag ,
+button1 ,
+button2 ,
+button3 ,
+button4 ,
+button5 ,
+code ,
+image_link ,
+image_url ,
+kind ,
+message ,
+message_type ,
+msg ,
+msg_sms ,
+only_sms ,
+p_com ,
+p_invoice ,
+phn ,
+profile ,
+reg_dt ,
+remark1 ,
+remark2 ,
+remark3 ,
+remark4 ,
+remark5 ,
+res_dt ,
+reserve_dt ,
+result ,
+s_code ,
+sms_kind ,
+sms_lms_tit ,
+sms_sender ,
+sync ,
+tmpl_id ,
+wide ,
+send_group ,
+supplement ,
+price ,
+currency_type,
+header,
+carousel     
+) values %s`
 
-		//친구톡 insert 컬럼 셋팅
-		reqinsQuery := `insert IGNORE into DHN_REQUEST(`+ftColumnStr+`) values %s`
+		resinstempquery := `insert IGNORE into DHN_RESULT_TEMP(
+msgid ,
+userid ,
+ad_flag ,
+button1 ,
+button2 ,
+button3 ,
+button4 ,
+button5 ,
+code ,
+image_link ,
+image_url ,
+kind ,
+message ,
+message_type ,
+msg ,
+msg_sms ,
+only_sms ,
+p_com ,
+p_invoice ,
+phn ,
+profile ,
+reg_dt ,
+remark1 ,
+remark2 ,
+remark3 ,
+remark4 ,
+remark5 ,
+res_dt ,
+reserve_dt ,
+result ,
+s_code ,
+sms_kind ,
+sms_lms_tit ,
+sms_sender ,
+sync ,
+tmpl_id ,
+wide ,
+send_group ,
+supplement ,
+price ,
+currency_type,
+header,
+carousel     
+) values %s`
 
-		//알림톡 insert 컬럼 셋팅
-		atreqinsQuery := `insert IGNORE into DHN_REQUEST_AT(`+atColumnStr+`) values %s`
-
-		//문자 insert 컬럼 셋팅
-		resinsquery := `insert IGNORE into DHN_RESULT(`+msgColumnStr+`) values %s`
-
-		//temp 테이블 컬럼 셋팅(DHN_RESULT_TEMP : 에러 시 데이터 유실을 막기 위한 테이블)
-		resinstempquery := `insert IGNORE into DHN_RESULT_TEMP(`+msgColumnStr+`) values %s`
-
-		ftQmarkStr := cm.GetQuestionMark(ftColumn)
-		atQmarkStr := cm.GetQuestionMark(atColumn)
-		msgQmarkStr := cm.GetQuestionMark(msgColumn)
-
-		//맵핑한 데이터 row 처리
+		//fmt.Printf("%d 건 임.\n", len(msg))
 		for i, _ := range msg {
-			var nonce string
-			if len(msg[i].Crypto) > 0 {
-				nonce = s.Split(msg[i].Crypto, ",")[0]
+			//fmt.Println(msg[i])
+			if s.EqualFold(config.Conf.DEBUG, "Y") {
+				jsonstr, _ := json.Marshal(msg[i])
+				errlog.Println(string(jsonstr))
 			}
-			//친구톡 insert values 만들기
+
 			if s.HasPrefix(s.ToUpper(msg[i].Messagetype), "F") {
-				reqinsStrs = append(reqinsStrs, "("+ftQmarkStr+")")
+
+				reqinsStrs = append(reqinsStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 				reqinsValues = append(reqinsValues, msg[i].Msgid)
 				reqinsValues = append(reqinsValues, userid)
 				reqinsValues = append(reqinsValues, msg[i].Adflag)
-				reqinsValues = append(reqinsValues, msg[i].Button1)
-				reqinsValues = append(reqinsValues, msg[i].Button2)
-				reqinsValues = append(reqinsValues, msg[i].Button3)
-				reqinsValues = append(reqinsValues, msg[i].Button4)
-				reqinsValues = append(reqinsValues, msg[i].Button5)
-				reqinsValues = append(reqinsValues, msg[i].Imagelink)
-				reqinsValues = append(reqinsValues, msg[i].Imageurl)
+
+				reqinsValues = append(reqinsValues, nil)
+				reqinsValues = append(reqinsValues, nil)
+				reqinsValues = append(reqinsValues, nil)
+				reqinsValues = append(reqinsValues, nil)
+				reqinsValues = append(reqinsValues, nil)
+
+				if !r.ValueOf(msg[i].Attachments).IsZero() && !r.ValueOf(msg[i].Attachments.Image).IsZero() && len(msg[i].Attachments.Image.ImgURL) > 0 {
+					reqinsValues = append(reqinsValues, msg[i].Attachments.Image.ImgURL)
+				} else {
+					reqinsValues = append(reqinsValues, nil)
+				}
+
+				if !r.ValueOf(msg[i].Attachments).IsZero() && !r.ValueOf(msg[i].Attachments.Image).IsZero() && len(msg[i].Attachments.Image.ImgLink) > 0 {
+					reqinsValues = append(reqinsValues, msg[i].Attachments.Image.ImgLink)
+				} else {
+					reqinsValues = append(reqinsValues, nil)
+				}
+
 				reqinsValues = append(reqinsValues, msg[i].Messagetype)
-				if s.Contains(s.ToLower(msg[i].Crypto), "msg") {
-					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
-				} else {
-					reqinsValues = append(reqinsValues, msg[i].Msg)
-				}
-				if s.Contains(s.ToLower(msg[i].Crypto), "msg") && len(msg[i].Msgsms) > 0 {
-					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
-				} else {
-					reqinsValues = append(reqinsValues, msg[i].Msgsms)
-				}
+				reqinsValues = append(reqinsValues, msg[i].Msg)
+				reqinsValues = append(reqinsValues, msg[i].Msgsms)
 				reqinsValues = append(reqinsValues, msg[i].Onlysms)
-				reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
-				if s.Contains(s.ToLower(msg[i].Crypto), "profile") && len(msg[i].Profile) > 0 {
-					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
-				} else {
-					reqinsValues = append(reqinsValues, msg[i].Profile)
-				}
+				reqinsValues = append(reqinsValues, msg[i].Phn)
+				reqinsValues = append(reqinsValues, msg[i].Profile)
 				reqinsValues = append(reqinsValues, msg[i].Pcom)
 				reqinsValues = append(reqinsValues, msg[i].Pinvoice)
 				reqinsValues = append(reqinsValues, msg[i].Regdt)
@@ -144,38 +302,51 @@ func ReqReceive(c *gin.Context) {
 				reqinsValues = append(reqinsValues, msg[i].Remark5)
 				reqinsValues = append(reqinsValues, msg[i].Reservedt)
 				reqinsValues = append(reqinsValues, msg[i].Smskind)
-				if s.Contains(s.ToLower(msg[i].Crypto), "smslmstit") && len(msg[i].Smslmstit) > 0 {
-					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
-				} else {
-					reqinsValues = append(reqinsValues, msg[i].Smslmstit)
-				}
-				if s.Contains(s.ToLower(msg[i].Crypto), "smssender") && len(msg[i].Smssender) > 0 {
-					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
-				} else {
-					reqinsValues = append(reqinsValues, msg[i].Smssender)
-				}
+				reqinsValues = append(reqinsValues, msg[i].Smslmstit)
+				reqinsValues = append(reqinsValues, msg[i].Smssender)
 				reqinsValues = append(reqinsValues, msg[i].Scode)
 				reqinsValues = append(reqinsValues, msg[i].Tmplid)
-				reqinsValues = append(reqinsValues, msg[i].Wide)
-				reqinsValues = append(reqinsValues, nil)
-				reqinsValues = append(reqinsValues, msg[i].Supplement)
-				if len(msg[i].Price) > 0 {
-					price, _ := strconv.Atoi(msg[i].Price)
-					reqinsValues = append(reqinsValues, price)
+
+				if !r.ValueOf(msg[i].Attachments).IsZero() && !r.ValueOf(msg[i].Attachments.Extra).IsZero() && len(msg[i].Attachments.Extra.Wide) > 0 {
+					reqinsValues = append(reqinsValues, msg[i].Attachments.Extra.Wide)
 				} else {
 					reqinsValues = append(reqinsValues, nil)
 				}
-				reqinsValues = append(reqinsValues, msg[i].Currencytype)
-				reqinsValues = append(reqinsValues, msg[i].Title)
-				reqinsValues = append(reqinsValues, msg[i].Header)
+
+				reqinsValues = append(reqinsValues, nil)
+				reqinsValues = append(reqinsValues, nil)
+				reqinsValues = append(reqinsValues, nil)
+
+				reqinsValues = append(reqinsValues, nil)
+				reqinsValues = append(reqinsValues, nil)
+
+				if !r.ValueOf(msg[i].Attachments).IsZero() && !r.ValueOf(msg[i].Attachments.Extra).IsZero() && len(msg[i].Attachments.Extra.Header) > 0 {
+					reqinsValues = append(reqinsValues, msg[i].Attachments.Extra.Header)
+				} else {
+					reqinsValues = append(reqinsValues, nil)
+				}
+
 				reqinsValues = append(reqinsValues, msg[i].Carousel)
+
 				reqinsValues = append(reqinsValues, msg[i].Att_items)
 				reqinsValues = append(reqinsValues, msg[i].Att_coupon)
-			//문자 insert values 만들기
-			} else if s.EqualFold(msg[i].Messagetype, "PH") {
+				if !r.ValueOf(msg[i].Attachments).IsZero() {
+					attjson, _ := json.Marshal(msg[i].Attachments)
+					reqinsValues = append(reqinsValues, string(attjson))
+				} else {
+					reqinsValues = append(reqinsValues, nil)
+				}
+
+				reqinsValues = append(reqinsValues, msg[i].Userkey)
+			} else if s.EqualFold(msg[i].Messagetype, "PH") || s.EqualFold(msg[i].Messagetype, "OT") {
+				//fmt.Println(msg[i])
 				var resdt = time.Now()
+				resultStr := "P"
+				if s.EqualFold(msg[i].Messagetype, "OT") {
+					resultStr = "O"
+				}
 				var resdtstr = fmt.Sprintf("%4d-%02d-%02d %02d:%02d:%02d", resdt.Year(), resdt.Month(), resdt.Day(), resdt.Hour(), resdt.Minute(), resdt.Second())
-				resinsStrs = append(resinsStrs, "("+msgQmarkStr+")")
+				resinsStrs = append(resinsStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 				resinsValues = append(resinsValues, msg[i].Msgid)
 				resinsValues = append(resinsValues, userid)
 				resinsValues = append(resinsValues, msg[i].Adflag)
@@ -190,23 +361,30 @@ func ReqReceive(c *gin.Context) {
 				resinsValues = append(resinsValues, nil) // kind
 				resinsValues = append(resinsValues, "")  // 결과 Message
 				resinsValues = append(resinsValues, msg[i].Messagetype)
-				if s.Contains(s.ToLower(msg[i].Crypto), "msg") {
-					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
+
+				if s.EqualFold(msg[i].Crypto, "Y") {
+					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, msg[i].Profile))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Msg)
 				}
 
-				if s.Contains(s.ToLower(msg[i].Crypto), "msg") && len(msg[i].Msgsms) > 0 {
-					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
+				if s.EqualFold(msg[i].Crypto, "Y") {
+					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, msg[i].Profile))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Msgsms)
 				}
 				resinsValues = append(resinsValues, msg[i].Onlysms)
 				resinsValues = append(resinsValues, msg[i].Pcom)
 				resinsValues = append(resinsValues, msg[i].Pinvoice)
-				resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
-				if s.Contains(s.ToLower(msg[i].Crypto), "profile") && len(msg[i].Profile) > 0 {
-					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
+
+				if s.EqualFold(msg[i].Crypto, "Y") {
+					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, msg[i].Profile))
+				} else {
+					resinsValues = append(resinsValues, msg[i].Phn)
+				}
+
+				if s.EqualFold(msg[i].Crypto, "Y") {
+					resinsValues = append(resinsValues, nil)
 				} else {
 					resinsValues = append(resinsValues, msg[i].Profile)
 				}
@@ -218,63 +396,59 @@ func ReqReceive(c *gin.Context) {
 				resinsValues = append(resinsValues, msg[i].Remark5)
 				resinsValues = append(resinsValues, resdtstr) // res_dt
 				resinsValues = append(resinsValues, msg[i].Reservedt)
-				resinsValues = append(resinsValues, "P") // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
+				resinsValues = append(resinsValues, resultStr) // sms_kind 가 SMS / LMS / MMS / OTP 이면 문자 발송 시도
 				resinsValues = append(resinsValues, msg[i].Scode)
 				resinsValues = append(resinsValues, msg[i].Smskind)
-				if s.Contains(s.ToLower(msg[i].Crypto), "smslmstit") && len(msg[i].Smslmstit) > 0 {
-					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
+
+				if s.EqualFold(msg[i].Crypto, "Y") {
+					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, msg[i].Profile))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Smslmstit)
 				}
 
-				if s.Contains(s.ToLower(msg[i].Crypto), "smssender") && len(msg[i].Smssender) > 0 {
-					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
+				if s.EqualFold(msg[i].Crypto, "Y") {
+					resinsValues = append(resinsValues, AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, msg[i].Profile))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Smssender)
 				}
 				resinsValues = append(resinsValues, "N")
 				resinsValues = append(resinsValues, msg[i].Tmplid)
 				resinsValues = append(resinsValues, msg[i].Wide)
-				resinsValues = append(resinsValues, nil) // send_group
+				resinsValues = append(resinsValues, nil) // send group
 				resinsValues = append(resinsValues, msg[i].Supplement)
-				resinsValues = append(resinsValues, nil) //price
-				resinsValues = append(resinsValues, nil) //currency_type
+				resinsValues = append(resinsValues, nil)
+				resinsValues = append(resinsValues, nil)
 				resinsValues = append(resinsValues, msg[i].Header)
 				resinsValues = append(resinsValues, msg[i].Carousel)
-			//알림톡 insert values 만들기
+
 			} else {
-				atreqinsStrs = append(atreqinsStrs, "("+atQmarkStr+")")
+
+				atreqinsStrs = append(atreqinsStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 				atreqinsValues = append(atreqinsValues, msg[i].Msgid)
 				atreqinsValues = append(atreqinsValues, userid)
 				atreqinsValues = append(atreqinsValues, msg[i].Adflag)
-				atreqinsValues = append(atreqinsValues, msg[i].Button1)
-				atreqinsValues = append(atreqinsValues, msg[i].Button2)
-				atreqinsValues = append(atreqinsValues, msg[i].Button3)
-				atreqinsValues = append(atreqinsValues, msg[i].Button4)
-				atreqinsValues = append(atreqinsValues, msg[i].Button5)
+
+				atreqinsValues = append(atreqinsValues, nil)
+				atreqinsValues = append(atreqinsValues, nil)
+				atreqinsValues = append(atreqinsValues, nil)
+				atreqinsValues = append(atreqinsValues, nil)
+				atreqinsValues = append(atreqinsValues, nil)
+
 				atreqinsValues = append(atreqinsValues, msg[i].Imagelink)
 				atreqinsValues = append(atreqinsValues, msg[i].Imageurl)
-				atreqinsValues = append(atreqinsValues, msg[i].Messagetype)
-				if s.Contains(s.ToLower(msg[i].Crypto), "msg") {
-					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
+
+				// Extra -> msg_type : ai
+				if !r.ValueOf(msg[i].Attachments).IsZero() && !r.ValueOf(msg[i].Attachments.Extra).IsZero() && len(msg[i].Attachments.Extra.MsgType) > 0 {
+					atreqinsValues = append(atreqinsValues, s.ToUpper(msg[i].Attachments.Extra.MsgType))
 				} else {
-					atreqinsValues = append(atreqinsValues, msg[i].Msg)
+					atreqinsValues = append(atreqinsValues, msg[i].Messagetype)
 				}
 
-				if s.Contains(s.ToLower(msg[i].Crypto), "msg") && len(msg[i].Msgsms) > 0 {
-					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
-				} else {
-					atreqinsValues = append(atreqinsValues, msg[i].Msgsms)
-				}
+				atreqinsValues = append(atreqinsValues, string(msg[i].Msg))
+				atreqinsValues = append(atreqinsValues, string(msg[i].Msgsms))
 				atreqinsValues = append(atreqinsValues, msg[i].Onlysms)
-
-				atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
-				// atreqinsValues = append(atreqinsValues, msg[i].Phn)
-				if s.Contains(s.ToLower(msg[i].Crypto), "profile") && len(msg[i].Profile) > 0 {
-					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
-				} else {
-					atreqinsValues = append(atreqinsValues, msg[i].Profile)
-				}
+				atreqinsValues = append(atreqinsValues, msg[i].Phn)
+				atreqinsValues = append(atreqinsValues, msg[i].Profile)
 				atreqinsValues = append(atreqinsValues, msg[i].Pcom)
 				atreqinsValues = append(atreqinsValues, msg[i].Pinvoice)
 				atreqinsValues = append(atreqinsValues, msg[i].Regdt)
@@ -282,69 +456,149 @@ func ReqReceive(c *gin.Context) {
 				atreqinsValues = append(atreqinsValues, msg[i].Remark2)
 				atreqinsValues = append(atreqinsValues, msg[i].Remark3)
 				atreqinsValues = append(atreqinsValues, msg[i].Remark4)
-				atreqinsValues = append(atreqinsValues, msg[i].Remark5)
+				atreqinsValues = append(atreqinsValues, msg[i].ResponseMethod)
 				atreqinsValues = append(atreqinsValues, msg[i].Reservedt)
 				atreqinsValues = append(atreqinsValues, msg[i].Smskind)
-				if s.Contains(s.ToLower(msg[i].Crypto), "smslmstit") && len(msg[i].Smslmstit) > 0 {
-					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
-				} else {
-					atreqinsValues = append(atreqinsValues, msg[i].Smslmstit)
-				}
-
-				if s.Contains(s.ToLower(msg[i].Crypto), "smssender") && len(msg[i].Smssender) > 0 {
-					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
-				} else {
-					atreqinsValues = append(atreqinsValues, msg[i].Smssender)
-				}
+				atreqinsValues = append(atreqinsValues, msg[i].Smslmstit)
+				atreqinsValues = append(atreqinsValues, msg[i].Smssender)
 				atreqinsValues = append(atreqinsValues, msg[i].Scode)
 				atreqinsValues = append(atreqinsValues, msg[i].Tmplid)
 				atreqinsValues = append(atreqinsValues, msg[i].Wide)
-				atreqinsValues = append(atreqinsValues, nil) //send_group
-				atreqinsValues = append(atreqinsValues, msg[i].Supplement)
+				atreqinsValues = append(atreqinsValues, nil)
 
-				if len(msg[i].Price) > 0 {
-					price, _ := strconv.Atoi(msg[i].Price)
-					atreqinsValues = append(atreqinsValues, price)
+				if !r.ValueOf(msg[i].Attachments).IsZero() && !r.ValueOf(msg[i].Attachments.Extra).IsZero() && !r.ValueOf(msg[i].Attachments.Extra.Supplement).IsZero() {
+					supp, _ := json.Marshal(msg[i].Attachments.Extra.Supplement)
+					atreqinsValues = append(atreqinsValues, string(supp))
 				} else {
 					atreqinsValues = append(atreqinsValues, nil)
 				}
 
-				atreqinsValues = append(atreqinsValues, msg[i].Currencytype)
-				atreqinsValues = append(atreqinsValues, msg[i].Title)
-				// atreqinsValues = append(atreqinsValues, msg[i].Header)
-				// atreqinsValues = append(atreqinsValues, msg[i].Carousel)
+				if !r.ValueOf(msg[i].Attachments).IsZero() && !r.ValueOf(msg[i].Attachments.Extra).IsZero() && msg[i].Attachments.Extra.Price > 0 {
+					atreqinsValues = append(atreqinsValues, msg[i].Attachments.Extra.Price)
+				} else {
+					atreqinsValues = append(atreqinsValues, nil)
+				}
+
+				if !r.ValueOf(msg[i].Attachments).IsZero() && !r.ValueOf(msg[i].Attachments.Extra).IsZero() {
+					atreqinsValues = append(atreqinsValues, msg[i].Attachments.Extra.CurrencyType)
+					atreqinsValues = append(atreqinsValues, msg[i].Attachments.Extra.Title)
+					atreqinsValues = append(atreqinsValues, msg[i].Attachments.Extra.Header)
+				} else {
+					atreqinsValues = append(atreqinsValues, nil)
+					atreqinsValues = append(atreqinsValues, nil)
+					atreqinsValues = append(atreqinsValues, nil)
+				}
+
+				atreqinsValues = append(atreqinsValues, nil)
+
+				if !r.ValueOf(msg[i].Attachments).IsZero() {
+					attjson, _ := json.Marshal(msg[i].Attachments)
+					atreqinsValues = append(atreqinsValues, string(attjson))
+				} else {
+					atreqinsValues = append(atreqinsValues, nil)
+				}
+
+				atreqinsValues = append(atreqinsValues, msg[i].Userkey)
+				atreqinsValues = append(atreqinsValues, msg[i].ResponseMethod)
+				atreqinsValues = append(atreqinsValues, msg[i].Timeout)
+
+				if !r.ValueOf(msg[i].Attachments).IsZero() && !r.ValueOf(msg[i].Attachments.Extra).IsZero() && !r.ValueOf(msg[i].Attachments.Extra.Link).IsZero() {
+					link, _ := json.Marshal(msg[i].Attachments.Extra.Link)
+					atreqinsValues = append(atreqinsValues, string(link))
+				} else {
+					atreqinsValues = append(atreqinsValues, nil)
+				}
+			}
+			if len(reqinsStrs) >= 500 {
+				stmt := fmt.Sprintf(reqinsQuery, s.Join(reqinsStrs, ","))
+				_, err := databasepool.DB.Exec(stmt, reqinsValues...)
+
+				if err != nil {
+					config.Stdlog.Println("MSG Table Insert 처리 중 오류 발생 " + err.Error())
+				}
+
+				reqinsStrs = nil
+				reqinsValues = nil
 			}
 
-			// 500건 단위로 처리한다(클라이언트에서 1000건씩 전송하더라도 지정한 단위의 건수로 insert한다.)
-			saveCount := 500
-			if len(reqinsStrs) >= saveCount {
-				reqinsStrs, reqinsValues = cm.InsMsg(reqinsQuery, reqinsStrs, reqinsValues)
+			if len(atreqinsStrs) >= 500 {
+				stmt := fmt.Sprintf(atreqinsQuery, s.Join(atreqinsStrs, ","))
+				_, err := databasepool.DB.Exec(stmt, atreqinsValues...)
+
+				if err != nil {
+					config.Stdlog.Println("AT Table Insert 처리 중 오류 발생 " + err.Error())
+				}
+
+				atreqinsStrs = nil
+				atreqinsValues = nil
 			}
 
-			if len(atreqinsStrs) >= saveCount {
-				atreqinsStrs, atreqinsValues = cm.InsMsg(atreqinsQuery, atreqinsStrs, atreqinsValues)
-			}
+			if len(resinsStrs) >= 500 {
+				stmt := fmt.Sprintf(resinsquery, s.Join(resinsStrs, ","))
+				//fmt.Println(stmt)
+				_, err := databasepool.DB.Exec(stmt, resinsValues...)
 
-			if len(resinsStrs) >= saveCount {
-				resinsStrs, resinsValues = cm.InsMsgTemp(resinsquery, resinsStrs, resinsValues, true, resinstempquery)
+				if err != nil {
+					config.Stdlog.Println("Result Table Insert 처리 중 오류 발생 " + err.Error())
+					config.Stdlog.Println("Result Temp Table Insert 시작")
+					stmtt := fmt.Sprintf(resinstempquery, s.Join(resinsStrs, ","))
+					_, errt := databasepool.DB.Exec(stmtt, resinsValues...)
+					if errt != nil {
+						config.Stdlog.Println("Result Temp Table Insert 처리 중 오류 발생 " + err.Error())
+					}
+				}
+
+				resinsStrs = nil
+				resinsValues = nil
 			}
 		}
-		
-		// 나머지 건수를 저장하기 위해 다시한번 정의
+		//fmt.Println(len(reqinsStrs))
 		if len(reqinsStrs) > 0 {
-			reqinsStrs, reqinsValues = cm.InsMsg(reqinsQuery, reqinsStrs, reqinsValues)
+			stmt := fmt.Sprintf(reqinsQuery, s.Join(reqinsStrs, ","))
+			//fmt.Println(stmt)
+			_, err := databasepool.DB.Exec(stmt, reqinsValues...)
+
+			if err != nil {
+				fmt.Println("FT Table Insert 처리 중 오류 발생 " + err.Error())
+			}
+
+			reqinsStrs = nil
+			reqinsValues = nil
 		}
 
 		if len(atreqinsStrs) > 0 {
-			atreqinsStrs, atreqinsValues = cm.InsMsg(atreqinsQuery, atreqinsStrs, atreqinsValues)
+			stmt := fmt.Sprintf(atreqinsQuery, s.Join(atreqinsStrs, ","))
+			//fmt.Println(stmt)
+			_, err := databasepool.DB.Exec(stmt, atreqinsValues...)
+
+			if err != nil {
+				fmt.Println("AT Table Insert 처리 중 오류 발생 " + err.Error())
+			}
+
+			atreqinsStrs = nil
+			atreqinsValues = nil
 		}
 
 		if len(resinsStrs) > 0 {
-			resinsStrs, resinsValues = cm.InsMsgTemp(resinsquery, resinsStrs, resinsValues, true, resinstempquery)
+			stmt := fmt.Sprintf(resinsquery, s.Join(resinsStrs, ","))
+			//fmt.Println(stmt)
+			_, err := databasepool.DB.Exec(stmt, resinsValues...)
+
+			if err != nil {
+				config.Stdlog.Println("Result Table Insert 처리 중 오류 발생 " + err.Error())
+				config.Stdlog.Println("Result Temp Table Insert 시작")
+				stmtt := fmt.Sprintf(resinstempquery, s.Join(resinsStrs, ","))
+				_, errt := databasepool.DB.Exec(stmtt, resinsValues...)
+				if errt != nil {
+					config.Stdlog.Println("Result Temp Table Insert 처리 중 오류 발생 " + err.Error())
+				}
+			}
+
+			resinsStrs = nil
+			resinsValues = nil
 		}
 
-		errlog.Println("발송 메세지 수신 끝 ( ", userid, ") : ", len(msg), startTime)
-
+		errlog.Println("처리 끝", startTime)
 		c.JSON(200, gin.H{
 			"message": "ok",
 		})
@@ -358,8 +612,46 @@ func ReqReceive(c *gin.Context) {
 	}
 }
 
+func AES256GSMDecrypt(secretKey []byte, ciphertext_ string, nonce_ string) string {
 
+	ciphertext, _ := ConvertByte(ciphertext_)
+	nonce, _ := ConvertByte(nonce_)
 
+	if len(secretKey) != 32 {
+		return ""
+	}
 
+	// prepare AES-256-GSM cipher
+	block, err := aes.NewCipher(secretKey)
+	if err != nil {
+		return ""
+	}
 
+	aesgcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return ""
+	}
 
+	// decrypt ciphertext
+	plaintext, err := aesgcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return ""
+	}
+
+	return string(plaintext)
+}
+
+func ConvertByte(src string) ([]byte, error) {
+	ba := make([]byte, len(src)/2)
+	idx := 0
+	for i := 0; i < len(src); i = i + 2 {
+		b, err := strconv.ParseInt(src[i:i+2], 16, 10)
+		if err != nil {
+			return nil, err
+		}
+		ba[idx] = byte(b)
+		idx++
+	}
+
+	return ba, nil
+}

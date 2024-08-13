@@ -2,34 +2,22 @@ package kaosendrequest
 
 import (
 	//"encoding/json"
-	config "mycs/src/kaoconfig"
-	databasepool "mycs/src/kaodatabasepool"
+	config "kaoconfig"
+	databasepool "kaodatabasepool"
 	s "strings"
 	"sync"
 	"database/sql"
-	"context"
-	"time"
 )
 
-func ResultProc(ctx context.Context) {
+func ResultProc() {
 	var wg sync.WaitGroup
 
 	for {
-			select {
-				case <- ctx.Done():
-			
-			    config.Stdlog.Println("Polling Result process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println("Polling Result process 종료 완료")
-			    return
-			default:	
-			
-				wg.Add(1)
-		
-				go resPollingProcess(&wg)
-		
-				wg.Wait()
-			}
+		wg.Add(1)
+
+		go resPollingProcess(&wg)
+
+		wg.Wait()
 	}
 }
 

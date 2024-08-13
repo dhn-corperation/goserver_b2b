@@ -9,8 +9,4 @@
 /src/DHNServer/*.ini
 /src/DHNServer/DHNCenter
 /src/DHNServer/DHNServer
-/logs
-DHNCenter
-DHNServer
-DHNCenter2
-DHNServer2
+/src/DHNServer/test*

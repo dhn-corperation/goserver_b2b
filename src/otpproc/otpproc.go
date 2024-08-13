@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	//"sync"
-	config "mycs/src/kaoconfig"
-	databasepool "mycs/src/kaodatabasepool"
+	config "kaoconfig"
+	databasepool "kaodatabasepool"
 
 	"encoding/hex"
 	"regexp"
@@ -16,57 +16,45 @@ import (
 	//iconv "github.com/djimenez/iconv-go"
 	//"golang.org/x/text/encoding/korean"
 	//"golang.org/x/text/transform"
-	"context"
 )
 
 var procCnt int
 
-func OTPProcess(ctx context.Context) {
+func OTPProcess() {
 	//var wg sync.WaitGroup
 	procCnt = 0
 	for {
-	
-			select {
-				case <- ctx.Done():
-			
-			    config.Stdlog.Println("OTP Proc process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println("OTP Proc process 종료 완료")
-			    return
-			default:	
-			
-				if procCnt < 5 {
-					var count int
-		
-					cnterr := databasepool.DB.QueryRow("select length(msgid) as cnt from DHN_RESULT  where result = 'O' and send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit 1").Scan(&count)
-		
-					if cnterr != nil {
-						//config.Stdlog.Println("DHN_RESULT Table - select 오류 : " + cnterr.Error())
-					} else {
-		
-						if count > 0 {
-		
-							//wg.Add(1)
-		
-							var startNow = time.Now()
-							var group_no = fmt.Sprintf("%02d%02d%02d%02d%06d", startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), (startNow.Nanosecond()/1000))
-							
-							//config.Stdlog.Println(group_no, " Update 시작")
-							//updateRows, err := databasepool.DB.Exec("update DHN_RESULT set send_group = '" + group_no + "' where  result = 'O' and ( length(send_group) <=0 or send_group is null ) and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') LIMIT 1000")
-							//if err != nil {
-							//	config.Stdlog.Println("DHN_RESULT Table - Group No Update 오류" + err.Error())
-							//}
-							//rowcnt, _ := updateRows.RowsAffected()
-		
-							//config.Stdlog.Println(group_no, " Update 끝 ", rowcnt)
-							updateReqeust(group_no)
-							//if rowcnt > 0 {
-							go resProcess(group_no)
-							//}
-						}
-					}
+		if procCnt < 5 {
+			var count int
+
+			cnterr := databasepool.DB.QueryRow("select length(msgid) as cnt from DHN_RESULT  where result = 'O' and send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit 1").Scan(&count)
+
+			if cnterr != nil {
+				//config.Stdlog.Println("DHN_RESULT Table - select 오류 : " + cnterr.Error())
+			} else {
+
+				if count > 0 {
+
+					//wg.Add(1)
+
+					var startNow = time.Now()
+					var group_no = fmt.Sprintf("%02d%02d%02d%02d%06d", startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), (startNow.Nanosecond()/1000))
+					
+					//config.Stdlog.Println(group_no, " Update 시작")
+					//updateRows, err := databasepool.DB.Exec("update DHN_RESULT set send_group = '" + group_no + "' where  result = 'O' and ( length(send_group) <=0 or send_group is null ) and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') LIMIT 1000")
+					//if err != nil {
+					//	config.Stdlog.Println("DHN_RESULT Table - Group No Update 오류" + err.Error())
+					//}
+					//rowcnt, _ := updateRows.RowsAffected()
+
+					//config.Stdlog.Println(group_no, " Update 끝 ", rowcnt)
+					updateReqeust(group_no)
+					//if rowcnt > 0 {
+					go resProcess(group_no)
+					//}
 				}
 			}
+		}
 	}
 }
 
@@ -169,9 +157,7 @@ func resProcess(group_no string) {
 	,userid
 	,(select max(sms_len_check) from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as sms_len_check
 	FROM DHN_RESULT drr 
-	WHERE send_group = '` + group_no + `'
-	  and  result = 'O'
-	`
+	WHERE send_group = '` + group_no + `'`
 
 	resrows, err := db.Query(resquery)
 

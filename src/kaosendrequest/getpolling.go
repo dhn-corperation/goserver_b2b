@@ -5,10 +5,10 @@ import (
 	//"database/sql"
 	"encoding/json"
 	"fmt"
-	kakao "mycs/src/kakaojson"
-	config "mycs/src/kaoconfig"
+	kakao "kakaojson"
+	config "kaoconfig"
 
-	databasepool "mycs/src/kaodatabasepool"
+	databasepool "kaodatabasepool"
 
 	//"io/ioutil"
 	//"net"
@@ -19,31 +19,20 @@ import (
 	"sync"
 	//"time"
 
-	"github.com/go-resty/resty/v2"
-	"context"
-	"time"
+	"github.com/go-resty/resty"
 )
 
 var polprocCnt int
 
-func PollingProc(ctx context.Context) {
+func PollingProc() {
 	var wg sync.WaitGroup
 
 	for {
-			select {
-				case <- ctx.Done():
-			
-			    config.Stdlog.Println("Polling process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println("Polling process 종료 완료")
-			    return
-			default:	
-				wg.Add(1)
+		wg.Add(1)
 
-				go getPollingProcess(&wg)
+		go getPollingProcess(&wg)
 
-				wg.Wait()
-			}
+		wg.Wait()
 	}
 }
 
