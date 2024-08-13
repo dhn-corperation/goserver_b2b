@@ -1822,60 +1822,25 @@ func Sender_modified(c *gin.Context) {
 func Template_request_with_file(c *gin.Context) {
 	conf := config.Conf
 
-	file, err := c.FormFile("attachment")
-	if err != nil {
-		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-		return
-	}
-
-	extension := filepath.Ext(file.Filename)
-	newFileName := uuid.New().String() + extension
-
-	err = c.SaveUploadedFile(file, config.BasePath+"upload/"+newFileName)
-	if err != nil {
-		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-		return
-	}
-
 	param := map[string]io.Reader{
-		"attachment":    mustOpen(config.BasePath + "upload/" + newFileName),
 		"senderKey":     strings.NewReader(c.PostForm("senderKey")),
 		"templateCode":  strings.NewReader(c.PostForm("templateCode")),
 		"senderKeyType": strings.NewReader(c.PostForm("senderKeyType")),
 		"comment":       strings.NewReader(c.PostForm("comment")),
 	}
 
-	/*
+	file, err := c.FormFile("attachment")
+	if err == nil { {
+		extension := filepath.Ext(file.Filename)
+		newFileName := uuid.New().String() + extension
 
-		var param map[string]io.Reader
-
-		file, err := c.FormFile("attachment")
+		err = c.SaveUploadedFile(file, config.BasePath+"upload/"+newFileName)
 		if err != nil {
-			param = map[string]io.Reader{
-				"senderKey":     strings.NewReader(c.PostForm("senderKey")),
-				"templateCode":  strings.NewReader(c.PostForm("templateCode")),
-				"senderKeyType": strings.NewReader(c.PostForm("senderKeyType")),
-				"comment":       strings.NewReader(c.PostForm("comment")),
-			}
-		} else {
-			extension := filepath.Ext(file.Filename)
-			newFileName := uuid.New().String() + extension
-
-			err = c.SaveUploadedFile(file, config.BasePath+"upload/"+newFileName)
-			if err != nil {
-				c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-				return
-			}
-
-			param = map[string]io.Reader{
-				"attachment":    mustOpen(config.BasePath + "upload/" + newFileName),
-				"senderKey":     strings.NewReader(c.PostForm("senderKey")),
-				"templateCode":  strings.NewReader(c.PostForm("templateCode")),
-				"senderKeyType": strings.NewReader(c.PostForm("senderKeyType")),
-				"comment":       strings.NewReader(c.PostForm("comment")),
-			}
+			c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
+			return
 		}
-	*/
+		param["attachment"] = mustOpen(config.BasePath + "upload/" + newFileName)
+	}
 
 	resp, err := upload(conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/request_with_file", param)
 	if err != nil {

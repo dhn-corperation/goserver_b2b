@@ -161,7 +161,7 @@ func ReqReceive(c *gin.Context) {
 					reqinsValues = append(reqinsValues, msg[i].Msgsms)
 				}
 				reqinsValues = append(reqinsValues, msg[i].Onlysms)
-				if msg[i].Phn != "" {
+				if s.Contains(s.ToLower(msg[i].Crypto), "phn") && msg[i].Phn != "" {
 					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
 				} else {
 					reqinsValues = append(reqinsValues, msg[i].Msgsms)
@@ -242,7 +242,7 @@ func ReqReceive(c *gin.Context) {
 				resinsValues = append(resinsValues, msg[i].Onlysms)
 				resinsValues = append(resinsValues, msg[i].Pcom)
 				resinsValues = append(resinsValues, msg[i].Pinvoice)
-				if msg[i].Phn != "" {
+				if s.Contains(s.ToLower(msg[i].Crypto), "phn") && msg[i].Phn != "" {
 					resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
 				} else {
 					resinsValues = append(resinsValues, msg[i].Phn)
@@ -309,7 +309,7 @@ func ReqReceive(c *gin.Context) {
 					atreqinsValues = append(atreqinsValues, msg[i].Msgsms)
 				}
 				atreqinsValues = append(atreqinsValues, msg[i].Onlysms)
-				if msg[i].Phn != "" {
+				if s.Contains(s.ToLower(msg[i].Crypto), "phn") && msg[i].Phn != "" {
 					atreqinsValues = append(atreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
 				} else {
 					atreqinsValues = append(atreqinsValues, msg[i].Phn)
@@ -390,7 +390,8 @@ func ReqReceive(c *gin.Context) {
 		errlog.Println("발송 메세지 수신 끝 ( ", userid, ") : ", len(msg), startTime)
 
 		c.JSON(200, gin.H{
-			"message": "ok",
+			"code": "success"
+			"message": "발송 요청이 완료되었습니다.",
 		})
 	} else {
 		c.JSON(404, gin.H{
