@@ -2,8 +2,8 @@ package databasepool
 
 import (
 	"database/sql"
+	config "goserver/src/kaoconfig"
 	"log"
-	config "mycs/src/kaoconfig"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -16,7 +16,7 @@ func InitDatabase() {
 		log.Fatal(err)
 	}
 
-	db.SetMaxIdleConns(30)
+	db.SetMaxIdleConns(10)
 	db.SetMaxOpenConns(50)
 
 	DB = db

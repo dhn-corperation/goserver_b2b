@@ -7,8 +7,8 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	config "mycs/src/kaoconfig"
-	databasepool "mycs/src/kaodatabasepool"
+	config "goserver/src/kaoconfig"
+	databasepool "goserver/src/kaodatabasepool"
 
 	//"kaoreqtable"
 
@@ -40,14 +40,14 @@ func Resultreq(c *gin.Context) {
 
 	var use_flag, send_limit sql.NullString
 
-	if val != nil {
+    if val != nil {
 		val.Next()
 		val.Scan(&use_flag, &send_limit)
-
+	
 		if s.EqualFold(use_flag.String, "Y") {
 			isValidation = true
 		}
-	}
+    } 
 	if isValidation {
 
 		db2json := map[string]string{
@@ -95,7 +95,7 @@ func Resultreq(c *gin.Context) {
 			"title":         "title",
 		}
 
-		sqlstr := "select * from DHN_RESULT_PROC where userid = '" + userid + "' and sync='N' and result = 'Y' limit " + send_limit.String
+		sqlstr := "select * from DHN_RESULT where userid = '" + userid + "' and sync='N' and result = 'Y' limit " + send_limit.String
 
 		reqrows, err := db.Query(sqlstr)
 		if err != nil {
@@ -106,38 +106,30 @@ func Resultreq(c *gin.Context) {
 		if err != nil {
 			errlog.Fatal(err)
 		}
-
 		count := len(columnTypes)
-		scanArgs := make([]interface{}, count)
 
 		finalRows := []interface{}{}
 		upmsgids := []interface{}{}
 
 		var isContinue bool
-
-		isFirstRow := true
-
 		for reqrows.Next() {
+			scanArgs := make([]interface{}, count)
 
-			if isFirstRow {
-				errlog.Println("결과 전송 ( ", userid, " ) : 시작 ")
-				for i, v := range columnTypes {
+			for i, v := range columnTypes {
 
-					switch v.DatabaseTypeName() {
-					case "VARCHAR", "TEXT", "UUID", "TIMESTAMP":
-						scanArgs[i] = new(sql.NullString)
-						break
-					case "BOOL":
-						scanArgs[i] = new(sql.NullBool)
-						break
-					case "INT4":
-						scanArgs[i] = new(sql.NullInt64)
-						break
-					default:
-						scanArgs[i] = new(sql.NullString)
-					}
+				switch v.DatabaseTypeName() {
+				case "VARCHAR", "TEXT", "UUID", "TIMESTAMP":
+					scanArgs[i] = new(sql.NullString)
+					break
+				case "BOOL":
+					scanArgs[i] = new(sql.NullBool)
+					break
+				case "INT4":
+					scanArgs[i] = new(sql.NullInt64)
+					break
+				default:
+					scanArgs[i] = new(sql.NullString)
 				}
-				isFirstRow = false
 			}
 
 			err := reqrows.Scan(scanArgs...)
@@ -188,7 +180,7 @@ func Resultreq(c *gin.Context) {
 
 			if len(upmsgids) >= 500 {
 
-				var commastr = "update DHN_RESULT_PROC set sync='Y' where userid = '" + userid + "' and MSGID in ("
+				var commastr = "update DHN_RESULT set sync='Y' where MSGID in ("
 
 				for i := 1; i < len(upmsgids); i++ {
 					commastr = commastr + "?,"
@@ -208,7 +200,7 @@ func Resultreq(c *gin.Context) {
 
 		if len(upmsgids) > 0 {
 
-			var commastr = "update DHN_RESULT_PROC set sync='Y' where userid = '" + userid + "' and MSGID in ("
+			var commastr = "update DHN_RESULT set sync='Y' where MSGID in ("
 
 			for i := 1; i < len(upmsgids); i++ {
 				commastr = commastr + "?,"

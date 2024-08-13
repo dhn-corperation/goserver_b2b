@@ -2,17 +2,16 @@ package kaoreqreceive
 
 import (
 	//"encoding/json"
-	"crypto/aes"
-	"crypto/cipher"
-	"encoding/json"
 	"fmt"
-	config "mycs/src/kaoconfig"
-	databasepool "mycs/src/kaodatabasepool"
-	"mycs/src/kaoreqtable"
-	r "reflect"
+	config "goserver/src/kaoconfig"
+	databasepool "goserver/src/kaodatabasepool"
+	"goserver/src/kaoreqtable"
 	"strconv"
 	s "strings"
 	"time"
+
+	"crypto/aes"
+	"crypto/cipher"
 
 	//"crypto/rand"
 
@@ -20,16 +19,16 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-var SecretKey = "9b4dabe9d4fed126a58f8639846143c7"
+var SecretKey = config.Conf.SECRETKEY
 
 func ReqReceive(c *gin.Context) {
 
 	errlog := config.Stdlog
 
 	userid := c.Request.Header.Get("userid")
-	userip := c.ClientIP()
+	//userip := c.ClientIP()
 	isValidation := false
-	sqlstr := "select count(1) as cnt from DHN_CLIENT_LIST where user_id = '" + userid + "' and ip ='" + userip + "' and use_flag = 'Y'  "
+	sqlstr := "select count(1) as cnt from DHN_CLIENT_LIST where user_id = '" + userid + "' and use_flag = 'Y'  "
 	val, verr := databasepool.DB.Query(sqlstr)
 	if verr != nil {
 		errlog.Println(verr)
@@ -50,16 +49,11 @@ func ReqReceive(c *gin.Context) {
 	errlog.Println("메세지 발송 정보 수신 시작!!", startTime)
 	if isValidation {
 
-		var msg []kaoreqtable.NanoReqTable
-
+		var msg []kaoreqtable.Reqtable
 		err1 := c.ShouldBindJSON(&msg)
 		if err1 != nil {
 			panic(err1)
 		}
-
-		//attjson, _ := json.Marshal(msg)
-		//fmt.Println(string(attjson))
-
 		errlog.Println("발송 메세지 수신 ( ", userid, ") : ", len(msg), startTime)
 		reqinsStrs := []string{}
 		reqinsValues := []interface{}{}
@@ -107,9 +101,7 @@ func ReqReceive(c *gin.Context) {
   header,
   carousel,
   att_items,
-  att_coupon,
-  attachments,
-  user_key
+  att_coupon      
 ) values %s
 	`
 		atreqinsQuery := `insert IGNORE into DHN_REQUEST_AT(
@@ -150,12 +142,7 @@ func ReqReceive(c *gin.Context) {
   currency_type,
   title,
   header,
-  carousel,
-  attachments,
-  user_key,
-  response_method,
-  timeout,
-  link
+  carousel      
 ) values %s
 	`
 
@@ -204,88 +191,25 @@ supplement ,
 price ,
 currency_type,
 header,
-carousel     
-) values %s`
-
-		resinstempquery := `insert IGNORE into DHN_RESULT_TEMP(
-msgid ,
-userid ,
-ad_flag ,
-button1 ,
-button2 ,
-button3 ,
-button4 ,
-button5 ,
-code ,
-image_link ,
-image_url ,
-kind ,
-message ,
-message_type ,
-msg ,
-msg_sms ,
-only_sms ,
-p_com ,
-p_invoice ,
-phn ,
-profile ,
-reg_dt ,
-remark1 ,
-remark2 ,
-remark3 ,
-remark4 ,
-remark5 ,
-res_dt ,
-reserve_dt ,
-result ,
-s_code ,
-sms_kind ,
-sms_lms_tit ,
-sms_sender ,
-sync ,
-tmpl_id ,
-wide ,
-send_group ,
-supplement ,
-price ,
-currency_type,
-header,
-carousel     
+carousel      
 ) values %s`
 
 		//fmt.Printf("%d 건 임.\n", len(msg))
 		for i, _ := range msg {
 			//fmt.Println(msg[i])
-			if s.EqualFold(config.Conf.DEBUG, "Y") {
-				jsonstr, _ := json.Marshal(msg[i])
-				errlog.Println(string(jsonstr))
-			}
-
 			if s.HasPrefix(s.ToUpper(msg[i].Messagetype), "F") {
 
-				reqinsStrs = append(reqinsStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+				reqinsStrs = append(reqinsStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 				reqinsValues = append(reqinsValues, msg[i].Msgid)
 				reqinsValues = append(reqinsValues, userid)
 				reqinsValues = append(reqinsValues, msg[i].Adflag)
-
-				reqinsValues = append(reqinsValues, nil)
-				reqinsValues = append(reqinsValues, nil)
-				reqinsValues = append(reqinsValues, nil)
-				reqinsValues = append(reqinsValues, nil)
-				reqinsValues = append(reqinsValues, nil)
-
-				if !r.ValueOf(msg[i].Attachments).IsZero() && !r.ValueOf(msg[i].Attachments.Image).IsZero() && len(msg[i].Attachments.Image.ImgURL) > 0 {
-					reqinsValues = append(reqinsValues, msg[i].Attachments.Image.ImgURL)
-				} else {
-					reqinsValues = append(reqinsValues, nil)
-				}
-
-				if !r.ValueOf(msg[i].Attachments).IsZero() && !r.ValueOf(msg[i].Attachments.Image).IsZero() && len(msg[i].Attachments.Image.ImgLink) > 0 {
-					reqinsValues = append(reqinsValues, msg[i].Attachments.Image.ImgLink)
-				} else {
-					reqinsValues = append(reqinsValues, nil)
-				}
-
+				reqinsValues = append(reqinsValues, msg[i].Button1)
+				reqinsValues = append(reqinsValues, msg[i].Button2)
+				reqinsValues = append(reqinsValues, msg[i].Button3)
+				reqinsValues = append(reqinsValues, msg[i].Button4)
+				reqinsValues = append(reqinsValues, msg[i].Button5)
+				reqinsValues = append(reqinsValues, msg[i].Imagelink)
+				reqinsValues = append(reqinsValues, msg[i].Imageurl)
 				reqinsValues = append(reqinsValues, msg[i].Messagetype)
 				reqinsValues = append(reqinsValues, msg[i].Msg)
 				reqinsValues = append(reqinsValues, msg[i].Msgsms)
@@ -306,45 +230,25 @@ carousel
 				reqinsValues = append(reqinsValues, msg[i].Smssender)
 				reqinsValues = append(reqinsValues, msg[i].Scode)
 				reqinsValues = append(reqinsValues, msg[i].Tmplid)
-
-				if !r.ValueOf(msg[i].Attachments).IsZero() && !r.ValueOf(msg[i].Attachments.Extra).IsZero() && len(msg[i].Attachments.Extra.Wide) > 0 {
-					reqinsValues = append(reqinsValues, msg[i].Attachments.Extra.Wide)
+				reqinsValues = append(reqinsValues, msg[i].Wide)
+				reqinsValues = append(reqinsValues, nil)
+				reqinsValues = append(reqinsValues, msg[i].Supplement)
+				if len(msg[i].Price) > 0 {
+					price, _ := strconv.Atoi(msg[i].Price)
+					reqinsValues = append(reqinsValues, price)
 				} else {
 					reqinsValues = append(reqinsValues, nil)
 				}
 
-				reqinsValues = append(reqinsValues, nil)
-				reqinsValues = append(reqinsValues, nil)
-				reqinsValues = append(reqinsValues, nil)
-
-				reqinsValues = append(reqinsValues, nil)
-				reqinsValues = append(reqinsValues, nil)
-
-				if !r.ValueOf(msg[i].Attachments).IsZero() && !r.ValueOf(msg[i].Attachments.Extra).IsZero() && len(msg[i].Attachments.Extra.Header) > 0 {
-					reqinsValues = append(reqinsValues, msg[i].Attachments.Extra.Header)
-				} else {
-					reqinsValues = append(reqinsValues, nil)
-				}
-
+				reqinsValues = append(reqinsValues, msg[i].Currencytype)
+				reqinsValues = append(reqinsValues, msg[i].Title)
+				reqinsValues = append(reqinsValues, msg[i].Header)
 				reqinsValues = append(reqinsValues, msg[i].Carousel)
-
 				reqinsValues = append(reqinsValues, msg[i].Att_items)
 				reqinsValues = append(reqinsValues, msg[i].Att_coupon)
-				if !r.ValueOf(msg[i].Attachments).IsZero() {
-					attjson, _ := json.Marshal(msg[i].Attachments)
-					reqinsValues = append(reqinsValues, string(attjson))
-				} else {
-					reqinsValues = append(reqinsValues, nil)
-				}
-
-				reqinsValues = append(reqinsValues, msg[i].Userkey)
-			} else if s.EqualFold(msg[i].Messagetype, "PH") || s.EqualFold(msg[i].Messagetype, "OT") {
+			} else if s.EqualFold(msg[i].Messagetype, "PH") {
 				//fmt.Println(msg[i])
 				var resdt = time.Now()
-				resultStr := "P"
-				if s.EqualFold(msg[i].Messagetype, "OT") {
-					resultStr = "O"
-				}
 				var resdtstr = fmt.Sprintf("%4d-%02d-%02d %02d:%02d:%02d", resdt.Year(), resdt.Month(), resdt.Day(), resdt.Hour(), resdt.Minute(), resdt.Second())
 				resinsStrs = append(resinsStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 				resinsValues = append(resinsValues, msg[i].Msgid)
@@ -396,7 +300,7 @@ carousel
 				resinsValues = append(resinsValues, msg[i].Remark5)
 				resinsValues = append(resinsValues, resdtstr) // res_dt
 				resinsValues = append(resinsValues, msg[i].Reservedt)
-				resinsValues = append(resinsValues, resultStr) // sms_kind 가 SMS / LMS / MMS / OTP 이면 문자 발송 시도
+				resinsValues = append(resinsValues, "P") // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
 				resinsValues = append(resinsValues, msg[i].Scode)
 				resinsValues = append(resinsValues, msg[i].Smskind)
 
@@ -423,29 +327,20 @@ carousel
 
 			} else {
 
-				atreqinsStrs = append(atreqinsStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+				atreqinsStrs = append(atreqinsStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 				atreqinsValues = append(atreqinsValues, msg[i].Msgid)
 				atreqinsValues = append(atreqinsValues, userid)
 				atreqinsValues = append(atreqinsValues, msg[i].Adflag)
-
-				atreqinsValues = append(atreqinsValues, nil)
-				atreqinsValues = append(atreqinsValues, nil)
-				atreqinsValues = append(atreqinsValues, nil)
-				atreqinsValues = append(atreqinsValues, nil)
-				atreqinsValues = append(atreqinsValues, nil)
-
+				atreqinsValues = append(atreqinsValues, msg[i].Button1)
+				atreqinsValues = append(atreqinsValues, msg[i].Button2)
+				atreqinsValues = append(atreqinsValues, msg[i].Button3)
+				atreqinsValues = append(atreqinsValues, msg[i].Button4)
+				atreqinsValues = append(atreqinsValues, msg[i].Button5)
 				atreqinsValues = append(atreqinsValues, msg[i].Imagelink)
 				atreqinsValues = append(atreqinsValues, msg[i].Imageurl)
-
-				// Extra -> msg_type : ai
-				if !r.ValueOf(msg[i].Attachments).IsZero() && !r.ValueOf(msg[i].Attachments.Extra).IsZero() && len(msg[i].Attachments.Extra.MsgType) > 0 {
-					atreqinsValues = append(atreqinsValues, s.ToUpper(msg[i].Attachments.Extra.MsgType))
-				} else {
-					atreqinsValues = append(atreqinsValues, msg[i].Messagetype)
-				}
-
-				atreqinsValues = append(atreqinsValues, string(msg[i].Msg))
-				atreqinsValues = append(atreqinsValues, string(msg[i].Msgsms))
+				atreqinsValues = append(atreqinsValues, msg[i].Messagetype)
+				atreqinsValues = append(atreqinsValues, msg[i].Msg)
+				atreqinsValues = append(atreqinsValues, msg[i].Msgsms)
 				atreqinsValues = append(atreqinsValues, msg[i].Onlysms)
 				atreqinsValues = append(atreqinsValues, msg[i].Phn)
 				atreqinsValues = append(atreqinsValues, msg[i].Profile)
@@ -456,7 +351,7 @@ carousel
 				atreqinsValues = append(atreqinsValues, msg[i].Remark2)
 				atreqinsValues = append(atreqinsValues, msg[i].Remark3)
 				atreqinsValues = append(atreqinsValues, msg[i].Remark4)
-				atreqinsValues = append(atreqinsValues, msg[i].ResponseMethod)
+				atreqinsValues = append(atreqinsValues, msg[i].Remark5)
 				atreqinsValues = append(atreqinsValues, msg[i].Reservedt)
 				atreqinsValues = append(atreqinsValues, msg[i].Smskind)
 				atreqinsValues = append(atreqinsValues, msg[i].Smslmstit)
@@ -465,49 +360,19 @@ carousel
 				atreqinsValues = append(atreqinsValues, msg[i].Tmplid)
 				atreqinsValues = append(atreqinsValues, msg[i].Wide)
 				atreqinsValues = append(atreqinsValues, nil)
+				atreqinsValues = append(atreqinsValues, msg[i].Supplement)
 
-				if !r.ValueOf(msg[i].Attachments).IsZero() && !r.ValueOf(msg[i].Attachments.Extra).IsZero() && !r.ValueOf(msg[i].Attachments.Extra.Supplement).IsZero() {
-					supp, _ := json.Marshal(msg[i].Attachments.Extra.Supplement)
-					atreqinsValues = append(atreqinsValues, string(supp))
+				if len(msg[i].Price) > 0 {
+					price, _ := strconv.Atoi(msg[i].Price)
+					atreqinsValues = append(atreqinsValues, price)
 				} else {
 					atreqinsValues = append(atreqinsValues, nil)
 				}
 
-				if !r.ValueOf(msg[i].Attachments).IsZero() && !r.ValueOf(msg[i].Attachments.Extra).IsZero() && msg[i].Attachments.Extra.Price > 0 {
-					atreqinsValues = append(atreqinsValues, msg[i].Attachments.Extra.Price)
-				} else {
-					atreqinsValues = append(atreqinsValues, nil)
-				}
-
-				if !r.ValueOf(msg[i].Attachments).IsZero() && !r.ValueOf(msg[i].Attachments.Extra).IsZero() {
-					atreqinsValues = append(atreqinsValues, msg[i].Attachments.Extra.CurrencyType)
-					atreqinsValues = append(atreqinsValues, msg[i].Attachments.Extra.Title)
-					atreqinsValues = append(atreqinsValues, msg[i].Attachments.Extra.Header)
-				} else {
-					atreqinsValues = append(atreqinsValues, nil)
-					atreqinsValues = append(atreqinsValues, nil)
-					atreqinsValues = append(atreqinsValues, nil)
-				}
-
-				atreqinsValues = append(atreqinsValues, nil)
-
-				if !r.ValueOf(msg[i].Attachments).IsZero() {
-					attjson, _ := json.Marshal(msg[i].Attachments)
-					atreqinsValues = append(atreqinsValues, string(attjson))
-				} else {
-					atreqinsValues = append(atreqinsValues, nil)
-				}
-
-				atreqinsValues = append(atreqinsValues, msg[i].Userkey)
-				atreqinsValues = append(atreqinsValues, msg[i].ResponseMethod)
-				atreqinsValues = append(atreqinsValues, msg[i].Timeout)
-
-				if !r.ValueOf(msg[i].Attachments).IsZero() && !r.ValueOf(msg[i].Attachments.Extra).IsZero() && !r.ValueOf(msg[i].Attachments.Extra.Link).IsZero() {
-					link, _ := json.Marshal(msg[i].Attachments.Extra.Link)
-					atreqinsValues = append(atreqinsValues, string(link))
-				} else {
-					atreqinsValues = append(atreqinsValues, nil)
-				}
+				atreqinsValues = append(atreqinsValues, msg[i].Currencytype)
+				atreqinsValues = append(atreqinsValues, msg[i].Title)
+				atreqinsValues = append(atreqinsValues, msg[i].Header)
+				atreqinsValues = append(atreqinsValues, msg[i].Carousel)
 			}
 			if len(reqinsStrs) >= 500 {
 				stmt := fmt.Sprintf(reqinsQuery, s.Join(reqinsStrs, ","))
@@ -540,12 +405,6 @@ carousel
 
 				if err != nil {
 					config.Stdlog.Println("Result Table Insert 처리 중 오류 발생 " + err.Error())
-					config.Stdlog.Println("Result Temp Table Insert 시작")
-					stmtt := fmt.Sprintf(resinstempquery, s.Join(resinsStrs, ","))
-					_, errt := databasepool.DB.Exec(stmtt, resinsValues...)
-					if errt != nil {
-						config.Stdlog.Println("Result Temp Table Insert 처리 중 오류 발생 " + err.Error())
-					}
 				}
 
 				resinsStrs = nil
@@ -586,12 +445,6 @@ carousel
 
 			if err != nil {
 				config.Stdlog.Println("Result Table Insert 처리 중 오류 발생 " + err.Error())
-				config.Stdlog.Println("Result Temp Table Insert 시작")
-				stmtt := fmt.Sprintf(resinstempquery, s.Join(resinsStrs, ","))
-				_, errt := databasepool.DB.Exec(stmtt, resinsValues...)
-				if errt != nil {
-					config.Stdlog.Println("Result Temp Table Insert 처리 중 오류 발생 " + err.Error())
-				}
 			}
 
 			resinsStrs = nil
@@ -604,10 +457,7 @@ carousel
 		})
 	} else {
 		c.JSON(404, gin.H{
-			"code":    "error",
-			"message": "허용되지 않은 사용자 입니다",
-			"userid":  userid,
-			"ip":      userip,
+			"message": "허용되지 않은 사용자 입니다.",
 		})
 	}
 }

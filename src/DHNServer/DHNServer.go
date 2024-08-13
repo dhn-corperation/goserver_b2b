@@ -8,15 +8,14 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	config "mycs/src/kaoconfig"
-	databasepool "mycs/src/kaodatabasepool"
+	config "goserver/src/kaoconfig"
+	databasepool "goserver/src/kaodatabasepool"
 
 	//"kaoreqreceive"
 
 	//"kaocenter"
-	"mycs/src/kaosendrequest"
-	"mycs/src/oshotproc"
-	"mycs/src/otpproc"
+	"goserver/src/kaosendrequest"
+	"goserver/src/oshotproc"
 
 	//"strconv"
 	//"time"
@@ -26,11 +25,11 @@ import (
 )
 
 const (
-	name        = "DHNNanoServer"
+	name        = "DHNServer"
 	description = "대형네트웍스 카카오 발송 서버"
 )
 
-var dependencies = []string{"DHNNanoServer.service"}
+var dependencies = []string{"DHNServer.service"}
 
 var resultTable string
 
@@ -40,7 +39,7 @@ type Service struct {
 
 func (service *Service) Manage() (string, error) {
 
-	usage := "Usage: DHNNanoServer install | remove | start | stop | status"
+	usage := "Usage: DHNServer install | remove | start | stop | status"
 
 	if len(os.Args) > 1 {
 		command := os.Args[1]
@@ -136,15 +135,6 @@ func resultProc() {
 
 		go oshotproc.SMSProcess()
 	}
-
-	if s.EqualFold(config.Conf.OTP_MSG_FLAG, "YES") {
-		go otpproc.OTPProcess()
-
-		go otpproc.OTPLMSProcess()
-
-		go otpproc.OTPSMSProcess()
-	}
-
 	/*
 		r := gin.New()
 		r.Use(gin.Recovery())
