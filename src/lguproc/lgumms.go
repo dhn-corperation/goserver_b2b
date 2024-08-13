@@ -131,7 +131,7 @@ func pre_mmsProcess(wg *sync.WaitGroup) {
 	var t = time.Now().Add(time.Hour * -96)
 	var monthStr = fmt.Sprintf("%d%02d", t.Year(), t.Month())
 
-	var MMSTable = "MMS_LOG_" + monthStr
+	var MMSTable = "LG_MMS_LOG_" + monthStr
 
 	//발송 6시간 지난 메세지는 응답과 상관 없이 성공 처리 함.
 	db.Exec("update LG_MMS_MSG set STATUS='3', RSLT='9018', RSLTDATE=now() where REQDATE < DATE_SUB(now(), INTERVAL 6 HOUR)")
