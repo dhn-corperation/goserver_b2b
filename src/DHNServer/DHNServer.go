@@ -8,15 +8,16 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	config "kaoconfig"
-	databasepool "kaodatabasepool"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 
 	//"kaoreqreceive"
 
 	//"kaocenter"
-	"kaosendrequest"
-	"oshotproc"
-	"otpproc"
+	"mycs/src/kaosendrequest"
+	"mycs/src/oshotproc"
+	"mycs/src/otpproc"
+
 	//"strconv"
 	//"time"
 	s "strings"
@@ -81,26 +82,26 @@ func main() {
 	config.InitConfig()
 
 	databasepool.InitDatabase()
-	
+
 	var rLimit syscall.Rlimit
-	
+
 	rLimit.Max = 50000
-    rLimit.Cur = 50000
-    
-    err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-    
-    if err != nil {
-        config.Stdlog.Println("Error Setting Rlimit ", err)
-    }
-    
-    err = syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-    
-    if err != nil {
-        config.Stdlog.Println("Error Getting Rlimit ", err)
-    }
-    
-    config.Stdlog.Println("Rlimit Final", rLimit)
-    
+	rLimit.Cur = 50000
+
+	err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+
+	if err != nil {
+		config.Stdlog.Println("Error Setting Rlimit ", err)
+	}
+
+	err = syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+
+	if err != nil {
+		config.Stdlog.Println("Error Getting Rlimit ", err)
+	}
+
+	config.Stdlog.Println("Rlimit Final", rLimit)
+
 	srv, err := daemon.New(name, description, daemon.SystemDaemon, dependencies...)
 	if err != nil {
 		config.Stdlog.Println("Error: ", err)
@@ -122,28 +123,28 @@ func resultProc() {
 
 	go kaosendrequest.FriendtalkProc()
 
-	if  s.EqualFold(config.Conf.RESPONSE_METHOD, "polling") {
+	if s.EqualFold(config.Conf.RESPONSE_METHOD, "polling") {
 		go kaosendrequest.PollingProc()
 	}
 
 	go kaosendrequest.ResultProc()
-	
+
 	if s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
 		go oshotproc.OshotProcess()
-	
+
 		go oshotproc.LMSProcess()
-		
+
 		go oshotproc.SMSProcess()
 	}
-	
+
 	if s.EqualFold(config.Conf.OTP_MSG_FLAG, "YES") {
 		go otpproc.OTPProcess()
-	
+
 		go otpproc.OTPLMSProcess()
-		
+
 		go otpproc.OTPSMSProcess()
 	}
-	
+
 	/*
 		r := gin.New()
 		r.Use(gin.Recovery())

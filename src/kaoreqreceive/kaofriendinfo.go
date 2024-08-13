@@ -7,8 +7,8 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	config "kaoconfig"
-	databasepool "kaodatabasepool"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 
 	//"kaoreqtable"
 
@@ -151,21 +151,21 @@ func FriendInforeq(c *gin.Context) {
 
 		if len(upids) > 0 {
 
-				var commastr = "update sw_talk_link set partner_send_yn='Y', partner_send_dt = now() where tl_id in ("
+			var commastr = "update sw_talk_link set partner_send_yn='Y', partner_send_dt = now() where tl_id in ("
 
-				for i := 1; i < len(upids); i++ {
-					commastr = commastr + "?,"
-				}
+			for i := 1; i < len(upids); i++ {
+				commastr = commastr + "?,"
+			}
 
-				commastr = commastr + "?)"
+			commastr = commastr + "?)"
 
-				_, err1 := db.Exec(commastr, upids...)
+			_, err1 := db.Exec(commastr, upids...)
 
-				if err1 != nil {
-					errlog.Println("Friend Infor Table Update 처리 중 오류 발생 ")
-				}
+			if err1 != nil {
+				errlog.Println("Friend Infor Table Update 처리 중 오류 발생 ")
+			}
 
-				upids = nil
+			upids = nil
 		}
 		if len(finalRows) > 0 {
 			errlog.Println("결과 전송 ( ", userid, " ) : ", len(finalRows))

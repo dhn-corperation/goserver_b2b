@@ -2,8 +2,8 @@ package kaoreqreceive
 
 import (
 	"fmt"
-	config "kaoconfig"
-	databasepool "kaodatabasepool"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 
 	"time"
 )
@@ -17,10 +17,10 @@ func TempCopyProc() {
 		} else {
 			if count > 0 {
 				var startNow = time.Now()
-				var group_no = fmt.Sprintf("%02d%02d%02d%02d%06d", startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), (startNow.Nanosecond()/1000))
-				
+				var group_no = fmt.Sprintf("%02d%02d%02d%02d%06d", startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), (startNow.Nanosecond() / 1000))
+
 				databasepool.DB.Exec("update DHN_RESULT_TEMP set send_group = '" + group_no + "' where   send_group is null limit 1000")
-			
+
 				copyQuery := `INSERT INTO DHN_RESULT
 select msgid
       ,userid
@@ -70,12 +70,12 @@ from DHN_RESULT_TEMP
 where send_group = '` + group_no + `'`
 				_, err := databasepool.DB.Exec(copyQuery)
 				if err != nil {
-					config.Stdlog.Println("DHN_RESULT_TEMP -> DHN_RESULT 이전 오류 : ", group_no, " => " , err.Error())
+					config.Stdlog.Println("DHN_RESULT_TEMP -> DHN_RESULT 이전 오류 : ", group_no, " => ", err.Error())
 				}
 				config.Stdlog.Println("DHN_RESULT_TEMP -> DHN_RESULT 이전 완료 : ", group_no)
 			}
 		}
-	
+
 		time.Sleep(time.Millisecond * time.Duration(10000))
 	}
 }

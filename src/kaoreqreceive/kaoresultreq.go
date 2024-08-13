@@ -7,8 +7,8 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	config "kaoconfig"
-	databasepool "kaodatabasepool"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 
 	//"kaoreqtable"
 
@@ -40,14 +40,14 @@ func Resultreq(c *gin.Context) {
 
 	var use_flag, send_limit sql.NullString
 
-    if val != nil {
+	if val != nil {
 		val.Next()
 		val.Scan(&use_flag, &send_limit)
-	
+
 		if s.EqualFold(use_flag.String, "Y") {
 			isValidation = true
 		}
-    } 
+	}
 	if isValidation {
 
 		db2json := map[string]string{
@@ -106,23 +106,23 @@ func Resultreq(c *gin.Context) {
 		if err != nil {
 			errlog.Fatal(err)
 		}
-		
+
 		count := len(columnTypes)
 		scanArgs := make([]interface{}, count)
-		
+
 		finalRows := []interface{}{}
 		upmsgids := []interface{}{}
 
 		var isContinue bool
-		
+
 		isFirstRow := true
-		
+
 		for reqrows.Next() {
-			
+
 			if isFirstRow {
-				errlog.Println("결과 전송 ( ", userid, " ) : 시작 " )
+				errlog.Println("결과 전송 ( ", userid, " ) : 시작 ")
 				for i, v := range columnTypes {
-	
+
 					switch v.DatabaseTypeName() {
 					case "VARCHAR", "TEXT", "UUID", "TIMESTAMP":
 						scanArgs[i] = new(sql.NullString)
@@ -137,7 +137,7 @@ func Resultreq(c *gin.Context) {
 						scanArgs[i] = new(sql.NullString)
 					}
 				}
-				isFirstRow = false				
+				isFirstRow = false
 			}
 
 			err := reqrows.Scan(scanArgs...)

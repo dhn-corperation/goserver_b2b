@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	kakao "kakaoatjson"
-	config "kaoconfig"
-	databasepool "kaodatabasepool"
+	kakao "mycs/src/kakaoatjson"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 
 	//"io/ioutil"
 	//	"net"
@@ -268,8 +268,6 @@ attachments) values %s`
 				alimtalk.Response_method = "realtime"
 			}
 		}
-
-
 
 		if s.EqualFold(alimtalk.Response_method, "polling") {
 			alimtalk.Channel_key = conf.CHANNEL
