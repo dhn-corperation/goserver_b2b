@@ -223,7 +223,15 @@ func SearchResultReq(c *gin.Context) {
 
 		if len(finalRows) > 0 {
 			errlog.Println("결과 전송 ( ", userid, " ) : ", len(finalRows))
-			//errlog.Println(finalRows)
+			
+			var commastr = "update DHN_RESULT_PROC set sync='Y' where userid = '" + userid + "' and msgid in (?)"
+
+			_, err := db.Exec(commastr, msgids)
+
+			if err != nil {
+				errlog.Println("searchResult Table Update 처리 중 오류 발생 ")
+			}
+
 		}
 		c.JSON(200, finalRows)
 	} else {
