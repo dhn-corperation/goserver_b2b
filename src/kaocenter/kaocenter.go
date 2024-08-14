@@ -1325,7 +1325,7 @@ func MMS_Image(c *gin.Context) {
 		})
 	} else {
 		c.JSON(600, gin.H{
-			"message":"Error",
+			"message":"no content",
 		})
 	}
 }
