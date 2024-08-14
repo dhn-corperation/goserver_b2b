@@ -1321,10 +1321,10 @@ func MMS_Image(c *gin.Context) {
 		} 
 
 		c.JSON(http.StatusOK, gin.H{
-			"image group":group_no,
+			"image_group":group_no,
 		})
 	} else {
-		c.JSON(http.StatusOK, gin.H{
+		c.JSON(600, gin.H{
 			"message":"Error",
 		})
 	}
