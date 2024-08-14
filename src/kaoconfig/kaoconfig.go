@@ -25,9 +25,9 @@ type Config struct {
 	CHANNEL          string
 	RESPONSE_METHOD  string
 	SENDLIMIT        int
-	OTP_MSG_FLAG     string
 	DEBUG            string
 	KISA_CODE        string
+	IS_OTP			 string
 }
 
 var Conf Config

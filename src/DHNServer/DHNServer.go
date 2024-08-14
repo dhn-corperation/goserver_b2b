@@ -15,9 +15,10 @@ import (
 	"mycs/src/kaosendrequest"
 	"mycs/src/nanoproc"
 	"mycs/src/oshotproc"
-	"mycs/src/otpproc"
 	"mycs/src/ktproc"
 	"mycs/src/lguproc"
+	"mycs/src/otplguproc"
+	"mycs/src/otpnanoproc"
 
 	"strconv"
 	s "strings"
@@ -412,51 +413,89 @@ func resultProc() {
 	allCtxC["lgusms"] = lscancel
 	allService["lgusms"] = "LGU SMS"
 
+	//OTP 영역 시작
 
-	if s.EqualFold(config.Conf.OTP_MSG_FLAG, "YES") {
-		otpctx, otpcancel := context.WithCancel(context.Background())
-		go otpproc.OTPProcess(otpctx)
-		allCtxC["otpproc"] = otpcancel
-		allService["otpproc"] = "OTP Proc"
 
-		otplctx, otplcancel := context.WithCancel(context.Background())
-		go otpproc.OTPLMSProcess(otplctx)
-		allCtxC["otplms"] = otplcancel
-		allService["otplms"] = "OTP LMS"
+	otpLguUser := map[string]string{}
+	otpLguCtxC := map[string]interface{}{}
+	otpNanoUser := map[string]string{}
+	otpNanoCtxC := map[string]interface{}{}
 
-		otpsctx, otpscancel := context.WithCancel(context.Background())
-		go otpproc.OTPSMSProcess(otpsctx)
-		allCtxC["otpsms"] = otpscancel
-		allService["otpsms"] = "OTP SMS"
+
+	if s.EqualFold(config.Conf.IS_OTP, "Y") {
+		ctx, cancel := context.WithCancel(context.Background())
+		go otplguproc.LguProcess(ctx)
+
+		otpLguUser["OTPLGU"] = "OTPLGU"
+		otpLguCtxC["OTPLGU"] = cancel
+
+		allCtxC["OTPLGU"] = cancel
+		allService["OTPLGU"] = "OTPLGU"
+
+		ctx, cancel = context.WithCancel(context.Background())
+		go otpnanoproc.NanoProcess(ctx)
+
+		otpNanoUser["OTPNANO"] = "OTPNANO"
+		otpNanoCtxC["OTPNANO"] = cancel
+
+		allCtxC["OTPNANO"] = cancel
+		allService["OTPNANO"] = "OTPNANO"
 	}
+
+	ollctx, ollcancel := context.WithCancel(context.Background())
+	go otplguproc.LMSProcess(ollctx)
+	allCtxC["otplgulms"] = ollcancel
+	allService["otplgulms"] = "LGU OTP LMS"
+
+	olsctx, olscancel := context.WithCancel(context.Background())
+	go otplguproc.SMSProcess(olsctx)
+	allCtxC["otplgusms"] = olscancel
+	allService["otplgusms"] = "LGU OTP SMS"
+
+	onlctx, onlcancel := context.WithCancel(context.Background())
+	go otpnanoproc.LMSProcess(onlctx)
+	allCtxC["otpnanolms"] = onlcancel
+	allService["otpnanolms"] = "NANO OTP LMS"
+
+	onsctx, onscancel := context.WithCancel(context.Background())
+	go otpnanoproc.SMSProcess(onsctx)
+	allCtxC["otpnanosms"] = onscancel
+	allService["otpnanosms"] = "NANO OTP SMS"
+
+	//OTP 영역 종료
+
 
 	r := gin.New()
 	r.Use(gin.Recovery())
 	//r := gin.Default()
 	serCmd := `DHN Server 
 Command :
-/astop?uid=dhn   -> dhn Alimtalk process stop.
-/arun?uid=dhn    -> dhn Alimtalk process run.
-/alist           -> 실행 중인 Alimtalk process User List.
+/astop?uid=dhn   	 -> dhn Alimtalk process stop.
+/arun?uid=dhn    	 -> dhn Alimtalk process run.
+/alist           	 -> 실행 중인 Alimtalk process User List.
 
-/ostop?uid=dhn   -> dhn Oshot process stop.
-/orun?uid=dhn    -> dhn Oshot process run.
-/olist           -> 실행 중인 Oshot process User List.
+/ostop?uid=dhn   	 -> dhn Oshot process stop.
+/orun?uid=dhn    	 -> dhn Oshot process run.
+/olist           	 -> 실행 중인 Oshot process User List.
 
-/nstop?uid=dhn   -> dhn Nano process stop.
-/nrun?uid=dhn    -> dhn Nano process run.
-/nlist           -> 실행 중인 Nano process User List.
+/nstop?uid=dhn   	 -> dhn Nano process stop.
+/nrun?uid=dhn        -> dhn Nano process run.
+/nlist               -> 실행 중인 Nano process User List.
 
 /kstop?uid=dhn       -> dhn KTXRO process stop.
 /krun?uid=dhn&acc=0  -> dhn KTXRO process run.
 /klist               -> 실행 중인 KTXRO process User List.
 
-/lgstop?uid=dhn   -> dhn Lgu process stop.
-/lgrun?uid=dhn    -> dhn Lgu process run.
-/lglist           -> 실행 중인 Lgu process User List.
+/lgstop?uid=dhn   	 -> dhn Lgu process stop.
+/lgrun?uid=dhn   	 -> dhn Lgu process run.
+/lglist           	 -> 실행 중인 Lgu process User List.
 
-/all             -> DHNServer process list
-/allstop         -> DHNServer process stop
+/otpstop?uid=XXX  	 -> dhn OTP process stop.
+/otprun?uid=XXX   	 -> dhn OTP process run.
+/otplist          	 -> 실행 중인 OTP process User List.
+
+/all             	 -> DHNServer process list
+/allstop         	 -> DHNServer process stop
 `
 	r.GET("/", func(c *gin.Context) {
 		c.String(200, serCmd)
@@ -801,6 +840,83 @@ Command :
 		var key string
 		for k := range lguUser {
 			key = key + k + "\n"
+		}
+		c.String(200, key)
+	})
+
+	r.GET("/otpstop", func(c *gin.Context) {
+		var uid string
+		uid = c.Query("uid")
+		if uid == "dhn" {
+			temp := otpLguCtxC["OTPLGU"]
+			if temp != nil {
+				cancel := otpLguCtxC["OTPLGU"].(context.CancelFunc)
+				cancel()
+				delete(otpLguCtxC, "OTPLGU")
+				delete(otpLguUser, "OTPLGU")
+
+				delete(allService, "OTPLGU")
+				delete(allCtxC, "OTPLGU")
+
+				cancel2 := otpNanoCtxC["OTPNANO"].(context.CancelFunc)
+				cancel2()
+				delete(otpLguCtxC, "OTPNANO")
+				delete(otpLguUser, "OTPNANO")
+
+				delete(allService, "OTPNANO")
+				delete(allCtxC, "OTPNANO")
+
+			} else {
+				c.String(200, "OTP 는 실행 중이지 않습니다.")
+			}
+			c.String(200, "OTP 종료 신호 전달 완료")
+		} else {
+			c.String(200, "OTP 종료 불가")
+		}
+		
+	})
+
+	r.GET("/otprun", func(c *gin.Context) {
+		var uid string
+		uid = c.Query("uid")
+		if uid == "dhn" {
+				temp := otpLguCtxC["OTPLGU"]
+			if temp != nil {
+				c.String(200, "OTP 이미 실행 중입니다.")
+			} else {
+				ctx, cancel := context.WithCancel(context.Background())
+				go otplguproc.LguProcess(ctx)
+
+				otpLguCtxC["OTPLGU"] = cancel
+				otpLguUser["OTPLGU"] = "OTPLGU"
+
+				allCtxC["OTPLGU"] = cancel
+				allService["OTPLGU"] = "OTPLGU"
+
+				ctx, cancel = context.WithCancel(context.Background())
+				go otpnanoproc.NanoProcess(ctx)
+
+				otpNanoCtxC["OTPNANO"] = cancel
+				otpNanoUser["OTPNANO"] = "OTPNANO"
+
+				allCtxC["OTPNANO"] = cancel
+				allService["OTPNANO"] = "OTPNANO"
+
+				c.String(200, "OTP 시작 신호 전달 완료")
+			}
+		} else {
+			c.String(200, "OTP 시작 불가")
+		}
+	})
+
+	r.GET("/otplist", func(c *gin.Context) {
+		var key string
+		for k := range otpLguUser {
+			key = key + k + "\n"
+		}
+
+		for l := range otpNanoUser {
+			key = key + l + "\n"
 		}
 		c.String(200, key)
 	})
