@@ -431,15 +431,6 @@ func resultProc() {
 
 		allCtxC["OTPLGU"] = cancel
 		allService["OTPLGU"] = "OTPLGU"
-
-		ctx, cancel = context.WithCancel(context.Background())
-		go otpnanoproc.NanoProcess(ctx)
-
-		otpNanoUser["OTPNANO"] = "OTPNANO"
-		otpNanoCtxC["OTPNANO"] = cancel
-
-		allCtxC["OTPNANO"] = cancel
-		allService["OTPNANO"] = "OTPNANO"
 	}
 
 	ollctx, ollcancel := context.WithCancel(context.Background())
@@ -844,31 +835,33 @@ Command :
 		c.String(200, key)
 	})
 
+	 otpstop := func() {
+		temp := otpLguCtxC["OTPLGU"]
+		if temp != nil {
+			cancel := otpLguCtxC["OTPLGU"].(context.CancelFunc)
+			cancel()
+			delete(otpLguCtxC, "OTPLGU")
+			delete(otpLguUser, "OTPLGU")
+
+			delete(allService, "OTPLGU")
+			delete(allCtxC, "OTPLGU")
+		}
+		temp = otpNanoCtxC["OTPNANO"]
+		if temp != nil {
+			cancel := otpNanoCtxC["OTPNANO"].(context.CancelFunc)
+			cancel()
+			delete(otpLguCtxC, "OTPNANO")
+			delete(otpLguUser, "OTPNANO")
+
+			delete(allService, "OTPNANO")
+			delete(allCtxC, "OTPNANO")
+		}
+	}
+
 	r.GET("/otpstop", func(c *gin.Context) {
-		var uid string
-		uid = c.Query("uid")
+		uid := c.Query("uid")
 		if uid == "dhn" {
-			temp := otpLguCtxC["OTPLGU"]
-			if temp != nil {
-				cancel := otpLguCtxC["OTPLGU"].(context.CancelFunc)
-				cancel()
-				delete(otpLguCtxC, "OTPLGU")
-				delete(otpLguUser, "OTPLGU")
-
-				delete(allService, "OTPLGU")
-				delete(allCtxC, "OTPLGU")
-
-				cancel2 := otpNanoCtxC["OTPNANO"].(context.CancelFunc)
-				cancel2()
-				delete(otpLguCtxC, "OTPNANO")
-				delete(otpLguUser, "OTPNANO")
-
-				delete(allService, "OTPNANO")
-				delete(allCtxC, "OTPNANO")
-
-			} else {
-				c.String(200, "OTP 는 실행 중이지 않습니다.")
-			}
+			otpstop()
 			c.String(200, "OTP 종료 신호 전달 완료")
 		} else {
 			c.String(200, "OTP 종료 불가")
@@ -877,13 +870,12 @@ Command :
 	})
 
 	r.GET("/otprun", func(c *gin.Context) {
-		var uid string
-		uid = c.Query("uid")
-		if uid == "dhn" {
-				temp := otpLguCtxC["OTPLGU"]
-			if temp != nil {
-				c.String(200, "OTP 이미 실행 중입니다.")
-			} else {
+		uid := c.Query("uid")
+		pf := c.Query("pf")
+
+		if uid == "dhn" && (pf == "lgu" || pf == "nano") {
+			otpstop()
+			if pf == "lgu" {
 				ctx, cancel := context.WithCancel(context.Background())
 				go otplguproc.LguProcess(ctx)
 
@@ -893,17 +885,20 @@ Command :
 				allCtxC["OTPLGU"] = cancel
 				allService["OTPLGU"] = "OTPLGU"
 
-				ctx, cancel = context.WithCancel(context.Background())
+				c.String(200, "OTP LGU 시작 신호 전달 완료")
+			} else if pf == "nano" {
+				ctx, cancel := context.WithCancel(context.Background())
 				go otpnanoproc.NanoProcess(ctx)
 
-				otpNanoCtxC["OTPNANO"] = cancel
 				otpNanoUser["OTPNANO"] = "OTPNANO"
+				otpNanoCtxC["OTPNANO"] = cancel
 
 				allCtxC["OTPNANO"] = cancel
 				allService["OTPNANO"] = "OTPNANO"
 
-				c.String(200, "OTP 시작 신호 전달 완료")
+				c.String(200, "OTP NANO 시작 신호 전달 완료")
 			}
+			
 		} else {
 			c.String(200, "OTP 시작 불가")
 		}
