@@ -22,7 +22,7 @@ var procCnt int
 
 func LguProcess(ctx context.Context) {
 	//var wg sync.WaitGroup
-	config.Stdlog.Println(" Lgu OTP Process 시작 됨.")
+	config.Stdlog.Println("Lgu OTP Process 시작 됨.")
 	procCnt = 0
 	for {
 
@@ -94,7 +94,7 @@ func updateReqeust(ctx context.Context, group_no string) error {
 	gudQuery := `
 	update DHN_RESULT dr
 	set	send_group = ?
-	where result = 'P'
+	where result = 'O'
 	  and send_group is null
 	  and ifnull(reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
 	LIMIT 500
