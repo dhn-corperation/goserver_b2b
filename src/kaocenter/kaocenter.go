@@ -1240,6 +1240,8 @@ func MMS_Image(c *gin.Context) {
 
 	userID := c.PostForm("userid")
 	file1, err1 := c.FormFile("image1")
+	file2, err2 := c.FormFile("image2")
+	file3, err3 := c.FormFile("image3")
 	
 	var startNow = time.Now()
 	var group_no = fmt.Sprintf("%04d%02d%02d%02d%02d%02d%09d", startNow.Year(), startNow.Month(), startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
@@ -1257,8 +1259,6 @@ func MMS_Image(c *gin.Context) {
 		}
 	}
 
-	file2, err2 := c.FormFile("image2")
-	
 	if err2 != nil {
 		config.Stdlog.Println("File 2 Parameter 오류 : " , err2)
 	} else {
@@ -1271,8 +1271,6 @@ func MMS_Image(c *gin.Context) {
 			newFileName2 = ""
 		}
 	}
-
-	file3, err3 := c.FormFile("image3")
 	
 	if err3 != nil {
 		config.Stdlog.Println("File 3 Parameter 오류 : " , err3)
@@ -1287,7 +1285,7 @@ func MMS_Image(c *gin.Context) {
 		}
 	}
  
-	if len(newFileName1) > 0 || len(newFileName2) > 0 || len(newFileName2) > 0  {
+	if len(newFileName1) > 0 || len(newFileName2) > 0 || len(newFileName3) > 0  {
 	
 		mmsinsQuery := `insert IGNORE into api_mms_images(
   user_id,
@@ -1326,7 +1324,7 @@ func MMS_Image(c *gin.Context) {
 			"image group":group_no,
 		})
 	} else {
-		c.JSON(http.StatusNoContent, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"message":"Error",
 		})
 	}
