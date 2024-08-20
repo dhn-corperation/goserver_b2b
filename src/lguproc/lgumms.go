@@ -99,6 +99,7 @@ func mmsProcess(wg *sync.WaitGroup) {
 
 		for groupRows.Next() {
 			var cb_msg_id, sendresult, senddt, msgid, telecom, userid sql.NullString
+			var sendDt string
 
 			groupRows.Scan(&cb_msg_id, &sendresult, &senddt, &msgid, &telecom, &userid)
 
@@ -110,15 +111,21 @@ func mmsProcess(wg *sync.WaitGroup) {
  
 			resultCode := LguCode(sendresult.String)
 
+			if !senddt.Valid {
+				sendDt = time.Now().Format("2006-01-02 15:04:05")
+			} else {
+				sendDt = senddt.String
+			}
+
 			if !s.EqualFold(resultCode, "7006") {
 
 				var errcode = resultCode
 
 				val := CodeMessage(resultCode)
 		
-				db.Exec("update DHN_RESULT dr set dr.message_type = 'PH', dr.result = 'Y', dr.code = '" + errcode + "', dr.message = concat(dr.message, '," + val + "'), dr.remark1 = '" + telecom.String + "', dr.remark2 = '" + senddt.String + "' where userid='" + userid.String + "' and msgid = '" + cb_msg_id.String + "'")
+				db.Exec("update DHN_RESULT dr set dr.message_type = 'PH', dr.result = 'Y', dr.code = '" + errcode + "', dr.message = concat(dr.message, '," + val + "'), dr.remark1 = '" + telecom.String + "', dr.remark2 = '" + sendDt + "' where userid='" + userid.String + "' and msgid = '" + cb_msg_id.String + "'")
 			} else {
-				db.Exec("update DHN_RESULT dr set dr.message_type = 'PH', dr.result = 'Y', dr.code = '0000', dr.message = '', dr.remark1 = '" + tr_net + "', dr.remark2 = '" + senddt.String + "' where userid='" + userid.String + "' and  msgid = '" + cb_msg_id.String + "'")
+				db.Exec("update DHN_RESULT dr set dr.message_type = 'PH', dr.result = 'Y', dr.code = '0000', dr.message = '', dr.remark1 = '" + tr_net + "', dr.remark2 = '" + sendDt + "' where userid='" + userid.String + "' and  msgid = '" + cb_msg_id.String + "'")
 			}
 
 			db.Exec("update " + MMSTable + " set ETC4 = '1' where msgkey = '" + msgid.String + "'")
@@ -153,6 +160,7 @@ func pre_mmsProcess(wg *sync.WaitGroup) {
 
 		for groupRows.Next() {
 			var cb_msg_id, sendresult, senddt, msgid, telecom, userid sql.NullString
+			var sendDt string
 
 			groupRows.Scan(&cb_msg_id, &sendresult, &senddt, &msgid, &telecom, &userid)
 
@@ -160,15 +168,21 @@ func pre_mmsProcess(wg *sync.WaitGroup) {
  
 			resultCode := LguCode(sendresult.String)
 
+			if !senddt.Valid {
+				sendDt = time.Now().Format("2006-01-02 15:04:05")
+			} else {
+				sendDt = senddt.String
+			}
+
 			if !s.EqualFold(resultCode, "7006") {
 
 				var errcode = resultCode
 
 				val := CodeMessage(resultCode)
 		
-				db.Exec("update DHN_RESULT dr set dr.message_type = 'PH', dr.result = 'Y', dr.code = '" + errcode + "', dr.message = concat(dr.message, '," + val + "'), dr.remark1 = '" + telecom.String + "', dr.remark2 = '" + senddt.String + "' where userid='" + userid.String + "' and msgid = '" + cb_msg_id.String + "'")
+				db.Exec("update DHN_RESULT dr set dr.message_type = 'PH', dr.result = 'Y', dr.code = '" + errcode + "', dr.message = concat(dr.message, '," + val + "'), dr.remark1 = '" + telecom.String + "', dr.remark2 = '" + sendDt + "' where userid='" + userid.String + "' and msgid = '" + cb_msg_id.String + "'")
 			} else {
-				db.Exec("update DHN_RESULT dr set dr.message_type = 'PH', dr.result = 'Y', dr.code = '0000', dr.message = '', dr.remark1 = '" + tr_net + "', dr.remark2 = '" + senddt.String + "' where userid='" + userid.String + "' and  msgid = '" + cb_msg_id.String + "'")
+				db.Exec("update DHN_RESULT dr set dr.message_type = 'PH', dr.result = 'Y', dr.code = '0000', dr.message = '', dr.remark1 = '" + tr_net + "', dr.remark2 = '" + sendDt + "' where userid='" + userid.String + "' and  msgid = '" + cb_msg_id.String + "'")
 			}
 
 			db.Exec("update " + MMSTable + " set ETC4 = '1' where msgkey = '" + msgid.String + "'")
