@@ -431,27 +431,27 @@ func resultProc() {
 
 		allCtxC["OTPLGU"] = cancel
 		allService["OTPLGU"] = "OTPLGU"
+
+		ollctx, ollcancel := context.WithCancel(context.Background())
+		go otplguproc.LMSProcess(ollctx)
+		allCtxC["otplgulms"] = ollcancel
+		allService["otplgulms"] = "LGU OTP LMS"
+
+		olsctx, olscancel := context.WithCancel(context.Background())
+		go otplguproc.SMSProcess(olsctx)
+		allCtxC["otplgusms"] = olscancel
+		allService["otplgusms"] = "LGU OTP SMS"
+
+		onlctx, onlcancel := context.WithCancel(context.Background())
+		go otpnanoproc.LMSProcess(onlctx)
+		allCtxC["otpnanolms"] = onlcancel
+		allService["otpnanolms"] = "NANO OTP LMS"
+
+		onsctx, onscancel := context.WithCancel(context.Background())
+		go otpnanoproc.SMSProcess(onsctx)
+		allCtxC["otpnanosms"] = onscancel
+		allService["otpnanosms"] = "NANO OTP SMS"
 	}
-
-	ollctx, ollcancel := context.WithCancel(context.Background())
-	go otplguproc.LMSProcess(ollctx)
-	allCtxC["otplgulms"] = ollcancel
-	allService["otplgulms"] = "LGU OTP LMS"
-
-	olsctx, olscancel := context.WithCancel(context.Background())
-	go otplguproc.SMSProcess(olsctx)
-	allCtxC["otplgusms"] = olscancel
-	allService["otplgusms"] = "LGU OTP SMS"
-
-	onlctx, onlcancel := context.WithCancel(context.Background())
-	go otpnanoproc.LMSProcess(onlctx)
-	allCtxC["otpnanolms"] = onlcancel
-	allService["otpnanolms"] = "NANO OTP LMS"
-
-	onsctx, onscancel := context.WithCancel(context.Background())
-	go otpnanoproc.SMSProcess(onsctx)
-	allCtxC["otpnanosms"] = onscancel
-	allService["otpnanosms"] = "NANO OTP SMS"
 
 	//OTP 영역 종료
 
