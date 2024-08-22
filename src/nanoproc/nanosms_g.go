@@ -59,7 +59,7 @@ func smsProcess_G(wg *sync.WaitGroup) {
 
 	//발송 6시간 지난 메세지는 응답과 상관 없이 성공 처리 함.
 
-	var groupQuery = "select tr_etc9 as cb_msg_id, tr_rsltstat as SendResult, TR_REALSENDDATE as SendDT, tr_num as MsgID, tr_net as telecom,tr_etc10 as userid  from " + SMSTable + " a where a.TR_SENDSTAT = '2' and  a.tr_etc8 ='Y'"
+	var groupQuery = "select tr_etc9 as cb_msg_id, tr_rsltstat as SendResult, TR_RSLTDATE as SendDT, tr_num as MsgID, tr_net as telecom,tr_etc10 as userid  from " + SMSTable + " a where a.TR_SENDSTAT = '2' and  a.tr_etc8 ='Y'"
 
 	groupRows, err := db.Query(groupQuery)
 	if err != nil {
@@ -120,7 +120,7 @@ func pre_smsProcess_G(wg *sync.WaitGroup) {
 
 	//발송 6시간 지난 메세지는 응답과 상관 없이 성공 처리 함.
 
-	var groupQuery = "select tr_etc9 as cb_msg_id, tr_rsltstat as SendResult, TR_REALSENDDATE as SendDT, tr_num as MsgID, tr_net as telecom,tr_etc10 as userid  from " + SMSTable + " a where a.TR_SENDSTAT = '2' and  a.tr_etc8 ='Y'"
+	var groupQuery = "select tr_etc9 as cb_msg_id, tr_rsltstat as SendResult, TR_RSLTDATE as SendDT, tr_num as MsgID, tr_net as telecom,tr_etc10 as userid  from " + SMSTable + " a where a.TR_SENDSTAT = '2' and  a.tr_etc8 ='Y'"
 
 	groupRows, err := db.Query(groupQuery)
 	if err != nil {
