@@ -424,13 +424,13 @@ func resultProc() {
 
 	if s.EqualFold(config.Conf.IS_OTP, "Y") {
 		ctx, cancel := context.WithCancel(context.Background())
-		go otplguproc.LguProcess(ctx)
+		go otpnanoproc.NanoProcess(ctx)
 
-		otpLguUser["OTPLGU"] = "OTPLGU"
-		otpLguCtxC["OTPLGU"] = cancel
+		otpNanoUser["OTPNANO"] = "OTPNANO"
+		otpNanoCtxC["OTPNANO"] = cancel
 
-		allCtxC["OTPLGU"] = cancel
-		allService["OTPLGU"] = "OTPLGU"
+		allCtxC["OTPNANO"] = cancel
+		allService["OTPNANO"] = "OTPNANO"
 
 		ollctx, ollcancel := context.WithCancel(context.Background())
 		go otplguproc.LMSProcess(ollctx)
