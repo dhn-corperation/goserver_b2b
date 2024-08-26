@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	//"sync"
-	config "kaoconfig"
-	databasepool "kaodatabasepool"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 
 	"encoding/hex"
 	"regexp"
@@ -76,7 +76,7 @@ limit 1
 						//config.Stdlog.Println(group_no, " Update 끝 ", rowcnt)
 						upError := updateReqeust(group_no, user_id)
 						if upError != nil {
-							config.Stdlog.Println(user_id , "Group No Update 오류", group_no)
+							config.Stdlog.Println(user_id, "Group No Update 오류", group_no)
 						} else {
 							go resProcess(group_no, user_id)
 						}
@@ -140,7 +140,7 @@ LIMIT 500
 	_, err = tx.Query(gudQuery)
 
 	if err != nil {
-		config.Stdlog.Println(user_id, "- Group NO Update - Select error : ( " + group_no + " ) : " + err.Error())
+		config.Stdlog.Println(user_id, "- Group NO Update - Select error : ( "+group_no+" ) : "+err.Error())
 		config.Stdlog.Println(gudQuery)
 		return err
 	}

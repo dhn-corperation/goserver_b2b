@@ -5,63 +5,63 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	kakao "kakaojson"
-	config "kaoconfig"
-	databasepool "kaodatabasepool"
+	kakao "mycs/src/kakaojson"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 
 	//"io/ioutil"
 	//	"net"
 	//"net/http"
+	"context"
 	"strconv"
 	s "strings"
 	"sync"
 	"time"
-		"context"
 )
 
 var atprocCnt int
 
-func AlimtalkProc( user_id string, ctx context.Context ) {
+func AlimtalkProc(user_id string, ctx context.Context) {
 	atprocCnt = 1
-	config.Stdlog.Println(user_id, " - 알림톡 프로세스 시작 됨 ") 
+	config.Stdlog.Println(user_id, " - 알림톡 프로세스 시작 됨 ")
 	for {
-		if atprocCnt <=5 {
-			
+		if atprocCnt <= 5 {
+
 			select {
-				case <- ctx.Done():
-			
-			    uid := ctx.Value("user_id")
-			    config.Stdlog.Println(uid, " - Alimtalk process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println(uid, " - Alimtalk process 종료 완료")
-			    return
+			case <-ctx.Done():
+
+				uid := ctx.Value("user_id")
+				config.Stdlog.Println(uid, " - Alimtalk process가 20초 후에 종료 됨.")
+				time.Sleep(20 * time.Second)
+				config.Stdlog.Println(uid, " - Alimtalk process 종료 완료")
+				return
 			default:
-		
+
 				var count int
-	
+
 				cnterr := databasepool.DB.QueryRow("select length(msgid) as cnt from DHN_REQUEST_AT  where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid='" + user_id + "' limit 1").Scan(&count)
-	
+
 				if cnterr != nil {
 					//config.Stdlog.Println("DHN_REQUEST Table - select 오류 : " + cnterr.Error())
 				} else {
-	
-					if count > 0 {		
+
+					if count > 0 {
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
-				
+
 						updateRows, err := databasepool.DB.Exec("update DHN_REQUEST_AT set send_group = '" + group_no + "' where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid='" + user_id + "' limit " + strconv.Itoa(config.Conf.SENDLIMIT))
-				
+
 						if err != nil {
-							config.Stdlog.Println(user_id,"알림톡 send_group Update 오류 : ", err)
+							config.Stdlog.Println(user_id, "알림톡 send_group Update 오류 : ", err)
 						}
-				
+
 						rowcnt, _ := updateRows.RowsAffected()
-				
+
 						if rowcnt > 0 {
 							config.Stdlog.Println(user_id, "알림톡 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ")
 							atprocCnt++
 							go atsendProcess(group_no, user_id)
-				
+
 						}
 					}
 				}
@@ -271,14 +271,14 @@ title) values %s`
 		if s.EqualFold(result["message_type"], "at") {
 			alimtalk.Response_method = "realtime"
 		} else if s.EqualFold(result["message_type"], "ai") {
-			
+
 			alimtalk.Response_method = conf.RESPONSE_METHOD
 			alimtalk.Channel_key = conf.CHANNEL
-			
-			if  s.EqualFold(conf.RESPONSE_METHOD, "polling") {
+
+			if s.EqualFold(conf.RESPONSE_METHOD, "polling") {
 				alimtalk.Timeout = 600
 			}
-			
+
 		}
 
 		attache.Buttons = button
@@ -307,15 +307,15 @@ title) values %s`
 
 			var resdt = time.Now()
 			var resdtstr = fmt.Sprintf("%4d-%02d-%02d %02d:%02d:%02d", resdt.Year(), resdt.Month(), resdt.Day(), resdt.Hour(), resdt.Minute(), resdt.Second())
-			
+
 			var resCode = kakaoResp.Code
 			var resMessage = kakaoResp.Message
-			
+
 			if s.EqualFold(resCode, "3005") {
 				resCode = "0000"
 				resMessage = ""
-			} 
-			
+			}
+
 			resinsStrs = append(resinsStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 			resinsValues = append(resinsValues, result["msgid"])
 			resinsValues = append(resinsValues, result["userid"])
@@ -328,7 +328,7 @@ title) values %s`
 			resinsValues = append(resinsValues, resCode) // 결과 code
 			resinsValues = append(resinsValues, result["image_link"])
 			resinsValues = append(resinsValues, result["image_url"])
-			resinsValues = append(resinsValues, nil)//kind
+			resinsValues = append(resinsValues, nil)        //kind
 			resinsValues = append(resinsValues, resMessage) // 결과 Message
 			resinsValues = append(resinsValues, result["message_type"])
 			resinsValues = append(resinsValues, result["msg"])
@@ -350,15 +350,15 @@ title) values %s`
 			//result 컬럼 처리
 			if s.EqualFold(result["message_type"], "at") || !s.EqualFold(resCode, "0000") || (s.EqualFold(result["message_type"], "ai") && s.EqualFold(conf.RESPONSE_METHOD, "push")) {
 
-				if s.EqualFold(resCode,"0000") {
-					resinsValues = append(resinsValues, "Y") // 
-				// 1차 카카오 발송 실패 후 2차 발송을 바로 하기 위해서는 이 조건을 맞춰야함
-				} else if len(result["sms_kind"])>=1 && s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
+				if s.EqualFold(resCode, "0000") {
+					resinsValues = append(resinsValues, "Y") //
+					// 1차 카카오 발송 실패 후 2차 발송을 바로 하기 위해서는 이 조건을 맞춰야함
+				} else if len(result["sms_kind"]) >= 1 && s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
 					resinsValues = append(resinsValues, "P") // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
 				} else {
-					resinsValues = append(resinsValues, "Y") // 
-				} 
-				
+					resinsValues = append(resinsValues, "Y") //
+				}
+
 			} else if s.EqualFold(result["message_type"], "ai") {
 				resinsValues = append(resinsValues, "N") // result
 			}
@@ -373,18 +373,18 @@ title) values %s`
 			//send_group 컬럼 처리
 			if s.EqualFold(result["message_type"], "at") || !s.EqualFold(resCode, "0000") || (s.EqualFold(result["message_type"], "ai") && s.EqualFold(conf.RESPONSE_METHOD, "push")) {
 
-				if s.EqualFold(resCode,"0000") {
+				if s.EqualFold(resCode, "0000") {
 					resinsValues = append(resinsValues, nil) //send_group
-				} else if len(result["sms_kind"])>=1 && s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
+				} else if len(result["sms_kind"]) >= 1 && s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
 					resinsValues = append(resinsValues, nil) //send_group
 				} else {
 					resinsValues = append(resinsValues, nil) //send_group
-				} 
-				
+				}
+
 			} else if s.EqualFold(result["message_type"], "ai") {
 				resinsValues = append(resinsValues, nil) //send_group
 			}
-			
+
 			resinsValues = append(resinsValues, result["supplement"])
 			resinsValues = append(resinsValues, result["price"])
 			resinsValues = append(resinsValues, result["currency_type"])
@@ -429,11 +429,11 @@ title) values %s`
 	db.Exec("delete from DHN_REQUEST_AT where send_group = '" + group_no + "'")
 
 	stdlog.Println(user_id, "알림톡 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건 ( Proc Cnt :", atprocCnt, ")")
-	
+
 	atprocCnt--
 }
 
-//카카오 서버에 발송을 요청한다.
+// 카카오 서버에 발송을 요청한다.
 func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- resultStr, alimtalk kakao.Alimtalk, temp resultStr) {
 	defer reswg.Done()
 

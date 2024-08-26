@@ -3,8 +3,8 @@ package oshotproc
 import (
 	"database/sql"
 	"fmt"
-	config "kaoconfig"
-	databasepool "kaodatabasepool"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 	"strconv"
 
 	//	"log"
@@ -12,8 +12,9 @@ import (
 	"sync"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
 	"context"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func LMSProcess(ctx context.Context) {
@@ -39,28 +40,28 @@ func LMSProcess(ctx context.Context) {
 	}
 	errlog.Println("Oshot MMS length : ", len(oshotTable))
 	for {
-			select {
-				case <- ctx.Done():
-			
-			    config.Stdlog.Println("Oshot MMS process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println("Oshot MMS process 종료 완료")
-			    return
-			default:	
-			
-				for _, tableName := range oshotTable {
-					var t = time.Now()
-		
-					if t.Day() < 3 {
-						wg.Add(1)
-						go pre_mmsProcess(&wg, tableName[0])
-					}
-		
+		select {
+		case <-ctx.Done():
+
+			config.Stdlog.Println("Oshot MMS process가 20초 후에 종료 됨.")
+			time.Sleep(20 * time.Second)
+			config.Stdlog.Println("Oshot MMS process 종료 완료")
+			return
+		default:
+
+			for _, tableName := range oshotTable {
+				var t = time.Now()
+
+				if t.Day() < 3 {
 					wg.Add(1)
-					go mmsProcess(&wg, tableName[0])
+					go pre_mmsProcess(&wg, tableName[0])
 				}
-				wg.Wait()
+
+				wg.Add(1)
+				go mmsProcess(&wg, tableName[0])
 			}
+			wg.Wait()
+		}
 	}
 
 }

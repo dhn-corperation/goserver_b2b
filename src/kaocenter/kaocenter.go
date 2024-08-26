@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	config "kaoconfig"
-	db "kaodatabasepool"
+	config "mycs/src/kaoconfig"
+	db "mycs/src/kaodatabasepool"
 	"net"
 	"net/http"
 	"net/url"
@@ -335,9 +335,9 @@ func Template_(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
-	
+
 	req.Header.Add("Accept-Charset", "utf-8")
-	
+
 	//client := &http.Client{}
 	resp, err := centerClient.Do(req)
 	if err != nil {
@@ -404,10 +404,10 @@ func Template_Cancel_Request(c *gin.Context) {
 
 func Template_Update(c *gin.Context) {
 	conf := config.Conf
-	
+
 	fmt.Println("T U Call")
 	param := &TemplateUpdate{}
-	
+
 	err := c.Bind(param)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err.Error())
@@ -676,7 +676,7 @@ func Template_Comment_File(c *gin.Context) {
 	}
 
 	param := map[string]io.Reader{
-		"attachment":    mustOpen(config.BasePath+"upload/" + newFileName),
+		"attachment":    mustOpen(config.BasePath + "upload/" + newFileName),
 		"senderKey":     strings.NewReader(c.PostForm("senderKey")),
 		"templateCode":  strings.NewReader(c.PostForm("templateCode")),
 		"senderKeyType": strings.NewReader(c.PostForm("senderKeyType")),
@@ -1140,7 +1140,7 @@ func FT_Upload(c *gin.Context) {
 	}
 
 	param := map[string]io.Reader{
-		"image": mustOpen(config.BasePath+"upload/" +newFileName),
+		"image": mustOpen(config.BasePath + "upload/" + newFileName),
 	}
 
 	resp, err := upload(conf.IMAGE_SERVER+"v1/"+conf.PROFILE_KEY+"/image/friendtalk", param)
@@ -1148,7 +1148,6 @@ func FT_Upload(c *gin.Context) {
 	bytes, _ := ioutil.ReadAll(resp.Body)
 	c.Data(http.StatusOK, "application/json", bytes)
 }
-
 
 func FT_Wide_Upload(c *gin.Context) {
 	conf := config.Conf
@@ -1162,14 +1161,14 @@ func FT_Wide_Upload(c *gin.Context) {
 	extension := filepath.Ext(file.Filename)
 	newFileName := uuid.New().String() + extension
 
-	err = c.SaveUploadedFile(file, config.BasePath+"upload/" + newFileName)
+	err = c.SaveUploadedFile(file, config.BasePath+"upload/"+newFileName)
 	if err != nil {
 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
 		return
 	}
 
 	param := map[string]io.Reader{
-		"image": mustOpen(config.BasePath+"upload/" + newFileName),
+		"image": mustOpen(config.BasePath + "upload/" + newFileName),
 	}
 
 	resp, err := upload(conf.IMAGE_SERVER+"v1/"+conf.PROFILE_KEY+"/image/friendtalk/wide", param)
@@ -1190,17 +1189,17 @@ func AT_Image(c *gin.Context) {
 	extension := filepath.Ext(file.Filename)
 	newFileName := uuid.New().String() + extension
 
-	err = c.SaveUploadedFile(file, config.BasePath+"upload/" + newFileName)
+	err = c.SaveUploadedFile(file, config.BasePath+"upload/"+newFileName)
 	if err != nil {
 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
 		return
 	}
 
 	param := map[string]io.Reader{
-		"image": mustOpen(config.BasePath+"upload/" + newFileName),
+		"image": mustOpen(config.BasePath + "upload/" + newFileName),
 	}
 
-	resp, err := upload(conf.IMAGE_SERVER+ "v1/"+conf.PROFILE_KEY+"/image/alimtalk/template", param)
+	resp, err := upload(conf.IMAGE_SERVER+"v1/"+conf.PROFILE_KEY+"/image/alimtalk/template", param)
 
 	bytes, _ := ioutil.ReadAll(resp.Body)
 	c.Data(http.StatusOK, "application/json", bytes)
@@ -1218,17 +1217,17 @@ func AL_Image(c *gin.Context) {
 	extension := filepath.Ext(file.Filename)
 	newFileName := uuid.New().String() + extension
 
-	err = c.SaveUploadedFile(file, config.BasePath+"upload/" + newFileName)
+	err = c.SaveUploadedFile(file, config.BasePath+"upload/"+newFileName)
 	if err != nil {
 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
 		return
 	}
 
 	param := map[string]io.Reader{
-		"image": mustOpen(config.BasePath+"upload/" + newFileName),
+		"image": mustOpen(config.BasePath + "upload/" + newFileName),
 	}
 
-	resp, err := upload(conf.IMAGE_SERVER+ "v1/"+conf.PROFILE_KEY+"/image/alimtalk", param)
+	resp, err := upload(conf.IMAGE_SERVER+"v1/"+conf.PROFILE_KEY+"/image/alimtalk", param)
 
 	bytes, _ := ioutil.ReadAll(resp.Body)
 	c.Data(http.StatusOK, "application/json", bytes)
@@ -1236,20 +1235,20 @@ func AL_Image(c *gin.Context) {
 
 func MMS_Image(c *gin.Context) {
 	//conf := config.Conf
-	var newFileName1,newFileName2,newFileName3 string
+	var newFileName1, newFileName2, newFileName3 string
 
 	userID := c.PostForm("userid")
 	file1, err1 := c.FormFile("image1")
-	
+
 	var startNow = time.Now()
 	var group_no = fmt.Sprintf("%04d%02d%02d%02d%02d%02d%09d", startNow.Year(), startNow.Month(), startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
-						
+
 	if err1 != nil {
-		config.Stdlog.Println("File 1 Parameter 오류 : " , err1)
+		config.Stdlog.Println("File 1 Parameter 오류 : ", err1)
 	} else {
 		extension1 := filepath.Ext(file1.Filename)
-		newFileName1 = config.BasePath+"upload/mms/" + uuid.New().String() + extension1
-	
+		newFileName1 = config.BasePath + "upload/mms/" + uuid.New().String() + extension1
+
 		err := c.SaveUploadedFile(file1, newFileName1)
 		if err != nil {
 			config.Stdlog.Println("File 1 저장 오류 : ", newFileName1, err)
@@ -1258,13 +1257,13 @@ func MMS_Image(c *gin.Context) {
 	}
 
 	file2, err2 := c.FormFile("image2")
-	
+
 	if err2 != nil {
-		config.Stdlog.Println("File 2 Parameter 오류 : " , err2)
+		config.Stdlog.Println("File 2 Parameter 오류 : ", err2)
 	} else {
 		extension2 := filepath.Ext(file2.Filename)
-		newFileName2 = config.BasePath+"upload/mms/" + uuid.New().String() + extension2
-	
+		newFileName2 = config.BasePath + "upload/mms/" + uuid.New().String() + extension2
+
 		err := c.SaveUploadedFile(file2, newFileName2)
 		if err != nil {
 			config.Stdlog.Println("File 2 저장 오류 : ", newFileName2, err)
@@ -1273,22 +1272,22 @@ func MMS_Image(c *gin.Context) {
 	}
 
 	file3, err3 := c.FormFile("image3")
-	
+
 	if err3 != nil {
-		config.Stdlog.Println("File 3 Parameter 오류 : " , err3)
+		config.Stdlog.Println("File 3 Parameter 오류 : ", err3)
 	} else {
 		extension3 := filepath.Ext(file3.Filename)
-		newFileName3 = config.BasePath+"upload/mms/" + uuid.New().String() + extension3
-	
+		newFileName3 = config.BasePath + "upload/mms/" + uuid.New().String() + extension3
+
 		err := c.SaveUploadedFile(file3, newFileName3)
 		if err != nil {
 			config.Stdlog.Println("File 3 저장 오류 : ", newFileName3, err)
 			newFileName3 = ""
 		}
 	}
- 
-	if len(newFileName1) > 0 || len(newFileName2) > 0 || len(newFileName2) > 0  {
-	
+
+	if len(newFileName1) > 0 || len(newFileName2) > 0 || len(newFileName2) > 0 {
+
 		mmsinsQuery := `insert IGNORE into api_mms_images(
   user_id,
   mms_id,             
@@ -1302,43 +1301,42 @@ func MMS_Image(c *gin.Context) {
 	`
 		mmsinsStrs := []string{}
 		mmsinsValues := []interface{}{}
-	
+
 		mmsinsStrs = append(mmsinsStrs, "(?,?,null,null,null,?,?,?)")
 		mmsinsValues = append(mmsinsValues, userID)
 		mmsinsValues = append(mmsinsValues, group_no)
 		mmsinsValues = append(mmsinsValues, newFileName1)
 		mmsinsValues = append(mmsinsValues, newFileName2)
 		mmsinsValues = append(mmsinsValues, newFileName3)
-		
+
 		if len(mmsinsStrs) >= 1 {
 			stmt := fmt.Sprintf(mmsinsQuery, strings.Join(mmsinsStrs, ","))
 			_, err := db.DB.Exec(stmt, mmsinsValues...)
-	
+
 			if err != nil {
 				config.Stdlog.Println("API MMS Insert 처리 중 오류 발생 " + err.Error())
 			}
-	
+
 			mmsinsStrs = nil
 			mmsinsValues = nil
-		} 
+		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"image group":group_no,
+			"image group": group_no,
 		})
 	} else {
 		c.JSON(http.StatusNoContent, gin.H{
-			"message":"Error",
+			"message": "Error",
 		})
 	}
 }
 
-
 func Image_wideItemList(c *gin.Context) {
 	conf := config.Conf
 	config.Stdlog.Println("Call ")
-	
-	var newFileName1,newFileName2,newFileName3,newFileName4 string
-	
+
+	var newFileName1, newFileName2, newFileName3, newFileName4 string
+
 	file1, err1 := c.FormFile("image_1")
 	if err1 != nil {
 		config.Stdlog.Println(err1.Error())
@@ -1349,7 +1347,7 @@ func Image_wideItemList(c *gin.Context) {
 	extension := filepath.Ext(file1.Filename)
 	newFileName1 = uuid.New().String() + extension
 
-	err1 = c.SaveUploadedFile(file1, config.BasePath+"upload/" + newFileName1)
+	err1 = c.SaveUploadedFile(file1, config.BasePath+"upload/"+newFileName1)
 	if err1 != nil {
 		c.String(http.StatusBadRequest, fmt.Sprintf("File 1 - get form err: %s", err1.Error()))
 		return
@@ -1359,8 +1357,8 @@ func Image_wideItemList(c *gin.Context) {
 	if err2 == nil {
 		extension := filepath.Ext(file2.Filename)
 		newFileName2 = uuid.New().String() + extension
-			
-		err2 = c.SaveUploadedFile(file2, config.BasePath+"upload/" + newFileName2)
+
+		err2 = c.SaveUploadedFile(file2, config.BasePath+"upload/"+newFileName2)
 		if err2 != nil {
 			newFileName2 = "_"
 		}
@@ -1372,8 +1370,8 @@ func Image_wideItemList(c *gin.Context) {
 	if err3 == nil {
 		extension := filepath.Ext(file3.Filename)
 		newFileName3 = uuid.New().String() + extension
-	
-		err3 = c.SaveUploadedFile(file3, config.BasePath+"upload/" + newFileName3)
+
+		err3 = c.SaveUploadedFile(file3, config.BasePath+"upload/"+newFileName3)
 		if err3 != nil {
 			newFileName3 = "_"
 		}
@@ -1385,20 +1383,20 @@ func Image_wideItemList(c *gin.Context) {
 	if err4 == nil {
 		extension := filepath.Ext(file4.Filename)
 		newFileName4 = uuid.New().String() + extension
-	
-		err4 = c.SaveUploadedFile(file4, config.BasePath+"upload/" + newFileName4)
+
+		err4 = c.SaveUploadedFile(file4, config.BasePath+"upload/"+newFileName4)
 		if err4 != nil {
 			newFileName4 = "_"
 		}
 	} else {
 		newFileName4 = "_"
 	}
-	
+
 	param := map[string]io.Reader{
-		"image_1": mustOpen(config.BasePath+"upload/" + newFileName1),
-		"image_2": mustOpen(config.BasePath+"upload/" + newFileName2),
-		"image_3": mustOpen(config.BasePath+"upload/" + newFileName3),
-		"image_4": mustOpen(config.BasePath+"upload/" + newFileName4),
+		"image_1": mustOpen(config.BasePath + "upload/" + newFileName1),
+		"image_2": mustOpen(config.BasePath + "upload/" + newFileName2),
+		"image_3": mustOpen(config.BasePath + "upload/" + newFileName3),
+		"image_4": mustOpen(config.BasePath + "upload/" + newFileName4),
 	}
 
 	if newFileName4 == "_" {
@@ -1413,7 +1411,7 @@ func Image_wideItemList(c *gin.Context) {
 		delete(param, "image_2")
 	}
 
-	resp, err1 := upload(conf.IMAGE_SERVER+ "v1/"+conf.PROFILE_KEY+"/image/friendtalk/wideItemList", param)
+	resp, err1 := upload(conf.IMAGE_SERVER+"v1/"+conf.PROFILE_KEY+"/image/friendtalk/wideItemList", param)
 	bytes, _ := ioutil.ReadAll(resp.Body)
 	c.Data(http.StatusOK, "application/json", bytes)
 }
@@ -1421,9 +1419,9 @@ func Image_wideItemList(c *gin.Context) {
 func Image_carousel(c *gin.Context) {
 	conf := config.Conf
 	config.Stdlog.Println("Call ")
-	
-	var newFileName1,newFileName2,newFileName3,newFileName4,newFileName5,newFileName6 string
-	
+
+	var newFileName1, newFileName2, newFileName3, newFileName4, newFileName5, newFileName6 string
+
 	file1, err1 := c.FormFile("image_1")
 	if err1 != nil {
 		config.Stdlog.Println(err1.Error())
@@ -1434,7 +1432,7 @@ func Image_carousel(c *gin.Context) {
 	extension := filepath.Ext(file1.Filename)
 	newFileName1 = uuid.New().String() + extension
 
-	err1 = c.SaveUploadedFile(file1, config.BasePath+"upload/" + newFileName1)
+	err1 = c.SaveUploadedFile(file1, config.BasePath+"upload/"+newFileName1)
 	if err1 != nil {
 		c.String(http.StatusBadRequest, fmt.Sprintf("File 1 - get form err: %s", err1.Error()))
 		return
@@ -1444,8 +1442,8 @@ func Image_carousel(c *gin.Context) {
 	if err2 == nil {
 		extension := filepath.Ext(file2.Filename)
 		newFileName2 = uuid.New().String() + extension
-			
-		err2 = c.SaveUploadedFile(file2, config.BasePath+"upload/" + newFileName2)
+
+		err2 = c.SaveUploadedFile(file2, config.BasePath+"upload/"+newFileName2)
 		if err2 != nil {
 			newFileName2 = "_"
 		}
@@ -1457,8 +1455,8 @@ func Image_carousel(c *gin.Context) {
 	if err3 == nil {
 		extension := filepath.Ext(file3.Filename)
 		newFileName3 = uuid.New().String() + extension
-	
-		err3 = c.SaveUploadedFile(file3, config.BasePath+"upload/" + newFileName3)
+
+		err3 = c.SaveUploadedFile(file3, config.BasePath+"upload/"+newFileName3)
 		if err3 != nil {
 			newFileName3 = "_"
 		}
@@ -1470,57 +1468,57 @@ func Image_carousel(c *gin.Context) {
 	if err4 == nil {
 		extension := filepath.Ext(file4.Filename)
 		newFileName4 = uuid.New().String() + extension
-	
-		err4 = c.SaveUploadedFile(file4, config.BasePath+"upload/" + newFileName4)
+
+		err4 = c.SaveUploadedFile(file4, config.BasePath+"upload/"+newFileName4)
 		if err4 != nil {
 			newFileName4 = "_"
 		}
 	} else {
 		newFileName4 = "_"
 	}
-	
+
 	file5, err5 := c.FormFile("image_5")
 	if err5 == nil {
 		extension := filepath.Ext(file5.Filename)
 		newFileName5 = uuid.New().String() + extension
-	
-		err5 = c.SaveUploadedFile(file5, config.BasePath+"upload/" + newFileName5)
+
+		err5 = c.SaveUploadedFile(file5, config.BasePath+"upload/"+newFileName5)
 		if err5 != nil {
 			newFileName5 = "_"
 		}
 	} else {
 		newFileName5 = "_"
 	}
-	
+
 	file6, err6 := c.FormFile("image_6")
 	if err6 == nil {
 		extension := filepath.Ext(file6.Filename)
 		newFileName6 = uuid.New().String() + extension
-	
-		err6 = c.SaveUploadedFile(file6, config.BasePath+"upload/" + newFileName6)
+
+		err6 = c.SaveUploadedFile(file6, config.BasePath+"upload/"+newFileName6)
 		if err6 != nil {
 			newFileName6 = "_"
 		}
 	} else {
 		newFileName6 = "_"
 	}
-		
+
 	param := map[string]io.Reader{
-		"image_1": mustOpen(config.BasePath+"upload/" + newFileName1),
-		"image_2": mustOpen(config.BasePath+"upload/" + newFileName2),
-		"image_3": mustOpen(config.BasePath+"upload/" + newFileName3),
-		"image_4": mustOpen(config.BasePath+"upload/" + newFileName4),
-		"image_5": mustOpen(config.BasePath+"upload/" + newFileName5),
-		"image_6": mustOpen(config.BasePath+"upload/" + newFileName6),
+		"image_1": mustOpen(config.BasePath + "upload/" + newFileName1),
+		"image_2": mustOpen(config.BasePath + "upload/" + newFileName2),
+		"image_3": mustOpen(config.BasePath + "upload/" + newFileName3),
+		"image_4": mustOpen(config.BasePath + "upload/" + newFileName4),
+		"image_5": mustOpen(config.BasePath + "upload/" + newFileName5),
+		"image_6": mustOpen(config.BasePath + "upload/" + newFileName6),
 	}
 	if newFileName6 == "_" {
 		delete(param, "image_6")
 	}
-	
+
 	if newFileName5 == "_" {
 		delete(param, "image_5")
 	}
-	
+
 	if newFileName4 == "_" {
 		delete(param, "image_4")
 	}
@@ -1533,7 +1531,7 @@ func Image_carousel(c *gin.Context) {
 		delete(param, "image_2")
 	}
 
-	resp, err1 := upload(conf.IMAGE_SERVER+ "v1/"+conf.PROFILE_KEY+"/image/friendtalk/wideItemList", param)
+	resp, err1 := upload(conf.IMAGE_SERVER+"v1/"+conf.PROFILE_KEY+"/image/friendtalk/wideItemList", param)
 	bytes, _ := ioutil.ReadAll(resp.Body)
 	c.Data(http.StatusOK, "application/json", bytes)
 }

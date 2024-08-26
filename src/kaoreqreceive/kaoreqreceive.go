@@ -3,9 +3,9 @@ package kaoreqreceive
 import (
 	//"encoding/json"
 	"fmt"
-	config "kaoconfig"
-	databasepool "kaodatabasepool"
-	"kaoreqtable"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
+	"mycs/src/kaoreqtable"
 	"strconv"
 	s "strings"
 	"time"

@@ -5,10 +5,10 @@ import (
 	//"database/sql"
 	"encoding/json"
 	"fmt"
-	kakao "kakaojson"
-	config "kaoconfig"
+	kakao "mycs/src/kakaojson"
+	config "mycs/src/kaoconfig"
 
-	databasepool "kaodatabasepool"
+	databasepool "mycs/src/kaodatabasepool"
 
 	//"io/ioutil"
 	//"net"
@@ -17,11 +17,13 @@ import (
 	"strconv"
 	s "strings"
 	"sync"
+
 	//"time"
 
-	"github.com/go-resty/resty"
 	"context"
 	"time"
+
+	"github.com/go-resty/resty/v2"
 )
 
 var polprocCnt int
@@ -30,20 +32,20 @@ func PollingProc(ctx context.Context) {
 	var wg sync.WaitGroup
 
 	for {
-			select {
-				case <- ctx.Done():
-			
-			    config.Stdlog.Println("Polling process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println("Polling process 종료 완료")
-			    return
-			default:	
-				wg.Add(1)
+		select {
+		case <-ctx.Done():
 
-				go getPollingProcess(&wg)
+			config.Stdlog.Println("Polling process가 20초 후에 종료 됨.")
+			time.Sleep(20 * time.Second)
+			config.Stdlog.Println("Polling process 종료 완료")
+			return
+		default:
+			wg.Add(1)
 
-				wg.Wait()
-			}
+			go getPollingProcess(&wg)
+
+			wg.Wait()
+		}
 	}
 }
 
@@ -104,12 +106,12 @@ func getPollingProcess(wg *sync.WaitGroup) {
 			json.Unmarshal([]byte(str), &kakaoResp)
 
 			sinsStrs := []string{}
-	        sinsValues := []interface{}{}
-	        
-	        finsStrs := []string{}
-	        finsValues := []interface{}{}
-	        
-	        insquery := `insert IGNORE into DHN_POLLING_RESULT(
+			sinsValues := []interface{}{}
+
+			finsStrs := []string{}
+			finsValues := []interface{}{}
+
+			insquery := `insert IGNORE into DHN_POLLING_RESULT(
 msg_id ,
 type ,
 result_dt) values %s`
@@ -118,7 +120,7 @@ result_dt) values %s`
 				stdlog.Println("성공 : " + kakaoResp.Response.Success[i].Serial_number[9:len(kakaoResp.Response.Success[i].Serial_number)] + " / " + kakaoResp.Response.Success[i].Received_at)
 				//db.Exec("update DHN_RESULT set result = 'Y' where msgid = '" + kakaoResp.Response.Success[i].Serial_number[9:len(kakaoResp.Response.Success[i].Serial_number)] + "'")
 				//supmsgids = append(supmsgids, kakaoResp.Response.Success[i].Serial_number[9:len(kakaoResp.Response.Success[i].Serial_number)])
-				sinsStrs = append(sinsStrs, "(?,'S',now())");
+				sinsStrs = append(sinsStrs, "(?,'S',now())")
 				sinsValues = append(sinsValues, kakaoResp.Response.Success[i].Serial_number[9:len(kakaoResp.Response.Success[i].Serial_number)])
 			}
 
@@ -126,14 +128,14 @@ result_dt) values %s`
 				stdlog.Println("실퍠 : " + kakaoResp.Response.Fail[i].Serial_number[9:len(kakaoResp.Response.Fail[i].Serial_number)] + " / " + kakaoResp.Response.Fail[i].Received_at)
 				//db.Exec("update DHN_RESULT set result = 'Y', code = '9999', message = 'ME09' where msgid = '" + kakaoResp.Response.Fail[i].Serial_number[9:len(kakaoResp.Response.Fail[i].Serial_number)] + "'")
 				//fupmsgids = append(fupmsgids, kakaoResp.Response.Fail[i].Serial_number[9:len(kakaoResp.Response.Fail[i].Serial_number)])
-				finsStrs = append(finsStrs, "(?,'F',now())");
+				finsStrs = append(finsStrs, "(?,'F',now())")
 				finsValues = append(finsValues, kakaoResp.Response.Fail[i].Serial_number[9:len(kakaoResp.Response.Fail[i].Serial_number)])
 
 			}
-			
+
 			if len(sinsStrs) > 0 {
- 			
- 				stmt := fmt.Sprintf(insquery, s.Join(sinsStrs, ","))
+
+				stmt := fmt.Sprintf(insquery, s.Join(sinsStrs, ","))
 				//fmt.Println(stmt)
 				_, err := db.Exec(stmt, sinsValues...)
 
@@ -145,10 +147,10 @@ result_dt) values %s`
 				sinsValues = nil
 
 			}
-			
+
 			if len(finsStrs) > 0 {
- 			
- 				stmt := fmt.Sprintf(insquery, s.Join(finsStrs, ","))
+
+				stmt := fmt.Sprintf(insquery, s.Join(finsStrs, ","))
 				//fmt.Println(stmt)
 				_, err := db.Exec(stmt, finsValues...)
 
@@ -160,7 +162,7 @@ result_dt) values %s`
 				finsValues = nil
 
 			}
-			
+
 			if kakaoResp.Response_id > 0 {
 
 				//compreq, err1 := http.NewRequest("POST", conf.API_SERVER+"v3/"+conf.PROFILE_KEY+"/response/"+strconv.Itoa(kakaoResp.Response_id)+"/complete", nil)

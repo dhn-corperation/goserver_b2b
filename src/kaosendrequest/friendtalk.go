@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	kakao "kakaojson"
-	config "kaoconfig"
-	databasepool "kaodatabasepool"
+	kakao "mycs/src/kakaojson"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 
 	//"io/ioutil"
 	//"net"
@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
 	//"github.com/go-resty/resty"
 	"context"
 )
@@ -24,6 +25,7 @@ import (
 var ftprocCnt int
 var FisRunning bool
 var isStoping bool
+
 //var limitcnt int = config.Conf.SENDLIMIT
 
 type resultStr struct {
@@ -34,42 +36,42 @@ type resultStr struct {
 
 func FriendtalkProc(ctx context.Context) {
 	ftprocCnt = 1
-	
+
 	for {
-		if ftprocCnt <=5 {
-		
+		if ftprocCnt <= 5 {
+
 			select {
-				case <- ctx.Done():
-			
-			    config.Stdlog.Println("Friendtalk process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println("Friendtalk process 종료 완료")
-			    return
+			case <-ctx.Done():
+
+				config.Stdlog.Println("Friendtalk process가 20초 후에 종료 됨.")
+				time.Sleep(20 * time.Second)
+				config.Stdlog.Println("Friendtalk process 종료 완료")
+				return
 			default:
-						
+
 				var count int
-	
+
 				cnterr := databasepool.DB.QueryRow("select length(msgid) as cnt from DHN_REQUEST  where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit 1").Scan(&count)
-	
+
 				if cnterr != nil {
 					//config.Stdlog.Println("DHN_REQUEST Table - select 오류 : " + cnterr.Error())
 				} else {
-	
+
 					if count > 0 {
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
-				
+
 						updateRows, err := databasepool.DB.Exec("update DHN_REQUEST set send_group = '" + group_no + "' where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit " + strconv.Itoa(config.Conf.SENDLIMIT))
-				
+
 						if err != nil {
 							config.Stdlog.Println("Request Table - send_group Update 오류")
 						}
-				
+
 						rowcnt, _ := updateRows.RowsAffected()
-				
+
 						if rowcnt > 0 {
 							config.Stdlog.Println("친구톡 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ")
-							ftprocCnt ++
+							ftprocCnt++
 							go ftsendProcess(group_no)
 						}
 					}
@@ -235,16 +237,16 @@ carousel
 
 			case "carousel":
 				if z, ok := (scanArgs[i]).(*sql.NullString); ok {
-				    
+
 					json.Unmarshal([]byte(z.String), &tcarousel)
 					carousel.Tail = tcarousel.Tail
-					  
+
 					for ci, _ := range tcarousel.List {
 						var catt kakao.CarouselAttachment
 						var tcarlist kakao.CarouselList
-						
+
 						json.Unmarshal([]byte(tcarousel.List[ci].Attachment), &catt)
-						
+
 						tcarlist.Header = tcarousel.List[ci].Header
 						tcarlist.Message = tcarousel.List[ci].Message
 						tcarlist.Attachment = catt
@@ -254,7 +256,7 @@ carousel
 					if len(carousel.List) > 0 {
 						//fmt.Println(carousel)
 						friendtalk.Carousel = &carousel
-					}  
+					}
 				}
 
 			case "image_url":
@@ -271,7 +273,7 @@ carousel
 				if z, ok := (scanArgs[i]).(*sql.NullString); ok {
 					error := json.Unmarshal([]byte(z.String), &itemList)
 					if error == nil {
-						attache.Item    = &itemList
+						attache.Item = &itemList
 					}
 				}
 
@@ -279,7 +281,7 @@ carousel
 				if z, ok := (scanArgs[i]).(*sql.NullString); ok {
 					error := json.Unmarshal([]byte(z.String), &coupon)
 					if error == nil {
-						attache.Coupon    = &coupon
+						attache.Coupon = &coupon
 					}
 				}
 
@@ -330,11 +332,11 @@ carousel
 			attache.Ftimage = &image
 		}
 		friendtalk.Attachment = attache
-		
-		if s.EqualFold(conf.DEBUG,"Y") {
-		  	jsonstr, _ := json.Marshal(friendtalk)
+
+		if s.EqualFold(conf.DEBUG, "Y") {
+			jsonstr, _ := json.Marshal(friendtalk)
 			stdlog.Println(string(jsonstr))
-		  //fmt.Println(string(jsonstr))
+			//fmt.Println(string(jsonstr))
 		}
 		//buff := bytes.NewBuffer(jsonstr)
 
@@ -349,9 +351,9 @@ carousel
 		//resp, err := friendClient.Do(restReq)
 		var temp resultStr
 		temp.Result = result
-		
+
 		//return
-		
+
 		reswg.Add(1)
 		go sendKakao(&reswg, resultChan, friendtalk, temp)
 
@@ -401,13 +403,13 @@ carousel
 			resinsValues = append(resinsValues, resdtstr) // res_dt
 			resinsValues = append(resinsValues, result["reserve_dt"])
 
-			if s.EqualFold(kakaoResp.Code,"0000") {
-				resinsValues = append(resinsValues, "Y") // 
-			} else if len(result["sms_kind"])>=1 && s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
+			if s.EqualFold(kakaoResp.Code, "0000") {
+				resinsValues = append(resinsValues, "Y") //
+			} else if len(result["sms_kind"]) >= 1 && s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
 				resinsValues = append(resinsValues, "P") // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
 			} else {
-				resinsValues = append(resinsValues, "Y") // 
-			} 
+				resinsValues = append(resinsValues, "Y") //
+			}
 
 			resinsValues = append(resinsValues, kakaoResp.Code)
 			resinsValues = append(resinsValues, result["sms_kind"])
@@ -416,15 +418,15 @@ carousel
 			resinsValues = append(resinsValues, "N")
 			resinsValues = append(resinsValues, result["tmpl_id"])
 			resinsValues = append(resinsValues, result["wide"])
-			
-			if s.EqualFold(kakaoResp.Code,"0000") {
+
+			if s.EqualFold(kakaoResp.Code, "0000") {
 				resinsValues = append(resinsValues, nil) // send group
-			} else if len(result["sms_kind"])>=1 && s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
+			} else if len(result["sms_kind"]) >= 1 && s.EqualFold(config.Conf.PHONE_MSG_FLAG, "YES") {
 				resinsValues = append(resinsValues, nil) // send group
 			} else {
 				resinsValues = append(resinsValues, nil) // send group
-			} 
-			
+			}
+
 			resinsValues = append(resinsValues, result["supplement"])
 			resinsValues = append(resinsValues, result["price"])
 			resinsValues = append(resinsValues, result["currency_type"])
@@ -469,8 +471,8 @@ carousel
 	}
 
 	db.Exec("delete from DHN_REQUEST where send_group = '" + group_no + "'")
-	stdlog.Println("친구톡 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건  ( Proc Cnt :", ftprocCnt, ")" )
-	
+	stdlog.Println("친구톡 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건  ( Proc Cnt :", ftprocCnt, ")")
+
 	ftprocCnt--
 
 }

@@ -3,8 +3,8 @@ package nanoproc
 import (
 	"database/sql"
 	"fmt"
-	config "kaoconfig"
-	databasepool "kaodatabasepool"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 
 	//"strconv"
 
@@ -13,8 +13,9 @@ import (
 	"sync"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
 	"context"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func NanoLMSProcess(ctx context.Context) {
@@ -40,29 +41,29 @@ func NanoLMSProcess(ctx context.Context) {
 	}
 	errlog.Println("Nano MMS length : ", len(oshotTable))
 	for {
-	
-			select {
-				case <- ctx.Done():
-			
-			    config.Stdlog.Println("Nano LMS process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println("Nano LMS process 종료 완료")
-			    return
-			default:	
-			
-				for _, tableName := range oshotTable {
-					var t = time.Now()
-		
-					if t.Day() < 3 {
-						wg.Add(1)
-						go pre_mmsProcess(&wg, tableName[0])
-					}
-		
+
+		select {
+		case <-ctx.Done():
+
+			config.Stdlog.Println("Nano LMS process가 20초 후에 종료 됨.")
+			time.Sleep(20 * time.Second)
+			config.Stdlog.Println("Nano LMS process 종료 완료")
+			return
+		default:
+
+			for _, tableName := range oshotTable {
+				var t = time.Now()
+
+				if t.Day() < 3 {
 					wg.Add(1)
-					go mmsProcess(&wg, tableName[0])
+					go pre_mmsProcess(&wg, tableName[0])
 				}
-				wg.Wait()
+
+				wg.Add(1)
+				go mmsProcess(&wg, tableName[0])
 			}
+			wg.Wait()
+		}
 	}
 
 }
@@ -109,7 +110,7 @@ func mmsProcess(wg *sync.WaitGroup, tablename string) {
 			groupRows.Scan(&cb_msg_id, &sendresult, &file_path1, &senddt, &msgid, &telecom, &userid)
 
 			tr_net := telecom.String
- 
+
 			/*
 				var msg_type = "LMS"
 
@@ -124,7 +125,7 @@ func mmsProcess(wg *sync.WaitGroup, tablename string) {
 				var errcode = resultCode
 
 				val := CodeMessage(resultCode)
-		
+
 				db.Exec("update DHN_RESULT dr set dr.message_type = 'PH', dr.result = 'Y', dr.code = '" + errcode + "', dr.message = concat(dr.message, '," + val + "'), dr.remark1 = '" + telecom.String + "', dr.remark2 = '" + senddt.String + "' where userid='" + userid.String + "' and msgid = '" + cb_msg_id.String + "'")
 			} else {
 				db.Exec("update DHN_RESULT dr set dr.message_type = 'PH', dr.result = 'Y', dr.code = '0000', dr.message = '', dr.remark1 = '" + tr_net + "', dr.remark2 = '" + senddt.String + "' where userid='" + userid.String + "' and  msgid = '" + cb_msg_id.String + "'")
@@ -178,7 +179,6 @@ func pre_mmsProcess(wg *sync.WaitGroup, tablename string) {
 				var errcode = resultCode
 
 				val := CodeMessage(resultCode)
-				
 
 				db.Exec("update DHN_RESULT dr set dr.message_type = 'PH', dr.result = 'Y', dr.code = '" + errcode + "', dr.message = concat(dr.message, '," + val + "'), dr.remark1 = '" + telecom.String + "', dr.remark2 = '" + senddt.String + "' where userid='" + userid.String + "' and  msgid = '" + cb_msg_id.String + "'")
 			} else {

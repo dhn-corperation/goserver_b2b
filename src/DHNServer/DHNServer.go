@@ -9,16 +9,16 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	config "kaoconfig"
-	databasepool "kaodatabasepool"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 
 	//"kaoreqreceive"
 
 	//"kaocenter"
-	"kaosendrequest"
-	"nanoproc"
-	"oshotproc"
-	"otpproc"
+	"mycs/src/kaosendrequest"
+	"mycs/src/nanoproc"
+	"mycs/src/oshotproc"
+	"mycs/src/otpproc"
 
 	//"strconv"
 	//"time"

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	ini "github.com/BurntSushi/toml"
-	"github.com/go-resty/resty"
+	"github.com/go-resty/resty/v2"
 	rotatelogs "github.com/lestrrat/go-file-rotatelogs"
 )
 
