@@ -65,7 +65,7 @@ func ReqReceive(c *gin.Context) {
 
 		if err1 != nil {
 			errlog.Println(err1)
-			c.JSON(404, gin.H{
+			c.JSON(400, gin.H{
 				"code":    "error",
 				"message": err1,
 				"userid":  userid,

@@ -9,6 +9,8 @@ import (
 	"net/http"
 	// "time"
 	"runtime/debug"
+	"time"
+	"database/sql"
 
 	_ "github.com/go-sql-driver/mysql"
 
@@ -115,14 +117,13 @@ func resultProc() {
 	go kaoreqreceive.TempCopyProc()
 	r := gin.New()
 	r.Use(customRecovery())
-	//r := gin.Default()
 
 	r.GET("/", func(c *gin.Context) {
 		//time.Sleep(30 * time.Second)
 		c.String(200, "Center Server : "+config.Conf.CENTER_SERVER+",   "+"Image Server : "+config.Conf.IMAGE_SERVER)
 	})
 
-	r.POST("/req", kaoreqreceive.ReqReceive)
+	r.POST("/req", statusDatabase(), kaoreqreceive.ReqReceive)
 
 	r.POST("/result", kaoreqreceive.Resultreq)
 
@@ -531,6 +532,34 @@ func customRecovery() gin.HandlerFunc {
         }()
         c.Next() // 다음 미들웨어 또는 핸들러로 넘김
     }
+}
+
+func statusDatabase() gin.HandlerFunc {
+	return func(c *gin.Context){
+		for {
+			db, err := sql.Open(config.Conf.DB, config.Conf.DBURL)
+
+			if err != nil {
+				config.Stdlog.Println("DB 연결 실패 5초 후 재시도합니다. err : ", err)
+				time.Sleep(5 * time.Second) // 5초 후 재시도
+				continue
+			}
+
+			// Ping으로 연결 상태 확인
+			if err := db.Ping(); err != nil {
+				config.Stdlog.Println("DB 핑 신호 없음 err : ", err)
+				time.Sleep(5 * time.Second) // 5초 후 재시도
+				continue
+			} else {
+				db.SetMaxIdleConns(50)
+				db.SetMaxOpenConns(50)
+				databasepool.DB = db
+				config.Stdlog.Println("DB 재할당 완료")
+			}
+
+			c.Next()
+		}
+	}
 }
 
 func test(c *gin.Context) {
