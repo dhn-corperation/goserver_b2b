@@ -112,29 +112,29 @@ func ReqReceive(c *gin.Context) {
 				nonce = s.Split(msg[i].Crypto, ",")[0]
 			}
 
-			var processedMsg string
-			var err error
+			// var processedMsg string
+			// var err error
 			var smsKind = msg[i].Smskind
-			if s.Contains(s.ToLower(msg[i].Crypto), "msg") && len(msg[i].Msgsms) > 0 {
-				processedMsg, err = cm.RemoveWs(cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
-			} else {
-				processedMsg, err = cm.RemoveWs(msg[i].Msgsms)
-			}
-			if err != nil {
-				errlog.Println("RemoveWs 에러 : ", err)
-			} else {
-				euckrLength, err := cm.LengthInEUCKR(processedMsg)
-				if err != nil {
-					errlog.Println("LengthInEUCKR 에러 : ", err)
-				}
-				if euckrLength <= 90 {
-					smsKind = "S"
-				} else if euckrLength > 90 && msg[i].Pinvoice == "" {
-					smsKind = "L"
-				} else {
-					smsKind = "M"
-				}
-			}
+			// if s.Contains(s.ToLower(msg[i].Crypto), "msg") && len(msg[i].Msgsms) > 0 {
+			// 	processedMsg, err = cm.RemoveWs(cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
+			// } else {
+			// 	processedMsg, err = cm.RemoveWs(msg[i].Msgsms)
+			// }
+			// if err != nil {
+			// 	errlog.Println("RemoveWs 에러 : ", err)
+			// } else {
+			// 	euckrLength, err := cm.LengthInEUCKR(processedMsg)
+			// 	if err != nil {
+			// 		errlog.Println("LengthInEUCKR 에러 : ", err)
+			// 	}
+			// 	if euckrLength <= 90 {
+			// 		smsKind = "S"
+			// 	} else if euckrLength > 90 && msg[i].Pinvoice == "" {
+			// 		smsKind = "L"
+			// 	} else {
+			// 		smsKind = "M"
+			// 	}
+			// }
 
 			//친구톡 insert values 만들기
 			if s.HasPrefix(s.ToUpper(msg[i].Messagetype), "F") {
