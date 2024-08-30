@@ -835,7 +835,7 @@ Command :
 		c.String(200, key)
 	})
 
-	 otpstop := func() {
+	otpstop := func() {
 		temp := otpLguCtxC["OTPLGU"]
 		if temp != nil {
 			cancel := otpLguCtxC["OTPLGU"].(context.CancelFunc)
@@ -850,8 +850,8 @@ Command :
 		if temp != nil {
 			cancel := otpNanoCtxC["OTPNANO"].(context.CancelFunc)
 			cancel()
-			delete(otpLguCtxC, "OTPNANO")
-			delete(otpLguUser, "OTPNANO")
+			delete(otpNanoCtxC, "OTPNANO")
+			delete(otpNanoUser, "OTPNANO")
 
 			delete(allService, "OTPNANO")
 			delete(allCtxC, "OTPNANO")
