@@ -900,7 +900,7 @@ Command :
 			}
 			
 		} else {
-			c.String(200, "OTP 시작 불가")
+			c.String(400, "OTP 시작 불가")
 		}
 	})
 
