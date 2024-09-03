@@ -11,7 +11,6 @@ import (
 	"runtime/debug"
 	"time"
 	"database/sql"
-
 	_ "github.com/go-sql-driver/mysql"
 
 	config "mycs/src/kaoconfig"
@@ -522,10 +521,8 @@ func resultProc() {
 	go func() {
 		testHandler := func(ctx *fasthttp.RequestCtx) {
 			switch string(ctx.Path()) {
-			case "/":
-				ctx.SetContentType("text/plain")
-				ctx.SetStatusCode(fasthttp.StatusOK)
-				ctx.SetBodyString("제대로 실행되는지 테스트 해봅시다이")
+			case "/req":
+				kaoreqreceive.ReqReceive2(ctx)
 			default:
 				ctx.Error("Not Support", fasthttp.StatusNotFound)
 			}
