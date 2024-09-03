@@ -430,8 +430,8 @@ func ReqReceive2(c *fasthttp.RequestCtx) {
 	// ctx := c.Request.Context()
 	errlog := config.Stdlog
 
-	userid := c.Request.Header.Peek("userid")
-	userip := c.RemoteIP()
+	userid := string(c.Request.Header.Peek("userid"))
+	userip := c.RemoteIP().String()
 	isValidation := false
 
 	// 허가된 userid 인지 테이블에서 확인
@@ -791,7 +791,7 @@ func ReqReceive2(c *fasthttp.RequestCtx) {
 		c.SetStatusCode(fasthttp.StatusOK)
 		c.SetBody(resJson)
 	} else {
-		c.Error("Not Support", fasthttp.StatusNotFound)
+		c.Error("Not Support2", fasthttp.StatusNotFound)
 
 	}
 }
