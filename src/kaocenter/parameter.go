@@ -1,42 +1,5 @@
 package kaocenter
 
-type SenderCreate struct {
-	YellowId             string `json:"yellowId" binding:"required"`
-	CategoryCode         string `json:"categoryCode" binding:"required"`
-	ChannelKey           string `json:"channelKey,omitempty"`
-	Bizchat              string `json:"bizchat,omitempty"`
-	CommittalCompanyName string `json:"committalCompanyName,omitempty"`
-}
-
-type SenderDelete struct {
-	SenderKey string `json:"senderKey" binding:"required"`
-}
-
-type TemplateCreate struct {
-	SenderKey             string `json:"senderKey" binding:"required"`
-	TemplateCode          string `json:"templateCode" binding:"required"`
-	TemplateName          string `json:"templateName" binding:"required"`
-	TemplateMessageType   string `json:"templateMessageType" binding:"required"`
-	TemplateEmphasizeType string `json:"templateEmphasizeType" binding:"required"`
-	TemplateContent       string `json:"templateContent" binding:"required"`
-	TemplateExtra         string `json:"templateExtra,omitempty"`
-	//TemplateAd             string                 `json:"templateAd,omitempty"`
-	TemplateImageName      string                 `json:"templateImageName,omitempty"`
-	TemplateImageUrl       string                 `json:"templateImageUrl,omitempty"`
-	TemplateTitle          string                 `json:"templateTitle,omitempty"`
-	TemplateSubtitle       string                 `json:"templateSubtitle,omitempty"`
-	TemplateHeader         string                 `json:"templateHeader,omitempty"`
-	TemplateItemHighlight  TemplateItemHighlights `json:"templateItemHighlight,omitempty"`
-	TemplateItem           TemplateItems          `json:"templateItem,omitempty"`
-	SenderKeyType          string                 `json:"senderKeyType,omitempty"`
-	CategoryCode           string                 `json:"categoryCode,omitempty"`
-	SecurityFlag           bool                   `json:"securityFlag,omitempty"`
-	Buttons                []Button               `json:"buttons,omitempty"`
-	QuickReplies           []Quickreply           `json:"quickReplies,omitempty"`
-	TemplatePreviewMessage string                 `json:"templatePreviewMessage,omitempty"`
-	TemplateRepresentLink  templateRepresentLinks `json:"templateRepresentLink,omitempty"`
-}
-
 type Button struct {
 	Name      string `json:"name"`
 	LinkType  string `json:"linkType"`

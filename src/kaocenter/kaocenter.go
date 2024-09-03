@@ -2,25 +2,23 @@ package kaocenter
 
 import (
 	"bytes"
-	// "fmt"
-	// "io"
+	"fmt"
+	"io"
 	"io/ioutil"
-	config "mycs/src/kaoconfig"
-	// db "mycs/src/kaodatabasepool"
 	"net"
 	"net/http"
-	// "net/url"
-	// "path/filepath"
-
-	// "mime/multipart"
-	// "os"
-
+	"net/url"
+	"path/filepath"
+	"mime/multipart"
+	"os"
 	// "strconv"
-	// "strings"
+	"strings"
 	"time"
 
-	// "github.com/gin-gonic/gin"
-	// "github.com/google/uuid"
+	config "mycs/src/kaoconfig"
+	db "mycs/src/kaodatabasepool"
+
+	"github.com/google/uuid"
 	"github.com/valyala/fasthttp"
 	"github.com/goccy/go-json"
 )
@@ -47,12 +45,12 @@ func Sender_token(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
-	//client := &http.Client{}
 	resp, err := centerClient.Do(req)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -69,12 +67,12 @@ func Category_all(c *fasthttp.RequestCtx) {
 		return
 	}
 
-	//client := &http.Client{}
 	resp, err := centerClient.Do(req)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -98,6 +96,7 @@ func Category_(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -111,16 +110,11 @@ func Sender_Create(c *fasthttp.RequestCtx) {
 	token := string(c.Request.Header.Peek("token"))
 	phoneNumber := string(c.Request.Header.Peek("phoneNumber"))
 
-	// param := &SenderCreate{}
-
-	// if err := json.Unmarshal(c.PostBody(), param); err != nil {
-	// 	c.Error(err.Error(), fasthttp.StatusBadRequest)
-	// 	return
-	// }
-
-	// jsonstr, _ := json.Marshal(param)
-
-	jsonstr, _ := json.Marshal(c.PostBody())
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
 	buff := bytes.NewBuffer(jsonstr)
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v3/"+conf.PROFILE_KEY+"/sender/create", buff)
 	if err != nil {
@@ -131,7 +125,90 @@ func Sender_Create(c *fasthttp.RequestCtx) {
 	req.Header.Add("token", token)
 	req.Header.Add("phoneNumber", phoneNumber)
 
-	//client := &http.Client{}
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Sender_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	senderKey := string(c.QueryArgs().Peek("senderKey"))
+
+	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v3/"+conf.PROFILE_KEY+"/sender?senderKey="+senderKey, nil)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Sender_Delete(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/sender/delete", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Sender_Recover(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/sender/recover", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
 	resp, err := centerClient.Do(req)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -144,1283 +221,912 @@ func Sender_Create(c *fasthttp.RequestCtx) {
 	c.SetBody(bytes)
 }
 
-// func Sender_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
+func Template_Create(c *fasthttp.RequestCtx) {
+	conf := config.Conf
 
-// 	senderKey := c.QueryArgs().Peek("senderKey")
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
 
-// 	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v3/"+conf.PROFILE_KEY+"/sender?senderKey="+senderKey, nil)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/create", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
 
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
 
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
 
-// func Sender_Delete(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
+func Template_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
 
-// 	param := &SenderDelete{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/sender/delete", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
+	senderKey := string(c.QueryArgs().Peek("senderKey"))
+	templateCode := string(c.QueryArgs().Peek("templateCode"))
+	senderKeyType := string(c.QueryArgs().Peek("senderKeyType"))
 
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Sender_Recover(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &SenderDelete{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/sender/recover", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Template_Create(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &TemplateCreate{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/create", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Template_Create_Image(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	file, err := c.FormFile("image")
-// 	if err != nil {
-// 		//fmt.Println(err.Error())
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 		return
-// 	}
-
-// 	extension := filepath.Ext(file.Filename)
-// 	newFileName := uuid.New().String() + extension
-
-// 	err = c.SaveUploadedFile(file, config.BasePath+"upload/"+newFileName)
-
-// 	if err != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 		return
-// 	}
-
-// 	var tc TemplateCreate
-// 	json.Unmarshal([]byte(c.PostForm("json")), &tc)
-
-// 	cfile, _ := os.Open(config.BasePath + "upload/" + newFileName)
-// 	defer cfile.Close()
-
-// 	body := &bytes.Buffer{}
-// 	writer := multipart.NewWriter(body)
-
-// 	part, perr := writer.CreateFormFile("image", filepath.Base(config.BasePath+"upload/"+newFileName))
-// 	if perr != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", perr.Error()))
-// 		return
-// 	}
-
-// 	_, err = io.Copy(part, cfile)
-
-// 	_ = writer.WriteField("senderKey", tc.SenderKey)
-// 	_ = writer.WriteField("templateCode", tc.TemplateCode)
-// 	_ = writer.WriteField("templateName", tc.TemplateName)
-// 	_ = writer.WriteField("templateContent", tc.TemplateContent)
-// 	_ = writer.WriteField("templateMessageType", tc.TemplateMessageType)
-// 	_ = writer.WriteField("templateExtra", tc.TemplateExtra)
-// 	// _ = writer.WriteField("templateAd", tc.TemplateAd)
-// 	_ = writer.WriteField("templateEmphasizeType", tc.TemplateEmphasizeType)
-// 	_ = writer.WriteField("senderKeyType", tc.SenderKeyType)
-// 	_ = writer.WriteField("categoryCode", tc.CategoryCode)
-// 	_ = writer.WriteField("securityFlag", strconv.FormatBool(tc.SecurityFlag))
-
-// 	for key, r := range tc.Buttons {
-// 		_ = writer.WriteField("buttons["+strconv.Itoa(key)+"].name", r.Name)
-// 		_ = writer.WriteField("buttons["+strconv.Itoa(key)+"].linkType", r.LinkType)
-// 		_ = writer.WriteField("buttons["+strconv.Itoa(key)+"].ordering", strconv.Itoa(r.Ordering))
-// 		_ = writer.WriteField("buttons["+strconv.Itoa(key)+"].linkMo", r.LinkMo)
-// 		_ = writer.WriteField("buttons["+strconv.Itoa(key)+"].linkPc", r.LinkPc)
-// 		_ = writer.WriteField("buttons["+strconv.Itoa(key)+"].linkAnd", r.LinkAnd)
-// 		_ = writer.WriteField("buttons["+strconv.Itoa(key)+"].linkIos", r.LinkIos)
-// 	}
-
-// 	for key, r := range tc.QuickReplies {
-// 		_ = writer.WriteField("quickReplies["+strconv.Itoa(key)+"].name", r.Name)
-// 		_ = writer.WriteField("quickReplies["+strconv.Itoa(key)+"].linkType", r.LinkType)
-// 		_ = writer.WriteField("quickReplies["+strconv.Itoa(key)+"].linkMo", r.LinkMo)
-// 		_ = writer.WriteField("quickReplies["+strconv.Itoa(key)+"].linkPc", r.LinkPc)
-// 		_ = writer.WriteField("quickReplies["+strconv.Itoa(key)+"].linkAnd", r.LinkAnd)
-// 		_ = writer.WriteField("quickReplies["+strconv.Itoa(key)+"].linkIos", r.LinkIos)
-// 	}
-
-// 	err = writer.Close()
-
-// 	if err != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 		return
-// 	}
-
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/create_with_image", body)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", writer.FormDataContentType())
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Template_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	senderKey := c.Query("senderKey")
-// 	templateCode := c.Query("templateCode")
-// 	senderKeyType := c.Query("senderKeyType")
-
-// 	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template?senderKey="+senderKey+"&templateCode="+url.QueryEscape(templateCode)+"&senderKeyType="+senderKeyType, nil)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
+	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template?senderKey="+senderKey+"&templateCode="+url.QueryEscape(templateCode)+"&senderKeyType="+senderKeyType, nil)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
 	
-// 	req.Header.Add("Accept-Charset", "utf-8")
+	req.Header.Add("Accept-Charset", "utf-8")
 	
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
 
-// func Template_Request(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
 
-// 	param := &TemplateRequest{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/request", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
+func Template_Request(c *fasthttp.RequestCtx) {
+	conf := config.Conf
 
-// func Template_Cancel_Request(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
 
-// 	param := &TemplateRequest{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/cancel_request", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/request", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
 
-// func Template_Update(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Template_Cancel_Request(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/cancel_request", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Template_Update(c *fasthttp.RequestCtx) {
+	conf := config.Conf
 	
-// 	fmt.Println("T U Call")
-// 	param := &TemplateUpdate{}
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/update", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Template_Stop(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/stop", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Template_Reuse(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/reuse", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Template_Delete(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/delete", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Template_Last_Modified(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	senderKey := string(c.QueryArgs().Peek("senderKey"))
+	senderKeyType := string(c.QueryArgs().Peek("senderKeyType"))
+	since := string(c.QueryArgs().Peek("since"))
+	page := string(c.QueryArgs().Peek("page"))
+	count := string(c.QueryArgs().Peek("count"))
+
+	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v3/"+conf.PROFILE_KEY+"/alimtalk/template/last_modified?senderKey="+senderKey+"&senderKeyType="+senderKeyType+"&since="+since+"&page="+page+"&count="+count, nil)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	resp, err := centerClient.Do(req)
+
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Template_Category_all(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/category/all", nil)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Template_Category_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	categoryCode := string(c.QueryArgs().Peek("categoryCode"))
+
+	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/category?categoryCode="+categoryCode, nil)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	resp, err := centerClient.Do(req)
+
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Template_Dormant_Release(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/dormant/release", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Group_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/group", nil)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Group_Sender(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	groupKey := string(c.QueryArgs().Peek("groupKey"))
+
+	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v3/"+conf.PROFILE_KEY+"/group/sender?groupKey="+groupKey, nil)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Group_Sender_Add(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/group/sender/add", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Group_Sender_Remove(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/group/sender/remove", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Channel_Create_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/create", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Channel_all(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/all", nil)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Channel_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	channelKey := string(c.QueryArgs().Peek("channelKey"))
+
+	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel?channelKey="+channelKey, nil)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Channel_Update_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/update", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Channel_Senders_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/senders", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Channel_Delete_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/delete", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Plugin_CallbackUrls_List(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	senderKey := string(c.QueryArgs().Peek("senderKey"))
+
+	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/plugin/callbackUrl/list?senderKey="+senderKey, nil)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Plugin_callbackUrl_Create(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/plugin/callbackUrl/create", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Plugin_callbackUrl_Update(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/plugin/callbackUrl/update", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Plugin_callbackUrl_Delete(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/plugin/callbackUrl/delete", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func FT_Upload(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+	}
+
+	files := form.File["image"]
+	if len(files) == 0 {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+	}
+
+	file := files[0]
+
+	extension := filepath.Ext(file.Filename)
+	newFileName := uuid.New().String() + extension
+
+	err = saveUploadedFile(file, config.BasePath+"upload/"+newFileName)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusInternalServerError)
+		return
+	}
+
+	param := map[string]io.Reader{
+		"image": mustOpen(config.BasePath+"upload/" +newFileName),
+	}
+
+	resp, err := upload(conf.IMAGE_SERVER+"v1/"+conf.PROFILE_KEY+"/image/friendtalk", param)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+
+func FT_Wide_Upload(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+	}
+
+	files := form.File["image"]
+	if len(files) == 0 {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+	}
+
+	file := files[0]
+
+	extension := filepath.Ext(file.Filename)
+	newFileName := uuid.New().String() + extension
+
+	err = saveUploadedFile(file, config.BasePath+"upload/" + newFileName)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusInternalServerError)
+		return
+	}
+
+	param := map[string]io.Reader{
+		"image": mustOpen(config.BasePath+"upload/" + newFileName),
+	}
+
+	resp, err := upload(conf.IMAGE_SERVER+"v1/"+conf.PROFILE_KEY+"/image/friendtalk/wide", param)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func AT_Image(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+	}
+
+	files := form.File["image"]
+	if len(files) == 0 {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+	}
+
+	file := files[0]
+
+	extension := filepath.Ext(file.Filename)
+	newFileName := uuid.New().String() + extension
+
+	err = saveUploadedFile(file, config.BasePath+"upload/" + newFileName)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusInternalServerError)
+		return
+	}
+
+	param := map[string]io.Reader{
+		"image": mustOpen(config.BasePath+"upload/" + newFileName),
+	}
+
+	resp, err := upload(conf.IMAGE_SERVER+ "v1/"+conf.PROFILE_KEY+"/image/alimtalk/template", param)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+	}
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func MMS_Image(c *fasthttp.RequestCtx) {
+	//conf := config.Conf
+	var newFileName1, newFileName2, newFileName3 string
+	imageKeys := []string{"image1", "image2", "image3"}
+	userID := string(c.FormValue("userid"))
 	
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	fmt.Println("Json : ", string(jsonstr))
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/update", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Template_Update_Image(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	file, err := c.FormFile("image")
-// 	if err != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 		return
-// 	}
-
-// 	extension := filepath.Ext(file.Filename)
-// 	newFileName := uuid.New().String() + extension
-
-// 	err = c.SaveUploadedFile(file, config.BasePath+"upload/"+newFileName)
-// 	if err != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 		return
-// 	}
-
-// 	var tu TemplateUpdate
-// 	json.Unmarshal([]byte(c.PostForm("json")), &tu)
-
-// 	cfile, _ := os.Open(config.BasePath + "upload/" + newFileName)
-// 	defer cfile.Close()
-
-// 	body := &bytes.Buffer{}
-// 	writer := multipart.NewWriter(body)
-
-// 	part, perr := writer.CreateFormFile("image", filepath.Base(config.BasePath+"upload/"+newFileName))
-// 	if perr != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", perr.Error()))
-// 		return
-// 	}
-
-// 	_, err = io.Copy(part, cfile)
-
-// 	_ = writer.WriteField("senderKey", tu.SenderKey)
-// 	_ = writer.WriteField("templateCode", tu.TemplateCode)
-// 	_ = writer.WriteField("senderKeyType", tu.SenderKeyType)
-// 	_ = writer.WriteField("newSenderKey", tu.NewSenderKey)
-// 	_ = writer.WriteField("newTemplateCode", tu.NewTemplateCode)
-// 	_ = writer.WriteField("newTemplateName", tu.NewTemplateName)
-// 	_ = writer.WriteField("newTemplateContent", tu.NewTemplateContent)
-// 	_ = writer.WriteField("newTemplateMessageType", tu.NewTemplateMessageType)
-// 	_ = writer.WriteField("newTemplateExtra", tu.NewTemplateExtra)
-// 	// _ = writer.WriteField("newTemplateAd", tu.NewTemplateAd)
-// 	_ = writer.WriteField("newTemplateEmphasizeType", tu.NewTemplateEmphasizeType)
-// 	_ = writer.WriteField("newSenderKeyType", tu.NewSenderKeyType)
-// 	_ = writer.WriteField("newCategoryCode", tu.NewCategoryCode)
-// 	_ = writer.WriteField("securityFlag", strconv.FormatBool(tu.SecurityFlag))
-
-// 	for key, r := range tu.Buttons {
-// 		_ = writer.WriteField("buttons["+strconv.Itoa(key)+"].name", r.Name)
-// 		_ = writer.WriteField("buttons["+strconv.Itoa(key)+"].linkType", r.LinkType)
-// 		_ = writer.WriteField("buttons["+strconv.Itoa(key)+"].ordering", strconv.Itoa(r.Ordering))
-// 		_ = writer.WriteField("buttons["+strconv.Itoa(key)+"].linkMo", r.LinkMo)
-// 		_ = writer.WriteField("buttons["+strconv.Itoa(key)+"].linkPc", r.LinkPc)
-// 		_ = writer.WriteField("buttons["+strconv.Itoa(key)+"].linkAnd", r.LinkAnd)
-// 		_ = writer.WriteField("buttons["+strconv.Itoa(key)+"].linkIos", r.LinkIos)
-// 	}
-
-// 	for key, r := range tu.QuickReplies {
-// 		_ = writer.WriteField("quickReplies["+strconv.Itoa(key)+"].name", r.Name)
-// 		_ = writer.WriteField("quickReplies["+strconv.Itoa(key)+"].linkType", r.LinkType)
-// 		_ = writer.WriteField("quickReplies["+strconv.Itoa(key)+"].linkMo", r.LinkMo)
-// 		_ = writer.WriteField("quickReplies["+strconv.Itoa(key)+"].linkPc", r.LinkPc)
-// 		_ = writer.WriteField("quickReplies["+strconv.Itoa(key)+"].linkAnd", r.LinkAnd)
-// 		_ = writer.WriteField("quickReplies["+strconv.Itoa(key)+"].linkIos", r.LinkIos)
-// 	}
-
-// 	err = writer.Close()
-
-// 	if err != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 		return
-// 	}
-
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/update_with_image", body)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", writer.FormDataContentType())
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Template_Stop(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &TemplateRequest{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/stop", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Template_Reuse(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &TemplateRequest{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/reuse", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Template_Delete(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &TemplateRequest{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/delete", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Template_Last_Modified(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	senderKey := c.Query("senderKey")
-// 	senderKeyType := c.Query("senderKeyType")
-// 	since := c.Query("since")
-// 	page := c.Query("page")
-// 	count := c.Query("count")
-
-// 	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/last_modified?senderKey="+senderKey+"&senderKeyType="+senderKeyType+"&since="+since+"&page="+page+"&count="+count, nil)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Template_Comment(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &TemplateComment{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/comment", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Template_Comment_File(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	file, err := c.FormFile("attachment")
-// 	if err != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 		return
-// 	}
-
-// 	extension := filepath.Ext(file.Filename)
-// 	newFileName := uuid.New().String() + extension
-
-// 	err = c.SaveUploadedFile(file, config.BasePath+"upload/"+newFileName)
-// 	if err != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 		return
-// 	}
-
-// 	param := map[string]io.Reader{
-// 		"attachment":    mustOpen(config.BasePath+"upload/" + newFileName),
-// 		"senderKey":     strings.NewReader(c.PostForm("senderKey")),
-// 		"templateCode":  strings.NewReader(c.PostForm("templateCode")),
-// 		"senderKeyType": strings.NewReader(c.PostForm("senderKeyType")),
-// 		"comment":       strings.NewReader(c.PostForm("comment")),
-// 	}
-
-// 	resp, err := upload(conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/comment_file", param)
-
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Template_Category_all(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/category/all", nil)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Template_Category_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	categoryCode := c.Query("categoryCode")
-
-// 	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/category?categoryCode="+categoryCode, nil)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Template_Category_Update(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &TemplateCategoryUpdate{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/category/update", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Template_Dormant_Release(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &TemplateRequest{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/dormant/release", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Group_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/group", nil)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Group_Sender(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	groupKey := c.Query("groupKey")
-
-// 	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v3/"+conf.PROFILE_KEY+"/group/sender?groupKey="+groupKey, nil)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Group_Sender_Add(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &GroupSenderAdd{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/group/sender/add", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Group_Sender_Remove(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &GroupSenderAdd{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/group/sender/remove", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Channel_Create_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &ChannelCreate{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/create", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Channel_all(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/all", nil)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Channel_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	channelKey := c.Query("channelKey")
-
-// 	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel?channelKey="+channelKey, nil)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Channel_Update_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &ChannelCreate{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/update", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Channel_Senders_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &ChannelSenders{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/senders", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Channel_Delete_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &ChannelDelete{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/delete", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Plugin_CallbackUrls_List(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	senderKey := c.Query("senderKey")
-
-// 	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/plugin/callbackUrl/list?senderKey="+senderKey, nil)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Plugin_callbackUrl_Create(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &PluginCallbackUrlCreate{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/plugin/callbackUrl/create", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Plugin_callbackUrl_Update(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &PluginCallbackUrlUpdate{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/plugin/callbackUrl/update", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Plugin_callbackUrl_Delete(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &PluginCallbackUrlDelete{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/plugin/callbackUrl/delete", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	//client := &http.Client{}
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func FT_Upload(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	file, err := c.FormFile("image")
-// 	if err != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 		return
-// 	}
-
-// 	extension := filepath.Ext(file.Filename)
-// 	newFileName := uuid.New().String() + extension
-
-// 	err = c.SaveUploadedFile(file, config.BasePath+"upload/"+newFileName)
-// 	if err != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 		return
-// 	}
-
-// 	param := map[string]io.Reader{
-// 		"image": mustOpen(config.BasePath+"upload/" +newFileName),
-// 	}
-
-// 	resp, err := upload(conf.IMAGE_SERVER+"v1/"+conf.PROFILE_KEY+"/image/friendtalk", param)
-
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-
-// func FT_Wide_Upload(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	file, err := c.FormFile("image")
-// 	if err != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 		return
-// 	}
-
-// 	extension := filepath.Ext(file.Filename)
-// 	newFileName := uuid.New().String() + extension
-
-// 	err = c.SaveUploadedFile(file, config.BasePath+"upload/" + newFileName)
-// 	if err != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 		return
-// 	}
-
-// 	param := map[string]io.Reader{
-// 		"image": mustOpen(config.BasePath+"upload/" + newFileName),
-// 	}
-
-// 	resp, err := upload(conf.IMAGE_SERVER+"v1/"+conf.PROFILE_KEY+"/image/friendtalk/wide", param)
-
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func AT_Image(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	file, err := c.FormFile("image")
-// 	if err != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 		return
-// 	}
-
-// 	extension := filepath.Ext(file.Filename)
-// 	newFileName := uuid.New().String() + extension
-
-// 	err = c.SaveUploadedFile(file, config.BasePath+"upload/" + newFileName)
-// 	if err != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 		return
-// 	}
-
-// 	param := map[string]io.Reader{
-// 		"image": mustOpen(config.BasePath+"upload/" + newFileName),
-// 	}
-
-// 	resp, err := upload(conf.IMAGE_SERVER+ "v1/"+conf.PROFILE_KEY+"/image/alimtalk/template", param)
-
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func AL_Image(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	file, err := c.FormFile("image")
-// 	if err != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 		return
-// 	}
-
-// 	extension := filepath.Ext(file.Filename)
-// 	newFileName := uuid.New().String() + extension
-
-// 	err = c.SaveUploadedFile(file, config.BasePath+"upload/" + newFileName)
-// 	if err != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 		return
-// 	}
-
-// 	param := map[string]io.Reader{
-// 		"image": mustOpen(config.BasePath+"upload/" + newFileName),
-// 	}
-
-// 	resp, err := upload(conf.IMAGE_SERVER+ "v1/"+conf.PROFILE_KEY+"/image/alimtalk", param)
-
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func MMS_Image(c *fasthttp.RequestCtx) {
-// 	//conf := config.Conf
-// 	var newFileName1,newFileName2,newFileName3 string
-
-// 	userID := c.PostForm("userid")
-// 	file1, err1 := c.FormFile("image1")
-// 	file2, err2 := c.FormFile("image2")
-// 	file3, err3 := c.FormFile("image3")
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+	}
 	
-// 	var startNow = time.Now()
-// 	var group_no = fmt.Sprintf("%04d%02d%02d%02d%02d%02d%09d", startNow.Year(), startNow.Month(), startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
-						
-// 	if err1 != nil {
-// 		config.Stdlog.Println("File 1 Parameter 오류 : " , err1)
-// 	} else {
-// 		extension1 := filepath.Ext(file1.Filename)
-// 		newFileName1 = config.BasePath+"upload/mms/" + uuid.New().String() + extension1
+	seq := 1
+	var startNow = time.Now()
+	var group_no = fmt.Sprintf("%04d%02d%02d%02d%02d%02d%09d", startNow.Year(), startNow.Month(), startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
 	
-// 		err := c.SaveUploadedFile(file1, newFileName1)
-// 		if err != nil {
-// 			config.Stdlog.Println("File 1 저장 오류 : ", newFileName1, err)
-// 			newFileName1 = ""
-// 		}
-// 	}
-
-// 	if err2 != nil {
-// 		config.Stdlog.Println("File 2 Parameter 오류 : " , err2)
-// 	} else {
-// 		extension2 := filepath.Ext(file2.Filename)
-// 		newFileName2 = config.BasePath+"upload/mms/" + uuid.New().String() + extension2
-	
-// 		err := c.SaveUploadedFile(file2, newFileName2)
-// 		if err != nil {
-// 			config.Stdlog.Println("File 2 저장 오류 : ", newFileName2, err)
-// 			newFileName2 = ""
-// 		}
-// 	}
-	
-// 	if err3 != nil {
-// 		config.Stdlog.Println("File 3 Parameter 오류 : " , err3)
-// 	} else {
-// 		extension3 := filepath.Ext(file3.Filename)
-// 		newFileName3 = config.BasePath+"upload/mms/" + uuid.New().String() + extension3
-	
-// 		err := c.SaveUploadedFile(file3, newFileName3)
-// 		if err != nil {
-// 			config.Stdlog.Println("File 3 저장 오류 : ", newFileName3, err)
-// 			newFileName3 = ""
-// 		}
-// 	}
+	for _, key := range imageKeys {
+		files := form.File[key]
+		if len(files) != 0 {
+			extension := filepath.Ext(files[0].Filename)
+			switch seq {
+			case 1:
+				newFileName1 = config.BasePath+"upload/mms/" + uuid.New().String() + extension
+			case 2:
+				newFileName2 = config.BasePath+"upload/mms/" + uuid.New().String() + extension
+			case 3:
+				newFileName3 = config.BasePath+"upload/mms/" + uuid.New().String() + extension
+			}
+			err := saveUploadedFile(files[0], config.BasePath+"upload/mms/" + uuid.New().String() + extension)
+			if err != nil {
+				config.Stdlog.Println("File ", seq," 저장 오류 : ", newFileName1, err)
+				newFileName1 = ""
+			}
+		}
+		seq++
+	}
  
-// 	if len(newFileName1) > 0 || len(newFileName2) > 0 || len(newFileName3) > 0  {
+	if len(newFileName1) > 0 || len(newFileName2) > 0 || len(newFileName3) > 0  {
 	
-// 		mmsinsQuery := `insert IGNORE into api_mms_images(
-//   user_id,
-//   mms_id,             
-//   origin1_path,
-//   origin2_path,
-//   origin3_path,
-//   file1_path,
-//   file2_path,
-//   file3_path   
-// ) values %s
-// 	`
-// 		mmsinsStrs := []string{}
-// 		mmsinsValues := []interface{}{}
+		mmsinsQuery := `insert IGNORE into api_mms_images(
+  user_id,
+  mms_id,             
+  origin1_path,
+  origin2_path,
+  origin3_path,
+  file1_path,
+  file2_path,
+  file3_path   
+) values %s
+	`
+		mmsinsStrs := []string{}
+		mmsinsValues := []interface{}{}
 	
-// 		mmsinsStrs = append(mmsinsStrs, "(?,?,null,null,null,?,?,?)")
-// 		mmsinsValues = append(mmsinsValues, userID)
-// 		mmsinsValues = append(mmsinsValues, group_no)
-// 		mmsinsValues = append(mmsinsValues, newFileName1)
-// 		mmsinsValues = append(mmsinsValues, newFileName2)
-// 		mmsinsValues = append(mmsinsValues, newFileName3)
+		mmsinsStrs = append(mmsinsStrs, "(?,?,null,null,null,?,?,?)")
+		mmsinsValues = append(mmsinsValues, userID)
+		mmsinsValues = append(mmsinsValues, group_no)
+		mmsinsValues = append(mmsinsValues, newFileName1)
+		mmsinsValues = append(mmsinsValues, newFileName2)
+		mmsinsValues = append(mmsinsValues, newFileName3)
 		
-// 		if len(mmsinsStrs) >= 1 {
-// 			stmt := fmt.Sprintf(mmsinsQuery, strings.Join(mmsinsStrs, ","))
-// 			_, err := db.DB.Exec(stmt, mmsinsValues...)
+		if len(mmsinsStrs) >= 1 {
+			stmt := fmt.Sprintf(mmsinsQuery, strings.Join(mmsinsStrs, ","))
+			_, err := db.DB.Exec(stmt, mmsinsValues...)
 	
-// 			if err != nil {
-// 				config.Stdlog.Println("API MMS Insert 처리 중 오류 발생 " + err.Error())
-// 			}
+			if err != nil {
+				config.Stdlog.Println("API MMS Insert 처리 중 오류 발생 " + err.Error())
+			}
 	
-// 			mmsinsStrs = nil
-// 			mmsinsValues = nil
-// 		} 
+			mmsinsStrs = nil
+			mmsinsValues = nil
+		} 
 
-// 		c.JSON(http.StatusOK, gin.H{
-// 			"image_group":group_no,
-// 		})
-// 	} else {
-// 		c.JSON(600, gin.H{
-// 			"message":"no content",
-// 		})
-// 	}
-// }
+		res, _ := json.Marshal(map[string]string{
+			"image_group":group_no,
+		})
+		c.SetContentType("application/json")
+		c.SetStatusCode(fasthttp.StatusOK)
+		c.SetBody(res)
+	} else {
+		res, _ := json.Marshal(map[string]string{
+			"message":"no content",
+		})
+		c.SetContentType("application/json")
+		c.SetStatusCode(fasthttp.StatusBadRequest)
+		c.SetBody(res)
+	}
+}
 
 
 // func Image_wideItemList(c *fasthttp.RequestCtx) {
@@ -2545,58 +2251,77 @@ func Sender_Create(c *fasthttp.RequestCtx) {
 // 	return param, retErr
 // }
 
-// func upload(url string, values map[string]io.Reader) (*http.Response, error) {
+func upload(url string, values map[string]io.Reader) (*http.Response, error) {
 
-// 	var buff bytes.Buffer
-// 	w := multipart.NewWriter(&buff)
+	var buff bytes.Buffer
+	w := multipart.NewWriter(&buff)
 
-// 	for key, r := range values {
-// 		var fw io.Writer
-// 		if x, ok := r.(io.Closer); ok {
-// 			defer x.Close()
-// 		}
+	for key, r := range values {
+		var fw io.Writer
+		if x, ok := r.(io.Closer); ok {
+			defer x.Close()
+		}
 
-// 		if x, ok := r.(*os.File); ok {
-// 			fw, _ = w.CreateFormFile(key, x.Name())
-// 		} else {
+		if x, ok := r.(*os.File); ok {
+			fw, _ = w.CreateFormFile(key, x.Name())
+		} else {
 
-// 			fw, _ = w.CreateFormField(key)
-// 		}
-// 		_, err := io.Copy(fw, r)
+			fw, _ = w.CreateFormField(key)
+		}
+		_, err := io.Copy(fw, r)
 
-// 		if err != nil {
-// 			return nil, err
-// 		}
+		if err != nil {
+			return nil, err
+		}
 
-// 	}
+	}
 
-// 	w.Close()
+	w.Close()
 
-// 	req, err := http.NewRequest("POST", url, &buff)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	req, err := http.NewRequest("POST", url, &buff)
+	if err != nil {
+		return nil, err
+	}
 
-// 	req.Header.Set("Content-Type", w.FormDataContentType())
-// 	//client := &http.Client{}
+	req.Header.Set("Content-Type", w.FormDataContentType())
 
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
 
-// 	return resp, nil
-// }
+	return resp, nil
+}
 
-// func mustOpen(f string) *os.File {
-// 	r, err := os.Open(f)
-// 	if err != nil {
-// 		//pwd, _ := os.Getwd()
-// 		//fmt.Println("PWD: ", pwd)
-// 		return nil
-// 	}
-// 	return r
-// }
+func mustOpen(f string) *os.File {
+	r, err := os.Open(f)
+	if err != nil {
+		//pwd, _ := os.Getwd()
+		//fmt.Println("PWD: ", pwd)
+		return nil
+	}
+	return r
+}
+
+func saveUploadedFile(fileHeader *multipart.FileHeader, dst string) error {
+	src, err := fileHeader.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	if _, err := out.ReadFrom(src); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 // func MissingParams(c *fasthttp.RequestCtx, params map[string]string) bool {
 // 	var missingParams []string

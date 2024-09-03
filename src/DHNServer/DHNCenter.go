@@ -116,197 +116,6 @@ func resultProc() {
 	//go kaosendrequest.PollingProc()
 	go kaoreqreceive.TempCopyProc()
 
-	// go func() {
-	// 	r := gin.New()
-	// 	r.Use(customRecovery())
-
-	// 	r.GET("/", func(c *gin.Context) {
-	// 		//time.Sleep(30 * time.Second)
-	// 		c.String(200, "Center Server : "+config.Conf.CENTER_SERVER+",   "+"Image Server : "+config.Conf.IMAGE_SERVER)
-	// 	})
-
-	// 	r.POST("/req", statusDatabase(), kaoreqreceive.ReqReceive)
-
-	// 	r.POST("/result", kaoreqreceive.Resultreq)
-
-	// 	r.POST("/sresult", kaoreqreceive.SearchResultReq)
-
-	// 	// 카카오톡 채널 인증 토큰 요청
-	// 	// GET /api/v1/{partner_key}/sender/token
-	// 	r.GET("/sender/token", kaocenter.Sender_token)
-
-	// 	// 발신프로필 카테고리 전체 조회
-	// 	// GET /api/v1/{partner_key}/category/all
-	// 	r.GET("/category/all", kaocenter.Category_all)
-
-	// 	// 발신프로필 카테고리 조회
-	// 	// GET /api/v1/{partner_key}/category
-	// 	r.GET("/sender/category", kaocenter.Category_)
-
-	// 	// 발신프로필 등록
-	// 	// POST /api/v3/{partner_key}/sender/create
-	// 	r.POST("/sender/create", kaocenter.Sender_Create)
-
-	// 	// 발신프로필 조회1
-	// 	// GET /api/v3/{partner_key}/sender
-	// 	r.GET("/sender", kaocenter.Sender_)
-
-	// 	// 발신프로필 삭제
-	// 	// POST /api/v1/{partner_key}/sender/delete
-	// 	r.POST("/sender/delete", kaocenter.Sender_Delete)
-
-	// 	// 미사용 프로필 휴면 해제
-	// 	// POST /api/v1/{partner_key}/sender/recover
-	// 	r.POST("/sender/recover", kaocenter.Sender_Recover)
-
-	// 	// 템플릿 등록
-	// 	// POST /api/v2/{partner_key}/alimtalk/template/create
-	// 	r.POST("/template/create", kaocenter.Template_Create)
-
-	// 	// 사라진듯
-	// 	//r.POST("/template/create_with_image", kaocenter.Template_Create_Image)
-
-	// 	// 템플릿 조회
-	// 	// GET /api/v2/{partner_key}/alimtalk/template
-	// 	r.GET("/template", kaocenter.Template_)
-
-	// 	// 검수 요청
-	// 	// POST /api/v2/{partner_key}/alimtalk/template/request
-	// 	r.POST("/template/request", kaocenter.Template_Request)
-
-	// 	// 검수 요청 취소
-	// 	// POST /api/v2/{partner_key}/alimtalk/template/cancel_request
-	// 	r.POST("/template/cancel_request", kaocenter.Template_Cancel_Request)
-
-	// 	// 템플릿 수정
-	// 	// POST /api/v2/{partner_key}/alimtalk/template/update
-	// 	r.POST("/template/update", kaocenter.Template_Update)
-
-	// 	// 사라진듯
-	// 	//r.POST("/template/update_with_image", kaocenter.Template_Update_Image)
-
-	// 	// 템플릿 사용 중지
-	// 	// POST /api/v2/{partner_key}/alimtalk/template/stop
-	// 	r.POST("/template/stop", kaocenter.Template_Stop)
-
-	// 	// 템플릿 사용 중지 해제
-	// 	// POST /api/v2/{partner_key}/alimtalk/template/reuse
-	// 	r.POST("/template/reuse", kaocenter.Template_Reuse)
-
-	// 	// 템플릿 삭제
-	// 	// POST /api/v2/{partner_key}/alimtalk/template/delete
-	// 	r.POST("/template/delete", kaocenter.Template_Delete)
-
-	// 	// 최근 변경 템플릿 조회
-	// 	// GET /api/v3/{partner_key}/alimtalk/template/last_modified
-	// 	// 수정 /api/v2/ -> /api/v3/
-	// 	r.GET("/template/last_modified", kaocenter.Template_Last_Modified)
-
-	// 	// API 변경 ㅡ> r.POST("/template/request", kaocenter.Template_Request)
-	// 	//r.POST("/template/comment", kaocenter.Template_Comment)
-
-	// 	// API 변경 ㅡ> r.POST("/template/request_with_file", kaocenter.Template_request_with_file)
-	// 	//r.POST("/template/comment_file", kaocenter.Template_Comment_File)
-
-	// 	// 템플릿 카테고리 전체 조회
-	// 	// GET /api/v2/{partner_key}/alimtalk/template/category/all
-	// 	r.GET("/template/category/all", kaocenter.Template_Category_all)
-
-	// 	// 템플릿 카테고리 조회
-	// 	// GET /api/v2/{partner_key}/alimtalk/template/category
-	// 	r.GET("/template/category", kaocenter.Template_Category_)
-
-	// 	// 템플릿 카테고리 변경
-	// 	// 삭제됨 (센터API에 해당 API 없음)
-	// 	//r.POST("/template/category/update", kaocenter.Template_Category_Update)
-
-	// 	// 템플릿 휴면 해제
-	// 	// POST /api/v2/{partner_key}/alimtalk/template/dormant/release
-	// 	r.POST("/template/dormant/release", kaocenter.Template_Dormant_Release)
-
-	// 	// 발신 프로필 그룹 조회
-	// 	// GET /api/v1/{partner_key}/group
-	// 	r.GET("/group", kaocenter.Group_)
-
-	// 	// 그룹에 포함된 발신 프로필 조회
-	// 	// GET /api/v3/{partner_key}/group/sender
-	// 	r.GET("/group/sender", kaocenter.Group_Sender)
-
-	// 	// 그룹에 발신 프로필 추가
-	// 	// POST /api/v1/{partner_key}/group/sender/add
-	// 	r.POST("/group/sender/add", kaocenter.Group_Sender_Add)
-
-	// 	// 그룹에 발신 프로필 삭제
-	// 	// POST /api/v1/{partner_key}/group/sender/remove
-	// 	r.POST("/group/sender/remove", kaocenter.Group_Sender_Remove)
-
-	// 	// 채널 생성
-	// 	// POST /api/v2/{partner_key}/channel/create
-	// 	r.POST("/channel/create", kaocenter.Channel_Create_)
-
-	// 	// 전체 채널 조회
-	// 	// GET /api/v2/{partner_key}/channel/all
-	// 	r.GET("/channel/all", kaocenter.Channel_all)
-
-	// 	// 채널 상세 조회
-	// 	// GET /api/v2/{partner_key}/channel
-	// 	r.GET("/channel", kaocenter.Channel_)
-
-	// 	// 채널 수정
-	// 	// POST /api/v2/{partner_key}/channel/update
-	// 	r.POST("/channel/update", kaocenter.Channel_Update_)
-
-	// 	// 채널에 발신 프로필 할당
-	// 	// POST /api/v2/{partner_key}/channel/senders
-	// 	r.POST("/channel/senders", kaocenter.Channel_Senders_)
-
-	// 	// 채널 삭제
-	// 	// POST /api/v2/{partner_key}/channel/delete
-	// 	r.POST("/channel/delete", kaocenter.Channel_Delete_)
-
-	// 	// 플러그인 콜백 URL 조회
-	// 	// GET /api/v1/{partner_key}/plugin/callbackUrl/list
-	// 	// 수정 /api/v2/ -> /api/v1/
-	// 	r.GET("/plugin/callbackUrl/list", kaocenter.Plugin_CallbackUrls_List)
-
-	// 	// 플러그인 콜백 URL 등록
-	// 	// POST /api/v1/{partner_key}/plugin/callbackUrl/create
-	// 	// 수정 /api/v2/ -> /api/v1/
-	// 	r.POST("/plugin/callbackUrl/create", kaocenter.Plugin_callbackUrl_Create)
-
-	// 	// 플러그인 콜백 URL 수정
-	// 	// POST /api/v1/{partner_key}/plugin/callbackUrl/update
-	// 	// 수정 /api/v2/ -> /api/v1/
-	// 	r.POST("/plugin/callbackUrl/update", kaocenter.Plugin_callbackUrl_Update)
-
-	// 	// 플러그인 콜백 URL 삭제
-	// 	// POST /api/v1/{partner_key}/plugin/callbackUrl/delete
-	// 	// 수정 /api/v2/ -> /api/v1/
-	// 	r.POST("/plugin/callbackUrl/delete", kaocenter.Plugin_callbackUrl_Delete)
-
-	// 	// 친구톡 이미지 업로드 요청
-	// 	// POST /v1/{partner_key}/image/friendtalk
-	// 	//수정
-	// 	r.POST("/ft/image", kaocenter.FT_Upload)
-
-	// 	// 친구톡 와이드 이미지 업로드 요청
-	// 	// POST /v1/{partner_key}/image/friendtalk/wide
-	// 	//수정
-	// 	r.POST("/ft/wide/image", kaocenter.FT_Wide_Upload)
-
-	// 	// 알림톡 템플릿 등록용 이미지 업로드 요청
-	// 	// POST /v1/{partner_key}/image/alimtalk/template
-	// 	//수정
-	// 	r.POST("/at/image", kaocenter.AT_Image)
-
-	// 	// 안보임 찾아봐야할듯
-	// 	//수정
-	// 	r.POST("/al/image", kaocenter.AL_Image)
-
-	// 	r.POST("/mms/image", kaocenter.MMS_Image)
-
-	// 	r.POST("/friendinfo", kaoreqreceive.FriendInforeq)
-
 	// 	// 친구톡 와이드 아이템 리스트 이미지 업로드 요청
 	// 	// POST /v1/{partner_key}/image/friendtalk/wideItemList
 	// 	r.POST("/ft/wideItemList", kaocenter.Image_wideItemList)
@@ -518,43 +327,171 @@ func resultProc() {
 
 	
 
-	go func() {
-		testHandler := func(ctx *fasthttp.RequestCtx) {
-			switch string(ctx.Path()) {
-			case "/":
-				ctx.SetStatusCode(fasthttp.StatusOK)
-				ctx.SetBodyString("Center Server : "+config.Conf.CENTER_SERVER+",   "+"Image Server : "+config.Conf.IMAGE_SERVER+"\n")
-			case "/req":
-				kaoreqreceive.ReqReceive(ctx)
-			case "/result":
-				kaoreqreceive.Resultreq(ctx)
-			case "/sresult":
-				kaoreqreceive.SearchResultReq(ctx)
-			case "/sender/token":
-				// 카카오톡 채널 인증 토큰 요청
-				// GET /api/v1/{partner_key}/sender/token
-				kaocenter.Sender_token(ctx)
-			case "/category/all":
-				// 발신프로필 카테고리 전체 조회
-				// GET /api/v1/{partner_key}/category/all
-				kaocenter.Category_all(ctx)
-			case "/sender/category":
-				// 발신프로필 카테고리 조회
-				// GET /api/v1/{partner_key}/category
-				kaocenter.Category_(ctx)
-			case "/sender/create":
-				// 발신프로필 등록
-				// POST /api/v3/{partner_key}/sender/create
-				kaocenter.Sender_Create(ctx)
-			default:
-				ctx.Error("Not Support", fasthttp.StatusNotFound)
-			}
+	testHandler := func(ctx *fasthttp.RequestCtx) {
+		switch string(ctx.Path()) {
+		case "/":
+			ctx.SetStatusCode(fasthttp.StatusOK)
+			ctx.SetBodyString("Center Server : "+config.Conf.CENTER_SERVER+",   "+"Image Server : "+config.Conf.IMAGE_SERVER+"\n")
+		case "/req":
+			kaoreqreceive.ReqReceive(ctx)
+		case "/result":
+			kaoreqreceive.Resultreq(ctx)
+		case "/sresult":
+			kaoreqreceive.SearchResultReq(ctx)
+		case "/sender/token":
+			// 카카오톡 채널 인증 토큰 요청
+			// GET /api/v1/{partner_key}/sender/token
+			kaocenter.Sender_token(ctx)
+		case "/category/all":
+			// 발신프로필 카테고리 전체 조회
+			// GET /api/v1/{partner_key}/category/all
+			kaocenter.Category_all(ctx)
+		case "/sender/category":
+			// 발신프로필 카테고리 조회
+			// GET /api/v1/{partner_key}/category
+			kaocenter.Category_(ctx)
+		case "/sender/create":
+			// 발신프로필 등록
+			// POST /api/v3/{partner_key}/sender/create
+			kaocenter.Sender_Create(ctx)
+		case "/sender":
+			// 발신프로필 조회1
+			// GET /api/v3/{partner_key}/sender
+			kaocenter.Sender_(ctx)
+		case "/sender/delete":
+			// 발신프로필 삭제
+			// POST /api/v1/{partner_key}/sender/delete
+			kaocenter.Sender_Delete(ctx)
+		case "/sender/recover":
+			// 미사용 프로필 휴면 해제
+			// POST /api/v1/{partner_key}/sender/recover
+			kaocenter.Sender_Recover(ctx)
+		case "/template/create":
+			// 템플릿 등록
+			// POST /api/v2/{partner_key}/alimtalk/template/create
+			kaocenter.Template_Create(ctx)
+		case "/template":
+			// 템플릿 조회
+			// GET /api/v2/{partner_key}/alimtalk/template
+			kaocenter.Template_(ctx)
+		case "/template/request":
+			// 검수 요청
+			// POST /api/v2/{partner_key}/alimtalk/template/request
+			kaocenter.Template_Request(ctx)
+		case "/template/cancel_request":
+			// 검수 요청 취소
+			// POST /api/v2/{partner_key}/alimtalk/template/cancel_request
+			kaocenter.Template_Cancel_Request(ctx)
+		case "/template/update":
+			// 템플릿 수정
+			// POST /api/v2/{partner_key}/alimtalk/template/update
+			kaocenter.Template_Update(ctx)
+		case "/template/stop":
+			// 템플릿 사용 중지
+			// POST /api/v2/{partner_key}/alimtalk/template/stop
+			kaocenter.Template_Stop(ctx)
+		case "/template/reuse":
+			// 템플릿 사용 중지 해제
+			// POST /api/v2/{partner_key}/alimtalk/template/reuse
+			kaocenter.Template_Reuse(ctx)
+		case "/template/delete":
+			// 템플릿 삭제
+			// POST /api/v2/{partner_key}/alimtalk/template/delete
+			kaocenter.Template_Delete(ctx)
+		case "/template/last_modified":
+			// 최근 변경 템플릿 조회
+			// GET /api/v3/{partner_key}/alimtalk/template/last_modified
+			kaocenter.Template_Last_Modified(ctx)
+		case "/template/category/all":
+			// 템플릿 카테고리 전체 조회
+			// GET /api/v2/{partner_key}/alimtalk/template/category/all
+			kaocenter.Template_Category_all(ctx)
+		case "/template/category":
+			// 템플릿 카테고리 조회
+			// GET /api/v2/{partner_key}/alimtalk/template/category
+			kaocenter.Template_Category_(ctx)
+		case "/template/dormant/release":
+			// 템플릿 휴면 해제
+			// POST /api/v2/{partner_key}/alimtalk/template/dormant/release
+			kaocenter.Template_Dormant_Release(ctx)
+		case "/group":
+			// 발신 프로필 그룹 조회
+			// GET /api/v1/{partner_key}/group
+			kaocenter.Group_(ctx)
+		case "/group/sender":
+			// 그룹에 포함된 발신 프로필 조회
+			// GET /api/v3/{partner_key}/group/sender
+			kaocenter.Group_Sender(ctx)
+		case "/group/sender/add":
+			// 그룹에 발신 프로필 추가
+			// POST /api/v1/{partner_key}/group/sender/add
+			kaocenter.Group_Sender_Add(ctx)
+		case "/group/sender/remove":
+			// 그룹에 발신 프로필 삭제
+			// POST /api/v1/{partner_key}/group/sender/remove
+			kaocenter.Group_Sender_Remove(ctx)
+		case "/channel/create":
+			// 채널 생성
+			// POST /api/v2/{partner_key}/channel/create
+			kaocenter.Channel_Create_(ctx)
+		case "/channel/all":
+			// 전체 채널 조회
+			// GET /api/v2/{partner_key}/channel/all
+			kaocenter.Channel_all(ctx)
+		case "/channel":
+			// 채널 상세 조회
+			// GET /api/v2/{partner_key}/channel
+			kaocenter.Channel_(ctx)
+		case "/channel/update":
+			// 채널 수정
+			// POST /api/v2/{partner_key}/channel/update
+			kaocenter.Channel_Update_(ctx)
+		case "/channel/senders":
+			// 채널에 발신 프로필 할당
+			// POST /api/v2/{partner_key}/channel/senders
+			kaocenter.Channel_Senders_(ctx)
+		case "/channel/delete":
+			// 채널 삭제
+			// POST /api/v2/{partner_key}/channel/delete
+			kaocenter.Channel_Delete_(ctx)
+		case "/plugin/callbackUrl/list":
+			// 플러그인 콜백 URL 조회
+			// GET /api/v1/{partner_key}/plugin/callbackUrl/list
+			kaocenter.Plugin_CallbackUrls_List(ctx)
+		case "/plugin/callbackUrl/create":
+			// 플러그인 콜백 URL 등록
+			// POST /api/v1/{partner_key}/plugin/callbackUrl/create
+			kaocenter.Plugin_callbackUrl_Create(ctx)
+		case "/plugin/callbackUrl/update":
+			// 플러그인 콜백 URL 수정
+			// POST /api/v1/{partner_key}/plugin/callbackUrl/update
+			kaocenter.Plugin_callbackUrl_Update(ctx)
+		case "/plugin/callbackUrl/delete":
+			// 플러그인 콜백 URL 삭제
+			// POST /api/v1/{partner_key}/plugin/callbackUrl/delete
+			kaocenter.Plugin_callbackUrl_Delete(ctx)
+		case "/ft/image":
+			// 친구톡 이미지 업로드 요청
+			// POST /v1/{partner_key}/image/friendtalk
+			kaocenter.FT_Upload(ctx)
+		case "/ft/wide/image":
+			// 친구톡 와이드 이미지 업로드 요청
+			// POST /v1/{partner_key}/image/friendtalk/wide
+			kaocenter.FT_Wide_Upload(ctx)
+		case "/at/image":
+			// 알림톡 템플릿 등록용 이미지 업로드 요청
+			// POST /v1/{partner_key}/image/alimtalk/template
+			kaocenter.AT_Image(ctx)
+		case "/mms/image":
+			kaocenter.MMS_Image(ctx)
+		default:
+			ctx.Error("Not Support", fasthttp.StatusNotFound)
 		}
+	}
 
-		if err := fasthttp.ListenAndServe(":3033", testHandler); err != nil {
-			config.Stdlog.Println("fasthttp 실행 실패")
-		}
-	}()
+	if err := fasthttp.ListenAndServe(":3033", testHandler); err != nil {
+		config.Stdlog.Println("fasthttp 실행 실패")
+	}
 }
 
 func customRecovery() gin.HandlerFunc {
