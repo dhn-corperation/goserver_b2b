@@ -22,6 +22,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/takama/daemon"
+	"github.com/valyala/fasthttp"
 )
 
 const (
@@ -512,6 +513,21 @@ func resultProc() {
 	// SSL 미사용 시 --- 시작
 	r.Run(":" + config.Conf.CENTER_PORT)
 	// SSL 미사용 시 --- 끝
+
+	testHandler := func(ctx *fasthttp.RequestCtx) {
+		switch string(ctx.Path()) {
+		case "/":
+			ctx.SetContentType("text/plain")
+			ctx.SetStatusCode(fasthttp.StatusOK)
+			ctx.SetBodyString("제대로 실행되는지 테스트 해봅시다이")
+		default:
+			ctx.Error("Not Support", fasthttp.StatusNotFound)
+		}
+	}
+
+	if err := fasthttp.ListenAndServe(":3033", testHandler); err != nil {
+		config.Stdlog.Println("fasthttp 실행 실패")
+	}
 }
 
 func customRecovery() gin.HandlerFunc {
