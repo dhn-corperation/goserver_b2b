@@ -4,27 +4,24 @@ import (
 	"database/sql"
 	"time"
 	"fmt"
-
-	_ "github.com/go-sql-driver/mysql"
+	s "strings"
 
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
 	"mycs/src/kaoresulttable"
 
-	"github.com/gin-gonic/gin"
-
-	s "strings"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/valyala/fasthttp"
+	"github.com/goccy/go-json"
 )
 
 
-func SearchResultReq(c *gin.Context) {
+func SearchResultReq(c *fasthttp.RequestCtx) {
 	errlog := config.Stdlog
 	db := databasepool.DB
 
-	ctx := c.Request.Context()
-
-	userid := c.Request.Header.Get("userid")
-	userip := c.ClientIP()
+	userid := string(c.Request.Header.Peek("userid"))
+	userip := c.RemoteIP().String()
 	isValidation := false
 
 	sqlstr := `
@@ -38,7 +35,7 @@ func SearchResultReq(c *gin.Context) {
 			and use_flag = 'Y'`
 
 	var cnt int
-	err := db.QueryRowContext(ctx, sqlstr, userid, userip).Scan(&cnt)
+	err := db.QueryRow(sqlstr, userid, userip).Scan(&cnt)
 	if err != nil { errlog.Println(err) }
 
 	if cnt > 0 { 
@@ -97,13 +94,21 @@ func SearchResultReq(c *gin.Context) {
 		}
 		
 		var reqData kaoresulttable.ResultTable
-		err1 := c.ShouldBindJSON(&reqData)
+		if err1 := json.Unmarshal(c.PostBody(), &reqData); err1 != nil {
+			errlog.Println(err1)
+		}
+		// err1 := c.ShouldBindJSON(&reqData)
 
-		if err1 != nil { errlog.Println(err1) }
 		errlog.Println("발송 결과 재수신 시작 ( ", userid, ") : ", len(reqData.Msgid), startTime)
 
 		if len(reqData.Msgid) == 0 {
-			c.JSON(200, "msgid가 존재하지 않습니다.")
+			res, _ := json.Marshal(map[string]string{
+				"code":    "success",
+				"message": "msgid가 존재하지 않습니다.",
+			})
+			c.SetContentType("application/json")
+			c.SetStatusCode(fasthttp.StatusOK)
+			c.SetBody(res)
 			return
 		}
 
@@ -233,13 +238,21 @@ func SearchResultReq(c *gin.Context) {
 			}
 
 		}
-		c.JSON(200, finalRows)
+
+		res, _ := json.Marshal(finalRows)
+
+		c.SetContentType("application/json")
+		c.SetStatusCode(fasthttp.StatusOK)
+		c.SetBody(res)
 	} else {
-		c.JSON(404, gin.H{
+		res, _ := json.Marshal(map[string]string{
 			"code":    "error",
-			"message": "사용자 아이디 확인",
+			"message": "허용되지 않은 사용자 입니다",
 			"userid":  userid,
 			"ip":      userip,
 		})
+		c.SetContentType("application/json")
+		c.SetStatusCode(fasthttp.StatusNotAcceptable)
+		c.SetBody(res)
 	}
 }
