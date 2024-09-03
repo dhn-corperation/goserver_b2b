@@ -1,7 +1,6 @@
 package kaoreqreceive
 
 import (
-	"github.com/goccy/go-json"
 	"fmt"
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
@@ -14,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/valyala/fasthttp"
+	"github.com/goccy/go-json"
 )
 
 //언젠가는 다른곳으로 위치를 옮겨야 함
@@ -793,7 +793,7 @@ func ReqReceive2(c *fasthttp.RequestCtx) {
 			"ip":      userip,
 		})
 		c.SetContentType("application/json")
-		c.SetStatusCode(fasthttp.StatusUnauthorized)
+		c.SetStatusCode(fasthttp.StatusNotAcceptable)
 		c.SetBody(res)
 	}
 }

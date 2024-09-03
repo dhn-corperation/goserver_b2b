@@ -526,6 +526,8 @@ func resultProc() {
 				ctx.SetBodyString("Center Server : "+config.Conf.CENTER_SERVER+",   "+"Image Server : "+config.Conf.IMAGE_SERVER+"\n")
 			case "/req":
 				kaoreqreceive.ReqReceive2(ctx)
+			case "/result":
+				kaoreqreceive.Resultreq2(ctx)
 			default:
 				ctx.Error("Not Support", fasthttp.StatusNotFound)
 			}
