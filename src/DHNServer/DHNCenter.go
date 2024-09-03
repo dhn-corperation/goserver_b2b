@@ -522,10 +522,8 @@ func resultProc() {
 		testHandler := func(ctx *fasthttp.RequestCtx) {
 			switch string(ctx.Path()) {
 			case "/":
-				// ctx.String(200, "Center Server : "+config.Conf.CENTER_SERVER+",   "+"Image Server : "+config.Conf.IMAGE_SERVER)
-				// ctx.SetContentType("application/json")
 				ctx.SetStatusCode(fasthttp.StatusOK)
-				ctx.SetBodyString("Center Server : "+config.Conf.CENTER_SERVER+",   "+"Image Server : "+config.Conf.IMAGE_SERVER)
+				ctx.SetBodyString("Center Server : "+config.Conf.CENTER_SERVER+",   "+"Image Server : "+config.Conf.IMAGE_SERVER+"\n")
 			case "/req":
 				kaoreqreceive.ReqReceive2(ctx)
 			default:

@@ -1,7 +1,7 @@
 package kaoreqreceive
 
 import (
-	"encoding/json"
+	"github.com/goccy/go-json"
 	"fmt"
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
@@ -406,20 +406,6 @@ func ReqReceive(c *gin.Context) {
 
 func ReqReceive2(c *fasthttp.RequestCtx) {
 
-
-	type resultBox struct {
-		code int
-		msg string
-	}
-	res := resultBox{
-		code: 1,
-		msg: "fasthttp",
-	}
-	resJson, _ := json.Marshal(res)
-
-
-
-
 	ftColumn := cm.GetReqFtColumn()
 	atColumn := cm.GetReqAtColumn()
 	msgColumn := cm.GetReqMsgColumn()
@@ -427,7 +413,6 @@ func ReqReceive2(c *fasthttp.RequestCtx) {
 	atColumnStr := s.Join(atColumn, ",")
 	msgColumnStr := s.Join(msgColumn, ",")
 
-	// ctx := c.Request.Context()
 	errlog := config.Stdlog
 
 	userid := string(c.Request.Header.Peek("userid"))
@@ -465,10 +450,15 @@ func ReqReceive2(c *fasthttp.RequestCtx) {
 		// err1 := c.ShouldBindJSON(&msg)
 		if err1 := json.Unmarshal(c.PostBody(), &msg); err1 != nil {
 			errlog.Println(err1)
-			
+			res, _ := json.Marshal(map[string]string{
+				"code":    "error",
+				"message": "허용되지 않은 사용자 입니다",
+				"userid":  userid,
+				"ip":      userip,
+			})
 			c.SetContentType("application/json")
-			c.SetStatusCode(fasthttp.StatusOK)
-			c.SetBody(resJson)
+			c.SetStatusCode(fasthttp.StatusBadRequest)
+			c.SetBody(res)
 			return
 		}
 
@@ -787,12 +777,24 @@ func ReqReceive2(c *fasthttp.RequestCtx) {
 
 		errlog.Println("발송 메세지 수신 끝 ( ", userid, ") : ", len(msg), startTime)
 
+		res, _ := json.Marshal(map[string]string{
+			"code": "success",
+			"message": "발송 요청이 완료되었습니다.",
+		})
+
 		c.SetContentType("application/json")
 		c.SetStatusCode(fasthttp.StatusOK)
-		c.SetBody(resJson)
+		c.SetBody(res)
 	} else {
-		c.Error("Not Support2", fasthttp.StatusNotFound)
-
+		res, _ := json.Marshal(map[string]string{
+			"code":    "error",
+			"message": "허용되지 않은 사용자 입니다",
+			"userid":  userid,
+			"ip":      userip,
+		})
+		c.SetContentType("application/json")
+		c.SetStatusCode(fasthttp.StatusUnauthorized)
+		c.SetBody(res)
 	}
 }
 
