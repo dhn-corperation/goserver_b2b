@@ -1033,6 +1033,7 @@ func AT_Image(c *fasthttp.RequestCtx) {
 	resp, err := upload(conf.IMAGE_SERVER+ "v1/"+conf.PROFILE_KEY+"/image/alimtalk/template", param)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
 	}
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
@@ -1046,32 +1047,49 @@ func MMS_Image(c *fasthttp.RequestCtx) {
 	var newFileName1, newFileName2, newFileName3 string
 	imageKeys := []string{"image1", "image2", "image3"}
 	userID := string(c.FormValue("userid"))
-	
+
 	form, err := c.MultipartForm()
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 	}
 	
-	seq := 1
 	var startNow = time.Now()
 	var group_no = fmt.Sprintf("%04d%02d%02d%02d%02d%02d%09d", startNow.Year(), startNow.Month(), startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
 	
+	seq := 1
 	for _, key := range imageKeys {
 		files := form.File[key]
 		if len(files) != 0 {
 			extension := filepath.Ext(files[0].Filename)
+			nfn := config.BasePath+"upload/mms/" + uuid.New().String() + extension
 			switch seq {
 			case 1:
-				newFileName1 = config.BasePath+"upload/mms/" + uuid.New().String() + extension
+				newFileName1 = nfn
 			case 2:
-				newFileName2 = config.BasePath+"upload/mms/" + uuid.New().String() + extension
+				newFileName2 = nfn
 			case 3:
-				newFileName3 = config.BasePath+"upload/mms/" + uuid.New().String() + extension
+				newFileName3 = nfn
 			}
-			err := saveUploadedFile(files[0], config.BasePath+"upload/mms/" + uuid.New().String() + extension)
+			err := saveUploadedFile(files[0], nfn)
 			if err != nil {
 				config.Stdlog.Println("File ", seq," 저장 오류 : ", newFileName1, err)
+				switch seq {
+				case 1:
+					newFileName1 = ""
+				case 2:
+					newFileName2 = ""
+				case 3:
+					newFileName3 = ""
+				}
+			}
+		} else {
+			switch seq {
+			case 1:
 				newFileName1 = ""
+			case 2:
+				newFileName2 = ""
+			case 3:
+				newFileName3 = ""
 			}
 		}
 		seq++
@@ -1112,9 +1130,15 @@ func MMS_Image(c *fasthttp.RequestCtx) {
 			mmsinsValues = nil
 		} 
 
-		res, _ := json.Marshal(map[string]string{
+		res, err := json.Marshal(map[string]string{
 			"image_group":group_no,
 		})
+
+		if err != nil {
+			c.Error(err.Error(), fasthttp.StatusBadRequest)
+			return
+		}
+
 		c.SetContentType("application/json")
 		c.SetStatusCode(fasthttp.StatusOK)
 		c.SetBody(res)
@@ -1129,214 +1153,261 @@ func MMS_Image(c *fasthttp.RequestCtx) {
 }
 
 
-// func Image_wideItemList(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-// 	config.Stdlog.Println("Call ")
+func Image_wideItemList(c *fasthttp.RequestCtx) {
+	conf := config.Conf
 	
-// 	var newFileName1,newFileName2,newFileName3,newFileName4 string
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+	}
+
+	var newFileName1,newFileName2,newFileName3,newFileName4 string
+
+	imageKeys := []string{"image_1", "image_2", "image_3", "image_4"}
+
+	seq := 1
+	for _, key := range imageKeys {
+		files := form.File[key]
+		if len(files) != 0 {
+			extension := filepath.Ext(files[0].Filename)
+			nfn := uuid.New().String() + extension
+			switch seq {
+			case 1:
+				newFileName1 = nfn
+			case 2:
+				newFileName2 = nfn
+			case 3:
+				newFileName3 = nfn
+			case 4:
+				newFileName4 = nfn
+			}
+			err := saveUploadedFile(files[0], config.BasePath+"upload/" + nfn)
+			if err != nil {
+				config.Stdlog.Println("File ", seq," 저장 오류 : ", nfn, err)
+				switch seq {
+				case 1:
+					newFileName1 = "-"
+				case 2:
+					newFileName2 = "-"
+				case 3:
+					newFileName3 = "-"
+				case 4:
+					newFileName4 = "-"
+				}
+			}
+		} else {
+			switch seq {
+			case 1:
+				newFileName1 = "-"
+			case 2:
+				newFileName2 = "-"
+			case 3:
+				newFileName3 = "-"
+			case 4:
+				newFileName4 = "-"
+			}
+		}
+		seq++
+	}
 	
-// 	file1, err1 := c.FormFile("image_1")
-// 	if err1 != nil {
-// 		config.Stdlog.Println(err1.Error())
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("File 1 - get form err: %s", err1.Error()))
-// 		return
-// 	}
+	param := map[string]io.Reader{
+		"image_1": mustOpen(config.BasePath+"upload/" + newFileName1),
+		"image_2": mustOpen(config.BasePath+"upload/" + newFileName2),
+		"image_3": mustOpen(config.BasePath+"upload/" + newFileName3),
+		"image_4": mustOpen(config.BasePath+"upload/" + newFileName4),
+	}
 
-// 	extension := filepath.Ext(file1.Filename)
-// 	newFileName1 = uuid.New().String() + extension
+	if newFileName4 == "_" {
+		delete(param, "image_4")
+	}
 
-// 	err1 = c.SaveUploadedFile(file1, config.BasePath+"upload/" + newFileName1)
-// 	if err1 != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("File 1 - get form err: %s", err1.Error()))
-// 		return
-// 	}
+	if newFileName3 == "_" {
+		delete(param, "image_3")
+	}
 
-// 	file2, err2 := c.FormFile("image_2")
-// 	if err2 == nil {
-// 		extension := filepath.Ext(file2.Filename)
-// 		newFileName2 = uuid.New().String() + extension
-			
-// 		err2 = c.SaveUploadedFile(file2, config.BasePath+"upload/" + newFileName2)
-// 		if err2 != nil {
-// 			newFileName2 = "_"
-// 		}
-// 	} else {
-// 		newFileName2 = "_"
-// 	}
+	if newFileName2 == "_" {
+		delete(param, "image_2")
+	}
 
-// 	file3, err3 := c.FormFile("image_3")
-// 	if err3 == nil {
-// 		extension := filepath.Ext(file3.Filename)
-// 		newFileName3 = uuid.New().String() + extension
+	resp, err := upload(conf.IMAGE_SERVER+ "v1/"+conf.PROFILE_KEY+"/image/friendtalk/wideItemList", param)
+
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	bytes, _ := ioutil.ReadAll(resp.Body)
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func Image_carousel(c *fasthttp.RequestCtx) {
+	conf := config.Conf
 	
-// 		err3 = c.SaveUploadedFile(file3, config.BasePath+"upload/" + newFileName3)
-// 		if err3 != nil {
-// 			newFileName3 = "_"
-// 		}
-// 	} else {
-// 		newFileName3 = "_"
-// 	}
-
-// 	file4, err4 := c.FormFile("image_4")
-// 	if err4 == nil {
-// 		extension := filepath.Ext(file4.Filename)
-// 		newFileName4 = uuid.New().String() + extension
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+	}
 	
-// 		err4 = c.SaveUploadedFile(file4, config.BasePath+"upload/" + newFileName4)
-// 		if err4 != nil {
-// 			newFileName4 = "_"
-// 		}
-// 	} else {
-// 		newFileName4 = "_"
-// 	}
+	var newFileName1,newFileName2,newFileName3,newFileName4,newFileName5,newFileName6,newFileName7,newFileName8,newFileName9,newFileName10,newFileName11 string
+
+	imageKeys := []string{"image_1", "image_2", "image_3", "image_4", "image_5", "image_6", "image_7", "image_8", "image_9", "image_10", "image_11"}
+
+	seq := 1
+	for _, key := range imageKeys {
+		files := form.File[key]
+		if len(files) != 0 {
+			extension := filepath.Ext(files[0].Filename)
+			nfn := uuid.New().String() + extension
+			switch seq {
+			case 1:
+				newFileName1 = nfn
+			case 2:
+				newFileName2 = nfn
+			case 3:
+				newFileName3 = nfn
+			case 4:
+				newFileName4 = nfn
+			case 5:
+				newFileName5 = nfn
+			case 6:
+				newFileName6 = nfn
+			case 7:
+				newFileName7 = nfn
+			case 8:
+				newFileName8 = nfn
+			case 9:
+				newFileName9 = nfn
+			case 10:
+				newFileName10 = nfn
+			case 11:
+				newFileName11 = nfn
+			}
+			err := saveUploadedFile(files[0], config.BasePath+"upload/" + nfn)
+			if err != nil {
+				config.Stdlog.Println("File ", seq," 저장 오류 : ", nfn, err)
+				switch seq {
+				case 1:
+					newFileName1 = "-"
+				case 2:
+					newFileName2 = "-"
+				case 3:
+					newFileName3 = "-"
+				case 4:
+					newFileName4 = "-"
+				case 5:
+					newFileName5 = "-"
+				case 6:
+					newFileName6 = "-"
+				case 7:
+					newFileName2 = "-"
+				case 8:
+					newFileName3 = "-"
+				case 9:
+					newFileName4 = "-"
+				case 10:
+					newFileName5 = "-"
+				case 11:
+					newFileName6 = "-"
+				}
+			}
+		} else {
+			switch seq {
+			case 1:
+				newFileName1 = "-"
+			case 2:
+				newFileName2 = "-"
+			case 3:
+				newFileName3 = "-"
+			case 4:
+				newFileName4 = "-"
+			case 5:
+				newFileName5 = "-"
+			case 6:
+				newFileName6 = "-"
+			case 7:
+				newFileName2 = "-"
+			case 8:
+				newFileName3 = "-"
+			case 9:
+				newFileName4 = "-"
+			case 10:
+				newFileName5 = "-"
+			case 11:
+				newFileName6 = "-"
+			}
+		}
+		seq++
+	}
 	
-// 	param := map[string]io.Reader{
-// 		"image_1": mustOpen(config.BasePath+"upload/" + newFileName1),
-// 		"image_2": mustOpen(config.BasePath+"upload/" + newFileName2),
-// 		"image_3": mustOpen(config.BasePath+"upload/" + newFileName3),
-// 		"image_4": mustOpen(config.BasePath+"upload/" + newFileName4),
-// 	}
-
-// 	if newFileName4 == "_" {
-// 		delete(param, "image_4")
-// 	}
-
-// 	if newFileName3 == "_" {
-// 		delete(param, "image_3")
-// 	}
-
-// 	if newFileName2 == "_" {
-// 		delete(param, "image_2")
-// 	}
-
-// 	resp, err1 := upload(conf.IMAGE_SERVER+ "v1/"+conf.PROFILE_KEY+"/image/friendtalk/wideItemList", param)
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func Image_carousel(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-// 	config.Stdlog.Println("Call ")
 	
-// 	var newFileName1,newFileName2,newFileName3,newFileName4,newFileName5,newFileName6 string
-	
-// 	file1, err1 := c.FormFile("image_1")
-// 	if err1 != nil {
-// 		config.Stdlog.Println(err1.Error())
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("File 1 - get form err: %s", err1.Error()))
-// 		return
-// 	}
-
-// 	extension := filepath.Ext(file1.Filename)
-// 	newFileName1 = uuid.New().String() + extension
-
-// 	err1 = c.SaveUploadedFile(file1, config.BasePath+"upload/" + newFileName1)
-// 	if err1 != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("File 1 - get form err: %s", err1.Error()))
-// 		return
-// 	}
-
-// 	file2, err2 := c.FormFile("image_2")
-// 	if err2 == nil {
-// 		extension := filepath.Ext(file2.Filename)
-// 		newFileName2 = uuid.New().String() + extension
-			
-// 		err2 = c.SaveUploadedFile(file2, config.BasePath+"upload/" + newFileName2)
-// 		if err2 != nil {
-// 			newFileName2 = "_"
-// 		}
-// 	} else {
-// 		newFileName2 = "_"
-// 	}
-
-// 	file3, err3 := c.FormFile("image_3")
-// 	if err3 == nil {
-// 		extension := filepath.Ext(file3.Filename)
-// 		newFileName3 = uuid.New().String() + extension
-	
-// 		err3 = c.SaveUploadedFile(file3, config.BasePath+"upload/" + newFileName3)
-// 		if err3 != nil {
-// 			newFileName3 = "_"
-// 		}
-// 	} else {
-// 		newFileName3 = "_"
-// 	}
-
-// 	file4, err4 := c.FormFile("image_4")
-// 	if err4 == nil {
-// 		extension := filepath.Ext(file4.Filename)
-// 		newFileName4 = uuid.New().String() + extension
-	
-// 		err4 = c.SaveUploadedFile(file4, config.BasePath+"upload/" + newFileName4)
-// 		if err4 != nil {
-// 			newFileName4 = "_"
-// 		}
-// 	} else {
-// 		newFileName4 = "_"
-// 	}
-	
-// 	file5, err5 := c.FormFile("image_5")
-// 	if err5 == nil {
-// 		extension := filepath.Ext(file5.Filename)
-// 		newFileName5 = uuid.New().String() + extension
-	
-// 		err5 = c.SaveUploadedFile(file5, config.BasePath+"upload/" + newFileName5)
-// 		if err5 != nil {
-// 			newFileName5 = "_"
-// 		}
-// 	} else {
-// 		newFileName5 = "_"
-// 	}
-	
-// 	file6, err6 := c.FormFile("image_6")
-// 	if err6 == nil {
-// 		extension := filepath.Ext(file6.Filename)
-// 		newFileName6 = uuid.New().String() + extension
-	
-// 		err6 = c.SaveUploadedFile(file6, config.BasePath+"upload/" + newFileName6)
-// 		if err6 != nil {
-// 			newFileName6 = "_"
-// 		}
-// 	} else {
-// 		newFileName6 = "_"
-// 	}
 		
-// 	param := map[string]io.Reader{
-// 		"image_1": mustOpen(config.BasePath+"upload/" + newFileName1),
-// 		"image_2": mustOpen(config.BasePath+"upload/" + newFileName2),
-// 		"image_3": mustOpen(config.BasePath+"upload/" + newFileName3),
-// 		"image_4": mustOpen(config.BasePath+"upload/" + newFileName4),
-// 		"image_5": mustOpen(config.BasePath+"upload/" + newFileName5),
-// 		"image_6": mustOpen(config.BasePath+"upload/" + newFileName6),
-// 	}
-// 	if newFileName6 == "_" {
-// 		delete(param, "image_6")
-// 	}
+	param := map[string]io.Reader{
+		"image_1": mustOpen(config.BasePath+"upload/" + newFileName1),
+		"image_2": mustOpen(config.BasePath+"upload/" + newFileName2),
+		"image_3": mustOpen(config.BasePath+"upload/" + newFileName3),
+		"image_4": mustOpen(config.BasePath+"upload/" + newFileName4),
+		"image_5": mustOpen(config.BasePath+"upload/" + newFileName5),
+		"image_6": mustOpen(config.BasePath+"upload/" + newFileName6),
+		"image_7": mustOpen(config.BasePath+"upload/" + newFileName7),
+		"image_8": mustOpen(config.BasePath+"upload/" + newFileName8),
+		"image_9": mustOpen(config.BasePath+"upload/" + newFileName9),
+		"image_10": mustOpen(config.BasePath+"upload/" + newFileName10),
+		"image_11": mustOpen(config.BasePath+"upload/" + newFileName11),
+	}
+	if newFileName6 == "_" {
+		delete(param, "image_11")
+	}
 	
-// 	if newFileName5 == "_" {
-// 		delete(param, "image_5")
-// 	}
+	if newFileName5 == "_" {
+		delete(param, "image_10")
+	}
 	
-// 	if newFileName4 == "_" {
-// 		delete(param, "image_4")
-// 	}
+	if newFileName4 == "_" {
+		delete(param, "image_9")
+	}
 
-// 	if newFileName3 == "_" {
-// 		delete(param, "image_3")
-// 	}
+	if newFileName3 == "_" {
+		delete(param, "image_8")
+	}
 
-// 	if newFileName2 == "_" {
-// 		delete(param, "image_2")
-// 	}
+	if newFileName2 == "_" {
+		delete(param, "image_7")
+	}
 
-// 	resp, err1 := upload(conf.IMAGE_SERVER+ "v1/"+conf.PROFILE_KEY+"/image/friendtalk/wideItemList", param)
-// 	bytes, _ := ioutil.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
+	if newFileName6 == "_" {
+		delete(param, "image_6")
+	}
+	
+	if newFileName5 == "_" {
+		delete(param, "image_5")
+	}
+	
+	if newFileName4 == "_" {
+		delete(param, "image_4")
+	}
+
+	if newFileName3 == "_" {
+		delete(param, "image_3")
+	}
+
+	if newFileName2 == "_" {
+		delete(param, "image_2")
+	}
+
+	resp, err := upload(conf.IMAGE_SERVER+ "v1/"+conf.PROFILE_KEY+"/image/friendtalk/carousel", param)
+
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	bytes, _ := ioutil.ReadAll(resp.Body)
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
 
 // func Get_Polling_Id(c *fasthttp.RequestCtx) {
 // 	conf := config.Conf
