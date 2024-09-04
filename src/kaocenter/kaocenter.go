@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"mime/multipart"
 	"os"
-	// "strconv"
+	"strconv"
 	"strings"
 	"time"
 
@@ -50,6 +50,7 @@ func Sender_token(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
 
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
@@ -72,6 +73,7 @@ func Category_all(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
 
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
@@ -90,12 +92,12 @@ func Category_(c *fasthttp.RequestCtx) {
 		return
 	}
 
-	//client := &http.Client{}
 	resp, err := centerClient.Do(req)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
 
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
@@ -130,6 +132,7 @@ func Sender_Create(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
 
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
@@ -154,6 +157,7 @@ func Sender_(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
 
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
@@ -184,6 +188,7 @@ func Sender_Delete(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
 
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
@@ -214,6 +219,8 @@ func Sender_Recover(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -243,6 +250,8 @@ func Template_Create(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -270,6 +279,8 @@ func Template_(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -299,6 +310,8 @@ func Template_Request(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -328,6 +341,8 @@ func Template_Cancel_Request(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -357,6 +372,8 @@ func Template_Update(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -379,13 +396,15 @@ func Template_Stop(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+
 	req.Header.Add("Content-Type", "application/json")
 	resp, err := centerClient.Do(req)
-
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -408,13 +427,15 @@ func Template_Reuse(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+
 	req.Header.Add("Content-Type", "application/json")
 	resp, err := centerClient.Do(req)
-
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -437,13 +458,15 @@ func Template_Delete(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+
 	req.Header.Add("Content-Type", "application/json")
 	resp, err := centerClient.Do(req)
-
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -471,6 +494,8 @@ func Template_Last_Modified(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -492,6 +517,8 @@ func Template_Category_all(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -515,6 +542,8 @@ func Template_Category_(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -544,6 +573,8 @@ func Template_Dormant_Release(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -565,6 +596,8 @@ func Group_(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -588,6 +621,8 @@ func Group_Sender(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -617,6 +652,8 @@ func Group_Sender_Add(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -646,6 +683,8 @@ func Group_Sender_Remove(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -675,6 +714,8 @@ func Channel_Create_(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -696,6 +737,8 @@ func Channel_all(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -719,6 +762,8 @@ func Channel_(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -748,6 +793,8 @@ func Channel_Update_(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -777,6 +824,8 @@ func Channel_Senders_(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -806,6 +855,8 @@ func Channel_Delete_(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -829,6 +880,8 @@ func Plugin_CallbackUrls_List(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -858,6 +911,8 @@ func Plugin_callbackUrl_Create(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -887,6 +942,8 @@ func Plugin_callbackUrl_Update(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+	defer resp.Body.Close()
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -916,6 +973,8 @@ func Plugin_callbackUrl_Delete(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -955,6 +1014,8 @@ func FT_Upload(c *fasthttp.RequestCtx) {
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -995,6 +1056,8 @@ func FT_Wide_Upload(c *fasthttp.RequestCtx) {
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -1035,6 +1098,8 @@ func AT_Image(c *fasthttp.RequestCtx) {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
+
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	c.SetContentType("application/json")
@@ -1155,86 +1220,22 @@ func MMS_Image(c *fasthttp.RequestCtx) {
 
 func Image_wideItemList(c *fasthttp.RequestCtx) {
 	conf := config.Conf
-	
-	form, err := c.MultipartForm()
+
+	param, err := imageMapping(c, map[string]io.Reader{}, "image_", 4)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-	}
-
-	var newFileName1,newFileName2,newFileName3,newFileName4 string
-
-	imageKeys := []string{"image_1", "image_2", "image_3", "image_4"}
-
-	seq := 1
-	for _, key := range imageKeys {
-		files := form.File[key]
-		if len(files) != 0 {
-			extension := filepath.Ext(files[0].Filename)
-			nfn := uuid.New().String() + extension
-			switch seq {
-			case 1:
-				newFileName1 = nfn
-			case 2:
-				newFileName2 = nfn
-			case 3:
-				newFileName3 = nfn
-			case 4:
-				newFileName4 = nfn
-			}
-			err := saveUploadedFile(files[0], config.BasePath+"upload/" + nfn)
-			if err != nil {
-				config.Stdlog.Println("File ", seq," 저장 오류 : ", nfn, err)
-				switch seq {
-				case 1:
-					newFileName1 = "-"
-				case 2:
-					newFileName2 = "-"
-				case 3:
-					newFileName3 = "-"
-				case 4:
-					newFileName4 = "-"
-				}
-			}
-		} else {
-			switch seq {
-			case 1:
-				newFileName1 = "-"
-			case 2:
-				newFileName2 = "-"
-			case 3:
-				newFileName3 = "-"
-			case 4:
-				newFileName4 = "-"
-			}
-		}
-		seq++
-	}
-	
-	param := map[string]io.Reader{
-		"image_1": mustOpen(config.BasePath+"upload/" + newFileName1),
-		"image_2": mustOpen(config.BasePath+"upload/" + newFileName2),
-		"image_3": mustOpen(config.BasePath+"upload/" + newFileName3),
-		"image_4": mustOpen(config.BasePath+"upload/" + newFileName4),
-	}
-
-	if newFileName4 == "_" {
-		delete(param, "image_4")
-	}
-
-	if newFileName3 == "_" {
-		delete(param, "image_3")
-	}
-
-	if newFileName2 == "_" {
-		delete(param, "image_2")
+		return
+	} else if len(param) == 0 {
+		c.Error("이미지 저장 실패", fasthttp.StatusBadRequest)
+		return
 	}
 
 	resp, err := upload(conf.IMAGE_SERVER+ "v1/"+conf.PROFILE_KEY+"/image/friendtalk/wideItemList", param)
-
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
 
 	bytes, _ := ioutil.ReadAll(resp.Body)
 	c.SetContentType("application/json")
@@ -1244,164 +1245,22 @@ func Image_wideItemList(c *fasthttp.RequestCtx) {
 
 func Image_carousel(c *fasthttp.RequestCtx) {
 	conf := config.Conf
-	
-	form, err := c.MultipartForm()
+
+	param, err := imageMapping(c, map[string]io.Reader{}, "image_", 11)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-	}
-	
-	var newFileName1,newFileName2,newFileName3,newFileName4,newFileName5,newFileName6,newFileName7,newFileName8,newFileName9,newFileName10,newFileName11 string
-
-	imageKeys := []string{"image_1", "image_2", "image_3", "image_4", "image_5", "image_6", "image_7", "image_8", "image_9", "image_10", "image_11"}
-
-	seq := 1
-	for _, key := range imageKeys {
-		files := form.File[key]
-		if len(files) != 0 {
-			extension := filepath.Ext(files[0].Filename)
-			nfn := uuid.New().String() + extension
-			switch seq {
-			case 1:
-				newFileName1 = nfn
-			case 2:
-				newFileName2 = nfn
-			case 3:
-				newFileName3 = nfn
-			case 4:
-				newFileName4 = nfn
-			case 5:
-				newFileName5 = nfn
-			case 6:
-				newFileName6 = nfn
-			case 7:
-				newFileName7 = nfn
-			case 8:
-				newFileName8 = nfn
-			case 9:
-				newFileName9 = nfn
-			case 10:
-				newFileName10 = nfn
-			case 11:
-				newFileName11 = nfn
-			}
-			err := saveUploadedFile(files[0], config.BasePath+"upload/" + nfn)
-			if err != nil {
-				config.Stdlog.Println("File ", seq," 저장 오류 : ", nfn, err)
-				switch seq {
-				case 1:
-					newFileName1 = "-"
-				case 2:
-					newFileName2 = "-"
-				case 3:
-					newFileName3 = "-"
-				case 4:
-					newFileName4 = "-"
-				case 5:
-					newFileName5 = "-"
-				case 6:
-					newFileName6 = "-"
-				case 7:
-					newFileName2 = "-"
-				case 8:
-					newFileName3 = "-"
-				case 9:
-					newFileName4 = "-"
-				case 10:
-					newFileName5 = "-"
-				case 11:
-					newFileName6 = "-"
-				}
-			}
-		} else {
-			switch seq {
-			case 1:
-				newFileName1 = "-"
-			case 2:
-				newFileName2 = "-"
-			case 3:
-				newFileName3 = "-"
-			case 4:
-				newFileName4 = "-"
-			case 5:
-				newFileName5 = "-"
-			case 6:
-				newFileName6 = "-"
-			case 7:
-				newFileName2 = "-"
-			case 8:
-				newFileName3 = "-"
-			case 9:
-				newFileName4 = "-"
-			case 10:
-				newFileName5 = "-"
-			case 11:
-				newFileName6 = "-"
-			}
-		}
-		seq++
-	}
-	
-	
-		
-	param := map[string]io.Reader{
-		"image_1": mustOpen(config.BasePath+"upload/" + newFileName1),
-		"image_2": mustOpen(config.BasePath+"upload/" + newFileName2),
-		"image_3": mustOpen(config.BasePath+"upload/" + newFileName3),
-		"image_4": mustOpen(config.BasePath+"upload/" + newFileName4),
-		"image_5": mustOpen(config.BasePath+"upload/" + newFileName5),
-		"image_6": mustOpen(config.BasePath+"upload/" + newFileName6),
-		"image_7": mustOpen(config.BasePath+"upload/" + newFileName7),
-		"image_8": mustOpen(config.BasePath+"upload/" + newFileName8),
-		"image_9": mustOpen(config.BasePath+"upload/" + newFileName9),
-		"image_10": mustOpen(config.BasePath+"upload/" + newFileName10),
-		"image_11": mustOpen(config.BasePath+"upload/" + newFileName11),
-	}
-	if newFileName6 == "_" {
-		delete(param, "image_11")
-	}
-	
-	if newFileName5 == "_" {
-		delete(param, "image_10")
-	}
-	
-	if newFileName4 == "_" {
-		delete(param, "image_9")
-	}
-
-	if newFileName3 == "_" {
-		delete(param, "image_8")
-	}
-
-	if newFileName2 == "_" {
-		delete(param, "image_7")
-	}
-
-	if newFileName6 == "_" {
-		delete(param, "image_6")
-	}
-	
-	if newFileName5 == "_" {
-		delete(param, "image_5")
-	}
-	
-	if newFileName4 == "_" {
-		delete(param, "image_4")
-	}
-
-	if newFileName3 == "_" {
-		delete(param, "image_3")
-	}
-
-	if newFileName2 == "_" {
-		delete(param, "image_2")
+		return
+	} else if len(param) == 0 {
+		c.Error("이미지 저장 실패", fasthttp.StatusBadRequest)
+		return
 	}
 
 	resp, err := upload(conf.IMAGE_SERVER+ "v1/"+conf.PROFILE_KEY+"/image/friendtalk/carousel", param)
-
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
+	defer resp.Body.Close()
 
 	bytes, _ := ioutil.ReadAll(resp.Body)
 	c.SetContentType("application/json")
@@ -1409,918 +1268,996 @@ func Image_carousel(c *fasthttp.RequestCtx) {
 	c.SetBody(bytes)
 }
 
-// func Get_Polling_Id(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-// 	respId := c.Param("respid")
-
-// 	buff := bytes.NewBuffer([]byte("{}"))
-// 	req, err := http.NewRequest("POST", conf.API_SERVER+"/v3/"+conf.PROFILE_KEY+"/response/"+respId, buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	resp, err2 := centerClient.Do(req)
-// 	if err2 != nil {
-// 		c.JSON(http.StatusBadRequest, err2.Error())
-// 		return
-// 	}
-
-// 	defer resp.Body.Close()
-
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-
-// }
-
-// func AT_Highlight_Image(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param, err := image_Seq_Mapping(c, map[string]io.Reader{}, 0, "image")
-// 	if err != nil {
-// 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 		return
-// 	}
-
-// 	// file, err := c.FormFile("image")
-// 	// if err != nil {
-// 	// 	c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 	// 	return
-// 	// }
-
-// 	// extension := filepath.Ext(file.Filename)
-// 	// newFileName := uuid.New().String() + extension
-
-// 	// err = c.SaveUploadedFile(file, config.BasePath+"upload/" + newFileName)
-// 	// if err != nil {
-// 	// 	c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 	// 	return
-// 	// }
-
-// 	// param := map[string]io.Reader{
-// 	// 	"image": mustOpen(config.BasePath+"upload/" + newFileName),
-// 	// }
-
-// 	resp, err := upload(conf.IMAGE_SERVER+"v1/"+conf.PROFILE_KEY+"/image/alimtalk/itemHighlight", param)
-// 	if err != nil {
-// 		config.Stdlog.Println("File upload 오류 : ", err)
-// 	}
-
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func FT_Carousel_Feed_Image(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param, err := image_Seq_Mapping(c, map[string]io.Reader{}, 10, "image")
-// 	if err != nil {
-// 		config.Stdlog.Println("image Mapping 오류 : ", err)
-// 	}
-
-// 	resp, _ := upload(conf.IMAGE_SERVER+"v1/"+conf.PROFILE_KEY+"/image/friendtalk/carousel", param)
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func FT_Carousel_Commerce_Image(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param, err := image_Seq_Mapping(c, map[string]io.Reader{}, 11, "image")
-// 	if err != nil {
-// 		config.Stdlog.Println("image Mapping 오류 : ", err)
-// 	}
-
-// 	resp, _ := upload(conf.IMAGE_SERVER+"v1/"+conf.PROFILE_KEY+"/image/friendtalk/carouselCommerce", param)
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func DM_Default_Image(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param, err := image_Seq_Mapping(c, map[string]io.Reader{}, 0, "image")
-// 	if err != nil {
-// 		config.Stdlog.Println("image Mapping 오류 : ", err)
-// 	}
-
-// 	resp, _ := upload(conf.IMAGE_SERVER+"v2/"+conf.PROFILE_KEY+"/image/default", param)
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func DM_Wide_Image(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param, err := image_Seq_Mapping(c, map[string]io.Reader{}, 0, "image")
-// 	if err != nil {
-// 		config.Stdlog.Println("image Mapping 오류 : ", err)
-// 	}
-
-// 	resp, _ := upload(conf.IMAGE_SERVER+"v2/"+conf.PROFILE_KEY+"/image/wide", param)
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func DM_Widelist_First_image(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param, err := image_Seq_Mapping(c, map[string]io.Reader{}, 0, "image")
-// 	if err != nil {
-// 		config.Stdlog.Println("image Mapping 오류 : ", err)
-// 	}
-
-// 	resp, _ := upload(conf.IMAGE_SERVER+"v2/"+conf.PROFILE_KEY+"/image/wideItemList/first", param)
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func DM_Widelist_Image(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param, err := image_Seq_Mapping(c, map[string]io.Reader{}, 3, "image")
-// 	if err != nil {
-// 		config.Stdlog.Println("image Mapping 오류 : ", err)
-// 	}
-
-// 	resp, _ := upload(conf.IMAGE_SERVER+"v2/"+conf.PROFILE_KEY+"/image/wideItemList", param)
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func DM_Carousel_Feed_Image(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param, err := image_Seq_Mapping(c, map[string]io.Reader{}, 10, "image")
-// 	if err != nil {
-// 		config.Stdlog.Println("image Mapping 오류 : ", err)
-// 	}
-
-// 	resp, _ := upload(conf.IMAGE_SERVER+"v2/"+conf.PROFILE_KEY+"/image/carouselFeed", param)
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func DM_Carousel_Commerce_Image(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param, err := image_Seq_Mapping(c, map[string]io.Reader{}, 11, "image")
-// 	if err != nil {
-// 		config.Stdlog.Println("image Mapping 오류 : ", err)
-// 	}
-
-// 	resp, _ := upload(conf.IMAGE_SERVER+"v2/"+conf.PROFILE_KEY+"/image/carouselCommerce", param)
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// // 친구톡 API
-// // 별첨1 - 비즈폼 업로드 요청
-// func Bizform_upload_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &Bizform_upload{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/bizform/upload", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-
-// }
-
-// // 별첨2 - 친구톡 발송 가능 모수 확인
-// func Ft_possible_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &Ft_possible{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/friendtalk/possible", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-
-// }
-
-// // 센터 API
-// // 발신 프로필 조회2 (톡 채널 키로 조회)
-// func Sender_channel(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	talkChannelKey := c.Param("talkChannelKey")
-
-// 	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v3/"+conf.PROFILE_KEY+"/sender/"+talkChannelKey, nil)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// // 최근 변경 발신 프로필 조회
-// func Sender_modified(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	//since := c.Query("since")
-// 	//page := c.Query("page")
-// 	//count := c.Query("count")
-
-// 	params := map[string]string{
-// 		"since": c.Query("since"),
-// 		"page":  c.Query("page"),
-// 		"count": c.Query("count"),
-// 	}
-
-// 	query := c.Request.URL.Query()
-// 	for key, value := range params {
-// 		if value != "" {
-// 			query.Set(key, value)
-// 		}
-// 	}
-
-// 	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v3/"+conf.PROFILE_KEY+"/sender/last_modified?"+query.Encode(), nil)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// // 검수요청 (파일첨부)
-// func Template_request_with_file(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := map[string]io.Reader{
-// 		"senderKey":     strings.NewReader(c.PostForm("senderKey")),
-// 		"templateCode":  strings.NewReader(c.PostForm("templateCode")),
-// 		"senderKeyType": strings.NewReader(c.PostForm("senderKeyType")),
-// 		"comment":       strings.NewReader(c.PostForm("comment")),
-// 	}
-
-// 	file, err := c.FormFile("attachment")
-// 	if err == nil { 
-// 		extension := filepath.Ext(file.Filename)
-// 		newFileName := uuid.New().String() + extension
-
-// 		err = c.SaveUploadedFile(file, config.BasePath+"upload/"+newFileName)
-// 		if err != nil {
-// 			c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-// 			return
-// 		}
-// 		param["attachment"] = mustOpen(config.BasePath + "upload/" + newFileName)
-// 	}
-
-// 	resp, err := upload(conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/request_with_file", param)
-// 	if err != nil {
-// 		config.Stdlog.Println("File upload 오류 : ", err)
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// // 검수 승인 취소
-// func Template_cancel_approval_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &TemplateRequest{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/cancel_approval", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-
-// }
-
-// // 기등록된 템플릿 (타입 : BA, EX) 을 채널추가버튼 및 채널추가안내문구가 포함된 템플릿으로 전환 /template/convertAddCh
-// func Template_convertAddCh_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &Template_convertAddCh{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/convertAddCh", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-
-// }
-
-// // 채널에 발신 프로필 추가
-// func Channel_sender_add_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &Channel_sender{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/sender/add", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-
-// }
-
-// // 채널에 발신 프로필 삭제
-// func Channel_sender_remove_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &Channel_sender{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/sender/remove", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-
-// }
-
-// // 알림톡, 친구톡 발송 일별 통계
-// func Stat_daily(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	//beginDate := c.Query("beginDate")
-// 	//endDate := c.Query("endDate")
-// 	//productType := c.Query("productType")
-// 	//page := c.Query("page")
-
-// 	params := map[string]string{
-// 		"beginDate":   c.Query("beginDate"),
-// 		"endDate":     c.Query("endDate"),
-// 		"productType": c.Query("productType"),
-// 		"page":        c.Query("page"),
-// 	}
-
-// 	if !MissingParams(c, params) {
-// 		return
-// 	}
-
-// 	query := c.Request.URL.Query()
-// 	for key, value := range params {
-// 		if value != "" {
-// 			query.Set(key, value)
-// 		}
-// 	}
-
-// 	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/stat/daily?"+query.Encode(), nil)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// // 그룹 태그 생성
-// func GroupTag_create(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	param := &Group_Tag_create{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/groupTag/create", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-
-// }
-
-// // 그룹 태그 조회
-// func GroupTag_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	//senderKey := c.Query("senderKey")
-// 	//groupTagKey := c.Query("groupTagKey")
-
-// 	params := map[string]string{
-// 		"senderKey":   c.Query("senderKey"),
-// 		"groupTagKey": c.Query("groupTagKey"),
-// 	}
-
-// 	if !MissingParams(c, params) {
-// 		return
-// 	}
-
-// 	query := c.Request.URL.Query()
-// 	for key, value := range params {
-// 		if value != "" {
-// 			query.Set(key, value)
-// 		}
-// 	}
-
-// 	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/groupTag?"+query.Encode(), nil)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// // 그룹 태그 전체 조회
-// func GroupTag_list(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	//senderKey := c.Query("senderKey")
-
-// 	params := map[string]string{
-// 		"senderKey": c.Query("senderKey"),
-// 	}
-
-// 	if !MissingParams(c, params) {
-// 		return
-// 	}
-
-// 	query := c.Request.URL.Query()
-// 	for key, value := range params {
-// 		if value != "" {
-// 			query.Set(key, value)
-// 		}
-// 	}
-
-// 	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/groupTag/list?"+query.Encode(), nil)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-
-// }
-
-// // 그룹 태그 수정
-// func GroupTag_update(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-// 	param := &Group_Tag_update{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/groupTag/update", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-
-// }
-
-// // 그룹 태그 삭제
-// func GroupTag_delete(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-// 	param := &Group_Tag_delete{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/groupTag/delete", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-
-// }
-
-// // 광고성 메시지(다이렉트) 템플릿 등록
-// func Direct_template_create_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-// 	param := &Direct_template_create{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v3/"+conf.PROFILE_KEY+"/direct/template/create", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// // 광고성메시지(다이렉트) 템플릿 조회
-// func Direct_template_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-// 	code := c.Param("code")
-
-// 	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/direct/template/"+code, nil)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// // 광고성메시지(다이렉트) 템플릿 수정
-// func Direct_template_update_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-// 	code := c.Param("code")
-// 	param := &Direct_template_create{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v3/"+conf.PROFILE_KEY+"/direct/template/update/"+code, buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// // 광고성메시지(다이렉트) 템플릿 삭제
-// func Direct_template_delete_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-// 	code := c.Param("code")
-
-// 	buff := bytes.NewBuffer([]byte(`{}`))
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/direct/template/delete/"+code, buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// // 발신채널 전환
-// func Direct_convert_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-// 	param := &Direct_convert{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/sender/direct/convert", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// // 발신채널 전환 상태 확인
-// func Direct_convert_result(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-
-// 	params := map[string]string{
-// 		"senderKey": c.Query("senderKey"),
-// 	}
-
-// 	if !MissingParams(c, params) {
-// 		return
-// 	}
-
-// 	query := c.Request.URL.Query()
-// 	for key, value := range params {
-// 		if value != "" {
-// 			query.Set(key, value)
-// 		}
-// 	}
-
-// 	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/sender/direct/convert/result?"+query.Encode(), nil)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// // 발신채널에 연결된 비즈월렛 변경
-// func Direct_bizWallet_change_(c *fasthttp.RequestCtx) {
-// 	conf := config.Conf
-// 	param := &Direct_bizWallet_change{}
-// 	err := c.Bind(param)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	jsonstr, _ := json.Marshal(param)
-// 	buff := bytes.NewBuffer(jsonstr)
-// 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/sender/direct/bizWallet/change", buff)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	req.Header.Add("Content-Type", "application/json")
-// 	resp, err := centerClient.Do(req)
-// 	if err != nil {
-// 		c.Error(err.Error(), fasthttp.StatusBadRequest)
-// 		return
-// 	}
-// 	bytes, _ := io.ReadAll(resp.Body)
-// 	c.SetContentType("application/json")
-// 	c.SetStatusCode(fasthttp.StatusOK)
-// 	c.SetBody(bytes)
-// }
-
-// func image_Seq_Mapping(c *fasthttp.RequestCtx, param map[string]io.Reader, max int, filename string) (map[string]io.Reader, error) {
-// 	var retErr error = nil
-// 	if max > 0 {
-// 		for a := 1; a <= max; a++ {
-// 			file, err := c.FormFile(filename + "_" + strconv.Itoa(a))
-// 			newFileName := ""
-// 			if err == nil {
-// 				extension := filepath.Ext(file.Filename)
-// 				newFileName = uuid.New().String() + extension
-// 				err2 := c.SaveUploadedFile(file, config.BasePath+"upload/"+newFileName)
-// 				if err2 != nil {
-// 					newFileName = "_"
-// 					retErr = err2
-// 				}
-// 			} else {
-// 				newFileName = "_"
-// 				retErr = err
-// 			}
-
-// 			if newFileName != "_" {
-// 				param[filename+"_"+strconv.Itoa(a)] = mustOpen(config.BasePath + "upload/" + newFileName)
-// 			}
-// 		}
-// 	} else {
-// 		file, err := c.FormFile(filename)
-// 		newFileName := ""
-// 		if err == nil {
-// 			extension := filepath.Ext(file.Filename)
-// 			newFileName = uuid.New().String() + extension
-// 			err2 := c.SaveUploadedFile(file, config.BasePath+"upload/"+newFileName)
-// 			if err2 != nil {
-// 				newFileName = "_"
-// 				retErr = err2
-// 			}
-// 		} else {
-// 			newFileName = "_"
-// 			retErr = err
-// 		}
-
-// 		if newFileName != "_" {
-// 			param[filename] = mustOpen(config.BasePath + "upload/" + newFileName)
-// 		}
-// 	}
-// 	return param, retErr
-// }
+func Get_Polling_Id(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+	respId := c.UserValue("respid").(string)
+
+	buff := bytes.NewBuffer([]byte("{}"))
+	req, err := http.NewRequest("POST", conf.API_SERVER+"/v3/"+conf.PROFILE_KEY+"/response/"+respId, buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+
+}
+
+func AT_Highlight_Image(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	param, err := imageMapping(c, map[string]io.Reader{}, "image", 0)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	} else if len(param) == 0 {
+		c.Error("이미지 저장 실패", fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := upload(conf.IMAGE_SERVER+"v1/"+conf.PROFILE_KEY+"/image/alimtalk/itemHighlight", param)
+	if err != nil {
+		config.Stdlog.Println("File upload 오류 : ", err)
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func FT_Carousel_Feed_Image(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	param, err := imageMapping(c, map[string]io.Reader{}, "image_", 10)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	} else if len(param) == 0 {
+		c.Error("이미지 저장 실패", fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := upload(conf.IMAGE_SERVER+"v1/"+conf.PROFILE_KEY+"/image/friendtalk/carousel", param)
+	if err != nil {
+		config.Stdlog.Println("File upload 오류 : ", err)
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func FT_Carousel_Commerce_Image(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	param, err := imageMapping(c, map[string]io.Reader{}, "image_", 11)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	} else if len(param) == 0 {
+		c.Error("이미지 저장 실패", fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := upload(conf.IMAGE_SERVER+"v1/"+conf.PROFILE_KEY+"/image/friendtalk/carouselCommerce", param)
+	if err != nil {
+		config.Stdlog.Println("File upload 오류 : ", err)
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func DM_Default_Image(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	param, err := imageMapping(c, map[string]io.Reader{}, "image", 0)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	} else if len(param) == 0 {
+		c.Error("이미지 저장 실패", fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := upload(conf.IMAGE_SERVER+"v2/"+conf.PROFILE_KEY+"/image/default", param)
+	if err != nil {
+		config.Stdlog.Println("File upload 오류 : ", err)
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func DM_Wide_Image(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	param, err := imageMapping(c, map[string]io.Reader{}, "image", 0)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	} else if len(param) == 0 {
+		c.Error("이미지 저장 실패", fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := upload(conf.IMAGE_SERVER+"v2/"+conf.PROFILE_KEY+"/image/wide", param)
+	if err != nil {
+		config.Stdlog.Println("File upload 오류 : ", err)
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func DM_Widelist_First_image(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	param, err := imageMapping(c, map[string]io.Reader{}, "image", 0)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	} else if len(param) == 0 {
+		c.Error("이미지 저장 실패", fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := upload(conf.IMAGE_SERVER+"v2/"+conf.PROFILE_KEY+"/image/wideItemList/first", param)
+	if err != nil {
+		config.Stdlog.Println("File upload 오류 : ", err)
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func DM_Widelist_Image(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	param, err := imageMapping(c, map[string]io.Reader{}, "image_", 3)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	} else if len(param) == 0 {
+		c.Error("이미지 저장 실패", fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := upload(conf.IMAGE_SERVER+"v2/"+conf.PROFILE_KEY+"/image/wideItemList", param)
+	if err != nil {
+		config.Stdlog.Println("File upload 오류 : ", err)
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func DM_Carousel_Feed_Image(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	param, err := imageMapping(c, map[string]io.Reader{}, "image_", 10)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	} else if len(param) == 0 {
+		c.Error("이미지 저장 실패", fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := upload(conf.IMAGE_SERVER+"v2/"+conf.PROFILE_KEY+"/image/carouselFeed", param)
+	if err != nil {
+		config.Stdlog.Println("File upload 오류 : ", err)
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func DM_Carousel_Commerce_Image(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	param, err := imageMapping(c, map[string]io.Reader{}, "image_", 11)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	} else if len(param) == 0 {
+		c.Error("이미지 저장 실패", fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := upload(conf.IMAGE_SERVER+"v2/"+conf.PROFILE_KEY+"/image/carouselCommerce", param)
+	if err != nil {
+		config.Stdlog.Println("File upload 오류 : ", err)
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 친구톡 API
+// 별첨1 - 비즈폼 업로드 요청
+func Bizform_upload_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/bizform/upload", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 별첨2 - 친구톡 발송 가능 모수 확인
+func Ft_possible_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/friendtalk/possible", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 센터 API
+// 발신 프로필 조회2 (톡 채널 키로 조회)
+func Sender_channel(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	talkChannelKey := c.UserValue("talkChannelKey").(string)
+
+	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v3/"+conf.PROFILE_KEY+"/sender/"+talkChannelKey, nil)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 최근 변경 발신 프로필 조회
+func Sender_modified(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	args := fasthttp.AcquireArgs()
+	defer fasthttp.ReleaseArgs(args)
+
+	args.Add("since", string(c.QueryArgs().Peek("since")))
+	args.Add("page", string(c.QueryArgs().Peek("page")))
+	args.Add("count", string(c.QueryArgs().Peek("count")))
+
+	queryString := args.String()
+
+	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v3/"+conf.PROFILE_KEY+"/sender/last_modified?"+queryString, nil)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 검수요청 (파일첨부)
+func Template_request_with_file(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	param, err := imageMapping(c, map[string]io.Reader{}, "attachment", 0)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	} else if len(param) == 0 {
+		c.Error("이미지 저장 실패", fasthttp.StatusBadRequest)
+		return
+	}
+
+	param["senderKey"] = strings.NewReader(string(c.FormValue("senderKey")))
+	param["templateCode"] = strings.NewReader(string(c.FormValue("templateCode")))
+	param["senderKeyType"] = strings.NewReader(string(c.FormValue("senderKeyType")))
+	param["comment"] = strings.NewReader(string(c.FormValue("comment")))
+
+	resp, err := upload(conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/request_with_file", param)
+	if err != nil {
+		config.Stdlog.Println("File upload 오류 : ", err)
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 검수 승인 취소
+func Template_cancel_approval_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/cancel_approval", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 기등록된 템플릿 (타입 : BA, EX) 을 채널추가버튼 및 채널추가안내문구가 포함된 템플릿으로 전환 /template/convertAddCh
+func Template_convertAddCh_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/convertAddCh", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 채널에 발신 프로필 추가
+func Channel_sender_add_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/sender/add", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+
+}
+
+// 채널에 발신 프로필 삭제
+func Channel_sender_remove_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/sender/remove", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 알림톡, 친구톡 발송 일별 통계
+func Stat_daily(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	args := fasthttp.AcquireArgs()
+	defer fasthttp.ReleaseArgs(args)
+
+	args.Add("beginDate", string(c.QueryArgs().Peek("beginDate")))
+	args.Add("endDate", string(c.QueryArgs().Peek("endDate")))
+	args.Add("productType", string(c.QueryArgs().Peek("productType")))
+	args.Add("page", string(c.QueryArgs().Peek("page")))
+
+	queryString := args.String()
+
+	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/stat/daily?"+queryString, nil)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 그룹 태그 생성
+func GroupTag_create(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/groupTag/create", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 그룹 태그 조회
+func GroupTag_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	args := fasthttp.AcquireArgs()
+	defer fasthttp.ReleaseArgs(args)
+
+	args.Add("senderKey", string(c.QueryArgs().Peek("senderKey")))
+	args.Add("groupTagKey", string(c.QueryArgs().Peek("groupTagKey")))
+
+	queryString := args.String()
+
+	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/groupTag?"+queryString, nil)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 그룹 태그 전체 조회
+func GroupTag_list(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	args := fasthttp.AcquireArgs()
+	defer fasthttp.ReleaseArgs(args)
+
+	args.Add("senderKey", string(c.QueryArgs().Peek("senderKey")))
+
+	queryString := args.String()
+
+	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/groupTag/list?"+queryString, nil)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 그룹 태그 수정
+func GroupTag_update(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/groupTag/update", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 그룹 태그 삭제
+func GroupTag_delete(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/groupTag/delete", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 광고성 메시지(다이렉트) 템플릿 등록
+func Direct_template_create_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v3/"+conf.PROFILE_KEY+"/direct/template/create", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 광고성메시지(다이렉트) 템플릿 조회
+func Direct_template_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	code := c.UserValue("code").(string)
+
+	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/direct/template/"+code, nil)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 광고성메시지(다이렉트) 템플릿 수정
+func Direct_template_update_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	code := c.UserValue("code").(string)
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v3/"+conf.PROFILE_KEY+"/direct/template/update/"+code, buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 광고성메시지(다이렉트) 템플릿 삭제
+func Direct_template_delete_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+	
+	code := c.UserValue("code").(string)
+
+	buff := bytes.NewBuffer([]byte(`{}`))
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/direct/template/delete/"+code, buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 발신채널 전환
+func Direct_convert_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/sender/direct/convert", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 발신채널 전환 상태 확인
+func Direct_convert_result(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	args := fasthttp.AcquireArgs()
+	defer fasthttp.ReleaseArgs(args)
+
+	args.Add("senderKey", string(c.QueryArgs().Peek("senderKey")))
+
+	queryString := args.String()
+
+	req, err := http.NewRequest("GET", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/sender/direct/convert/result?"+queryString, nil)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+// 발신채널에 연결된 비즈월렛 변경
+func Direct_bizWallet_change_(c *fasthttp.RequestCtx) {
+	conf := config.Conf
+
+	jsonstr, err := json.Marshal(c.PostBody())
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	buff := bytes.NewBuffer(jsonstr)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/sender/direct/bizWallet/change", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+}
+
+func TestFunc(c *fasthttp.RequestCtx) {
+	res, _ := json.Marshal(map[string]string{
+		"code": "success",
+		"message": "test okay",
+	})
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(res)
+}
+
+func imageMapping(c *fasthttp.RequestCtx, param map[string]io.Reader, prefix string, seq int) (map[string]io.Reader, error) {
+	var rtnErr error = nil
+	form, err := c.MultipartForm()
+	if err != nil {
+		rtnErr = err
+	} else {
+		if seq > 0 {
+			for a := 1;a <= seq; a++ {
+				files := form.File[prefix+strconv.Itoa(a)]
+				if len(files) != 0 {
+					extension := filepath.Ext(files[0].Filename)
+					nfn := uuid.New().String() + extension
+					err := saveUploadedFile(files[0], config.BasePath+"upload/" + nfn)
+					if err != nil {
+						config.Stdlog.Println("File 저장 오류 err : ", err)
+					}
+					param[prefix+strconv.Itoa(a)] = mustOpen(config.BasePath + "upload/" + nfn)
+				}
+			}
+		} else {
+			files := form.File[prefix]
+			if len(files) != 0 {
+				extension := filepath.Ext(files[0].Filename)
+				nfn := uuid.New().String() + extension
+				err := saveUploadedFile(files[0], config.BasePath+"upload/" + nfn)
+				if err != nil {
+					config.Stdlog.Println("File 저장 오류 err : ", err)
+				}
+				param[prefix] = mustOpen(config.BasePath + "upload/" + nfn)
+			}
+		}
+	}
+	
+	return param, rtnErr
+}
 
 func upload(url string, values map[string]io.Reader) (*http.Response, error) {
 
@@ -2393,30 +2330,3 @@ func saveUploadedFile(fileHeader *multipart.FileHeader, dst string) error {
 
 	return nil
 }
-
-// func MissingParams(c *fasthttp.RequestCtx, params map[string]string) bool {
-// 	var missingParams []string
-
-// 	for param, value := range params {
-// 		if value == "" {
-// 			missingParams = append(missingParams, param)
-// 		}
-// 	}
-
-// 	if len(missingParams) > 0 {
-// 		message := "필수값이 부족합니다. ( "
-// 		for i, param := range missingParams {
-// 			if i != 0 {
-// 				message += ", "
-// 			}
-// 			message += param
-// 		}
-// 		message += " )"
-// 		c.JSON(999, gin.H{
-// 			"message": message,
-// 		})
-// 		return false
-// 	}
-
-// 	return true
-// }
