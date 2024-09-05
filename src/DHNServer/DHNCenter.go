@@ -483,13 +483,9 @@ func statusDatabaseMaddleware(next fasthttp.RequestHandler) fasthttp.RequestHand
 			for {
 				if err := databasepool.DB.Ping(); err != nil {
 					config.Stdlog.Println("DB 할당 중")
-					time.Sleep(5 * time.Second) // 5초 후 재시도
+					time.Sleep(10 * time.Second) // 10초 후 재시도
 					continue
 				} else {
-					// db, err := sql.Open(config.Conf.DB, config.Conf.DBURL)
-					// db.SetMaxIdleConns(100)
-					// db.SetMaxOpenConns(100)
-					// databasepool.DB = db
 					config.Stdlog.Println("DB 할당 완료")
 					break
 				}
