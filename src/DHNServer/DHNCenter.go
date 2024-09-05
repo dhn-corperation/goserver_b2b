@@ -469,7 +469,7 @@ func recoveryMiddleware(next fasthttp.RequestHandler) fasthttp.RequestHandler {
 				c.SetContentType("application/json")
 				c.SetStatusCode(fasthttp.StatusInternalServerError)
 				c.SetBody(res)
-                return
+				return
             }
         }()
         next(c) // 다음 미들웨어 또는 핸들러로 넘김

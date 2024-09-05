@@ -46,6 +46,7 @@ func FriendtalkProc(user_id string, second_send_flag string, ctx context.Context
 				cnterr := databasepool.DB.QueryRowContext(ctx, "select length(msgid) as cnt from DHN_REQUEST  where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid = ? limit 1", user_id).Scan(&count)
 	
 				if cnterr != nil {
+					time.Sleep(10 * time.Second)
 					//config.Stdlog.Println("DHN_REQUEST Table - select 오류 : " + cnterr.Error())
 				} else {
 	

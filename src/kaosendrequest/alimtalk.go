@@ -37,6 +37,7 @@ func AlimtalkProc( user_id string, second_send_flag string, ctx context.Context 
 				
 				if cnterr != nil && cnterr != sql.ErrNoRows {
 					config.Stdlog.Println("DHN_REQUEST Table - select 오류 : " + cnterr.Error())
+					time.Sleep(10 * time.Second)
 				} else {
 					if count.Valid && count.Int64 > 0 {		
 						var startNow = time.Now()

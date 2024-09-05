@@ -134,8 +134,25 @@ func smsProcess(wg *sync.WaitGroup) {
 }
 
 func pre_smsProcess(wg *sync.WaitGroup) {
-
 	defer wg.Done()
+	defer func(){
+		if r := recover(); r != nil {
+			config.Stdlog.Println("LGU smsProcess panic 발생 원인 : ", r)
+			if err, ok := r.(error); ok {
+				if s.Contains(err.Error(), "connection refused") {
+					for {
+						config.Stdlog.Println("LGU smsProcess send ping to DB")
+						err := databasepool.DB.Ping()
+						if err == nil {
+							break
+						}
+						time.Sleep(10 * time.Second)
+					}
+				}
+			}
+		}
+	}()
+	
 	var db = databasepool.DB
 
 	var isProc = true

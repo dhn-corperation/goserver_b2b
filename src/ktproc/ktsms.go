@@ -64,12 +64,6 @@ func smsProcess(wg *sync.WaitGroup, table string, seq int, acc int) {
 	var db = databasepool.DB
 	var errlog = config.Stdlog
 
-	defer func() {
-		if err := recover(); err != nil {
-			errlog.Println("KT크로샷 SMS 결과 처리 중 패닉 발생 : ", err)
-		}
-	}()
-
 	var isProc = true
 	var t time.Time
 	t = time.Now()

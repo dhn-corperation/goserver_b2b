@@ -132,8 +132,25 @@ func mmsProcess(wg *sync.WaitGroup) {
 }
 
 func pre_mmsProcess(wg *sync.WaitGroup) {
-
 	defer wg.Done()
+	defer func(){
+		if r := recover(); r != nil {
+			config.Stdlog.Println("OTPLGU mmsProcess panic 발생 원인 : ", r)
+			if err, ok := r.(error); ok {
+				if s.Contains(err.Error(), "connection refused") {
+					for {
+						config.Stdlog.Println("OTPLGU mmsProcess send ping to DB")
+						err := databasepool.DB.Ping()
+						if err == nil {
+							break
+						}
+						time.Sleep(10 * time.Second)
+					}
+				}
+			}
+		}
+	}()
+	
 	var db = databasepool.DB
 
 	var isProc = true

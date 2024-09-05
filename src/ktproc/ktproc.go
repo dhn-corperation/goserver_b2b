@@ -48,6 +48,7 @@ func KtProcess(user_id string, ctx context.Context, acc int) {
 
 				if cnterr != nil && cnterr != sql.ErrNoRows {
 					config.Stdlog.Println("DHN_RESULT Table - select 오류 : " + cnterr.Error())
+					time.Sleep(10 * time.Second)
 				} else {
 					if count.Int64 > 0 {
 						var startNow = time.Now()

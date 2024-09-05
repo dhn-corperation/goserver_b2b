@@ -56,6 +56,7 @@ limit 1
 				cnterr := databasepool.DB.QueryRow(tickSql).Scan(&count)
 
 				if cnterr != nil {
+					time.Sleep(10 * time.Second)
 					//config.Stdlog.Println("DHN_RESULT Table - select 오류 : " + cnterr.Error())
 				} else {
 
