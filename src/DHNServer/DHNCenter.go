@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 	"crypto/tls"
-	"net/http"
+	// "net/http"
 	// "time"
 	"runtime/debug"
 	"time"
@@ -19,10 +19,10 @@ import (
 
 	"mycs/src/kaocenter"
 
-	"github.com/gin-gonic/gin"
 	"github.com/takama/daemon"
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
+	"github.com/goccy/go-json"
 )
 
 const (
@@ -117,7 +117,7 @@ func resultProc() {
 		c.SetBodyString("Center Server : "+config.Conf.CENTER_SERVER+",   "+"Image Server : "+config.Conf.IMAGE_SERVER+"\n")
 	})
 
-	r.POST("/req", kaoreqreceive.ReqReceive)
+	r.POST("/req", statusDatabaseMaddleware(kaoreqreceive.ReqReceive))
 
 	r.POST("/result", kaoreqreceive.Resultreq)
 
@@ -445,56 +445,15 @@ func resultProc() {
 	r.GET("/dm/freestyle/response/message", kaocenter.TestFunc)
 	// TODO ----------------------------------------------------------------
 
-	
+	topLevelHandler := recoveryMiddleware(r.Handler)
 
-	if err := fasthttp.ListenAndServe(":3033", r.Handler); err != nil {
+	if err := fasthttp.ListenAndServe(":3033", topLevelHandler); err != nil {
 		config.Stdlog.Println("fasthttp 실행 실패")
 	}
-
-	// 	// SSL 사용 시 --- 시작
-	// 	// certFile := "etc/letsencrypt/live/dhntest.dhn.kr/fullchain.pem"
-	// 	// keyFile := "etc/letsencrypt/live/dhntest.dhn.kr/privkey.pem"
-
-	// 	// tlsConfig, err := loadTLSConfig(certFile, keyFile)
-	// 	// if err != nil {
-	// 	// 	config.Stdlog.Println("SSL 인증 실패 err : ", err)
-	// 	// 	return
-	// 	// }
-
-	// 	// server := &http.Server{
-	// 	// 	Addr: ":443",
-	// 	// 	Handler: r,
-	// 	// 	TLSConfig: tlsConfig,
-	// 	// }
-
-	// 	// go func() {
-	// 	// 	for {
-	// 	// 		time.Sleep(24 * time.Hour)
-	// 	// 		config.Stdlog.Println("자동 SSL 인증 갱신 시작")
-	// 	// 		newTLSConfig, err := loadTLSConfig(certFile, keyFile)
-	// 	// 		if err != nil {
-	// 	// 			config.Stdlog.Println("자동 SSL 인증 갱신 실패 err : ", err)
-	// 	// 			continue
-	// 	// 		}
-	// 	// 		server.TLSConfig = newTLSConfig
-	// 	// 		config.Stdlog.Println("자동 SSL 인증 갱신 성공")
-	// 	// 	}
-	// 	// }()
-
-	// 	// err = server.ListenAndServeTLS(certFile, keyFile)
-	// 	// if err != nil {
-	// 	// 	config.Stdlog.Println("서버 실행 실패")
-	// 	// }
-	// 	// SSL 사용 시 --- 끝
-
-	// 	// SSL 미사용 시 --- 시작
-	// 	r.Run(":" + config.Conf.CENTER_PORT)
-	// 	// SSL 미사용 시 --- 끝
-	// }()
 }
 
-func customRecovery() gin.HandlerFunc {
-    return func(c *gin.Context) {
+func recoveryMiddleware(next fasthttp.RequestHandler) fasthttp.RequestHandler {
+    return func(c *fasthttp.RequestCtx) {
         defer func() {
             if r := recover(); r != nil {
                 // panic 로그 기록
@@ -502,19 +461,23 @@ func customRecovery() gin.HandlerFunc {
                 config.Stdlog.Println("Stack trace: ", string(debug.Stack()))
                 
                 // 500 Internal Server Error 반환
-                c.JSON(http.StatusInternalServerError, gin.H{
-                    "code": "error",
-                    "message": "panic",
-                })
-                c.Abort() // 미들웨어 체인의 나머지를 중단
+                res, _ := json.Marshal(map[string]string{
+					"code": "error",
+					"message": r.(string),
+				})
+
+				c.SetContentType("application/json")
+				c.SetStatusCode(fasthttp.StatusInternalServerError)
+				c.SetBody(res)
+                return
             }
         }()
-        c.Next() // 다음 미들웨어 또는 핸들러로 넘김
+        next(c) // 다음 미들웨어 또는 핸들러로 넘김
     }
 }
 
-func statusDatabase() gin.HandlerFunc {
-	return func(c *gin.Context){
+func statusDatabaseMaddleware(next fasthttp.RequestHandler) fasthttp.RequestHandler {
+	return func(c *fasthttp.RequestCtx){
 		for {
 			db, err := sql.Open(config.Conf.DB, config.Conf.DBURL)
 
@@ -536,7 +499,7 @@ func statusDatabase() gin.HandlerFunc {
 				config.Stdlog.Println("DB 재할당 완료")
 			}
 
-			c.Next()
+			next(c)
 		}
 	}
 }
