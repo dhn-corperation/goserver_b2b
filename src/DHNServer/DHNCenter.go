@@ -445,9 +445,9 @@ func resultProc() {
 	r.GET("/dm/freestyle/response/message", kaocenter.TestFunc)
 	// TODO ----------------------------------------------------------------
 
-	topLevelHandler := recoveryMiddleware(r.Handler)
+	// topLevelHandler := recoveryMiddleware(r.Handler)
 
-	if err := fasthttp.ListenAndServe(":3033", topLevelHandler); err != nil {
+	if err := fasthttp.ListenAndServe(":3033", r.Handler); err != nil {
 		config.Stdlog.Println("fasthttp 실행 실패")
 	}
 }
