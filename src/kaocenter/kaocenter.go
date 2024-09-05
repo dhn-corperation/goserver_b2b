@@ -1006,7 +1006,7 @@ func FT_Upload(c *fasthttp.RequestCtx) {
 		})
 
 		c.SetContentType("application/json")
-		c.SetStatusCode(fasthttp.StatusBadRequest)
+		c.SetStatusCode(fasthttp.StatusOK)
 		c.SetBody(res)
 		return
 	}
@@ -1024,7 +1024,7 @@ func FT_Upload(c *fasthttp.RequestCtx) {
 		})
 
 		c.SetContentType("application/json")
-		c.SetStatusCode(fasthttp.StatusBadRequest)
+		c.SetStatusCode(fasthttp.StatusOK)
 		c.SetBody(res)
 		return
 	}
@@ -1035,7 +1035,7 @@ func FT_Upload(c *fasthttp.RequestCtx) {
 
 	resp, err := upload(conf.IMAGE_SERVER+"v1/"+conf.PROFILE_KEY+"/image/friendtalk", param)
 	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		c.Error(err.Error(), fasthttp.StatusOK)
 		return
 	}
 	defer resp.Body.Close()
