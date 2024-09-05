@@ -983,8 +983,6 @@ func Plugin_callbackUrl_Delete(c *fasthttp.RequestCtx) {
 }
 
 func FT_Upload(c *fasthttp.RequestCtx) {
-	c.Error("test", fasthttp.StatusBadRequest)
-	return
 	conf := config.Conf
 
 	form, err := c.MultipartForm()

@@ -22,7 +22,6 @@ import (
 	"github.com/takama/daemon"
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
-	"github.com/goccy/go-json"
 )
 
 const (
@@ -445,9 +444,9 @@ func resultProc() {
 	r.GET("/dm/freestyle/response/message", kaocenter.TestFunc)
 	// TODO ----------------------------------------------------------------
 
-	// topLevelHandler := recoveryMiddleware(r.Handler)
+	topLevelHandler := recoveryMiddleware(r.Handler)
 
-	if err := fasthttp.ListenAndServe(":3033", r.Handler); err != nil {
+	if err := fasthttp.ListenAndServe(":3033", topLevelHandler); err != nil {
 		config.Stdlog.Println("fasthttp 실행 실패")
 	}
 }
@@ -459,17 +458,6 @@ func recoveryMiddleware(next fasthttp.RequestHandler) fasthttp.RequestHandler {
                 // panic 로그 기록
                 config.Stdlog.Println("Recovered from panic : ", r)
                 config.Stdlog.Println("Stack trace: ", string(debug.Stack()))
-                
-                // 500 Internal Server Error 반환
-                res, _ := json.Marshal(map[string]string{
-					"code": "error",
-					"message": r.(string),
-				})
-
-				c.SetContentType("application/json")
-				c.SetStatusCode(fasthttp.StatusInternalServerError)
-				c.SetBody(res)
-				return
             }
         }()
         next(c) // 다음 미들웨어 또는 핸들러로 넘김
