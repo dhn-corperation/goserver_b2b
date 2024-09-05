@@ -994,6 +994,7 @@ func FT_Upload(c *fasthttp.RequestCtx) {
 	files := form.File["image"]
 	if len(files) == 0 {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
 	}
 
 	file := files[0]
