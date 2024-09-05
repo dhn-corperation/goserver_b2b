@@ -993,12 +993,25 @@ func FT_Upload(c *fasthttp.RequestCtx) {
 		})
 
 		c.SetContentType("application/json")
-		c.SetStatusCode(fasthttp.StatusBadRequest)
+		c.SetStatusCode(fasthttp.StatusOK)
+		c.SetBody(res)
+		return
+	}
+
+	if form.File["image"] == nil {
+		res, _ := json.Marshal(map[string]string{
+			"code": "error",
+			"message": err.Error(),
+		})
+
+		c.SetContentType("application/json")
+		c.SetStatusCode(fasthttp.StatusOK)
 		c.SetBody(res)
 		return
 	}
 
 	files := form.File["image"]
+
 	if len(files) == 0 {
 		res, _ := json.Marshal(map[string]string{
 			"code": "error",
