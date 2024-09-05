@@ -46,7 +46,9 @@ func resPollingProcess(wg *sync.WaitGroup) {
 
 	resrows, err := db.Query(pollingsql)
 	if err != nil {
-		errlog.Fatal(err)
+		errlog.Println("resPollingProcess 쿼리 에러 query : ", pollingsql)
+		errlog.Println("resPollingProcess 쿼리 에러 : ", err)
+		errlog.Println(err)
 	}
 
 	supmsgids := []interface{}{}

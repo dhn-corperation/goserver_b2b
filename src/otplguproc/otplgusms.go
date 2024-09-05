@@ -23,8 +23,8 @@ func SMSProcess(ctx context.Context) {
 		select {
 			case <- ctx.Done():
 		
-		    config.Stdlog.Println("Lgu SMS process가 20초 후에 종료 됨.")
-		    time.Sleep(20 * time.Second)
+		    config.Stdlog.Println("Lgu SMS process가 10초 후에 종료 됨.")
+		    time.Sleep(10 * time.Second)
 		    config.Stdlog.Println("Lgu SMS process 종료 완료")
 		    return
 		default:	
@@ -70,8 +70,6 @@ func smsProcess(wg *sync.WaitGroup) {
 			db.Exec("Create Table IF NOT EXISTS " + SMSTable + " like LG_OTP_SC_TRAN")
 			errlog.Println(SMSTable + " 생성 !!")
 
-		} else {
-			//errlog.Fatal(err)
 		}
 
 		isProc = false

@@ -26,8 +26,8 @@ func NanoLMSProcess_G(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 
-			config.Stdlog.Println("Nano LMS_G process가 20초 후에 종료 됨.")
-			time.Sleep(20 * time.Second)
+			config.Stdlog.Println("Nano LMS_G process가 10초 후에 종료 됨.")
+			time.Sleep(10 * time.Second)
 			config.Stdlog.Println("Nano LMS_G process 종료 완료")
 			return
 		default:
@@ -72,8 +72,6 @@ func mmsProcess_G(wg *sync.WaitGroup) {
 		if s.Index(errcode, "1146") > 0 {
 			db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like MMS_LOG")
 			errlog.Println(MMSTable + " 생성 !!")
-		} else {
-			//errlog.Fatal(groupQuery)
 		}
 
 		isProc = false

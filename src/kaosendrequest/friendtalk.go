@@ -91,12 +91,16 @@ func ftsendProcess(group_no string, user_id string, second_send_flag string) {
 
 	reqrows, err := db.Query(reqsql)
 	if err != nil {
-		errlog.Fatal(err)
+		errlog.Println("ftsendProcess 쿼리 에러 group_no : ", group_no, " / userid  : ", user_id," / query : ", reqsql)
+		errlog.Println("ftsendProcess 쿼리 에러 : ", err)
+		time.Sleep(5 * time.Second)
 	}
 
 	columnTypes, err := reqrows.ColumnTypes()
 	if err != nil {
-		errlog.Fatal(err)
+		errlog.Println("ftsendProcess 컬럼 초기화 에러 group_no : ", group_no, " / userid  : ", user_id)
+		errlog.Println("ftsendProcess 컬럼 초기화 에러 : ", err)
+		time.Sleep(5 * time.Second)
 	}
 	count := len(columnTypes)
 
@@ -182,7 +186,7 @@ carousel
 
 		err := reqrows.Scan(scanArgs...)
 		if err != nil {
-			errlog.Fatal(err)
+			time.Sleep(5 * time.Second)
 		}
 
 		var friendtalk kakao.Friendtalk

@@ -21,27 +21,26 @@ func NanoLMSProcess(ctx context.Context) {
 	var wg sync.WaitGroup
 
 	for {
-	
-			select {
-				case <- ctx.Done():
-			
-			    config.Stdlog.Println("Nano LMS process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println("Nano LMS process 종료 완료")
-			    return
-			default:
-				var t = time.Now()
-	
-				if t.Day() < 3 {
-					wg.Add(1)
-					go pre_mmsProcess(&wg)
-				}
-	
-				wg.Add(1)
-				go mmsProcess(&wg)
+		select {
+			case <- ctx.Done():
+		
+		    config.Stdlog.Println("Nano LMS process가 10초 후에 종료 됨.")
+		    time.Sleep(10 * time.Second)
+		    config.Stdlog.Println("Nano LMS process 종료 완료")
+		    return
+		default:
+			var t = time.Now()
 
-				wg.Wait()
+			if t.Day() < 3 {
+				wg.Add(1)
+				go pre_mmsProcess(&wg)
 			}
+
+			wg.Add(1)
+			go mmsProcess(&wg)
+
+			wg.Wait()
+		}
 	}
 
 }
@@ -71,8 +70,6 @@ func mmsProcess(wg *sync.WaitGroup) {
 		if s.Index(errcode, "1146") > 0 {
 			db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like MMS_LOG")
 			errlog.Println(MMSTable + " 생성 !!")
-		} else {
-			//errlog.Fatal(groupQuery)
 		}
 
 		isProc = false

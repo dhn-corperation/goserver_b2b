@@ -29,7 +29,8 @@ func LMSProcess(ctx context.Context) {
 	OshotTable, err := db.Query(OshotQuery)
 
 	if err != nil {
-		errlog.Fatal("DHN CLIENT LIST 조회 오류 ")
+		errlog.Println("DHN CLIENT LIST 조회 오류 ")
+		time.Sleep(10 * time.Second)
 	}
 	defer OshotTable.Close()
 
@@ -42,8 +43,8 @@ func LMSProcess(ctx context.Context) {
 			select {
 				case <- ctx.Done():
 			
-			    config.Stdlog.Println("Oshot MMS process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
+			    config.Stdlog.Println("Oshot MMS process가 10초 후에 종료 됨.")
+			    time.Sleep(10 * time.Second)
 			    config.Stdlog.Println("Oshot MMS process 종료 완료")
 			    return
 			default:	
@@ -151,8 +152,6 @@ func mmsProcess(wg *sync.WaitGroup, ostable string) {
 		if s.Index(errcode, "1146") > 0 {
 			db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like " + ostable + "MMS")
 			errlog.Println(MMSTable + " 생성 !!")
-		} else {
-			//errlog.Fatal(groupQuery)
 		}
 
 		isProc = false
@@ -290,8 +289,6 @@ func pre_mmsProcess(wg *sync.WaitGroup, ostable string) {
 		if s.Index(errcode, "1146") > 0 {
 			db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like " + ostable + "MMS")
 			errlog.Println(MMSTable + " 생성 !!")
-		} else {
-			//errlog.Fatal(groupQuery)
 		}
 
 		isProc = false

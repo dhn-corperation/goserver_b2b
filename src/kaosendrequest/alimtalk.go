@@ -30,13 +30,8 @@ func AlimtalkProc( user_id string, second_send_flag string, ctx context.Context 
 			
 			select {
 				case <- ctx.Done():
-			
-			    // uid := ctx.Value("user_id")
-			    // config.Stdlog.Println(uid, " - Alimtalk process가 20초 후에 종료 됨.")
-			    // time.Sleep(20 * time.Second)
-			    // config.Stdlog.Println(uid, " - Alimtalk process 종료 완료")
-			    config.Stdlog.Println(user_id, " - Alimtalk process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
+			    config.Stdlog.Println(user_id, " - Alimtalk process가 10초 후에 종료 됨.")
+			    time.Sleep(10 * time.Second)
 			    config.Stdlog.Println(user_id, " - Alimtalk process 종료 완료")
 			    return
 			default:
@@ -85,16 +80,16 @@ func atsendProcess(group_no string, user_id string, second_send_flag string) {
 
 	reqrows, err := db.Query(reqsql)
 	if err != nil {
-		errlog.Println("atsendProcess 쿼리 에러 query : ", reqsql)
+		errlog.Println("atsendProcess 쿼리 에러 group_no : ", group_no, " / userid  : ", user_id," / query : ", reqsql)
 		errlog.Println("atsendProcess 쿼리 에러 : ", err)
-		errlog.Fatal(err)
+		time.Sleep(5 * time.Second)
 	}
 
 	columnTypes, err := reqrows.ColumnTypes()
 	if err != nil {
 		errlog.Println("atsendProcess 컬럼 초기화 에러 group_no : ", group_no, " / userid  : ", user_id)
 		errlog.Println("atsendProcess 컬럼 초기화 에러 : ", err)
-		errlog.Fatal(err)
+		time.Sleep(5 * time.Second)
 	}
 	count := len(columnTypes)
 	initScanArgs := cm.InitDatabaseColumn(columnTypes, count)
@@ -118,7 +113,7 @@ func atsendProcess(group_no string, user_id string, second_send_flag string) {
 		if err != nil {
 			errlog.Println("atsendProcess 컬럼 스캔 에러 group_no : ", group_no, " / userid  : ", user_id)
 			errlog.Println("atsendProcess 컬럼 스캔 에러 : ", err)
-			errlog.Fatal(err)
+			time.Sleep(5 * time.Second)
 		}
 
 		var alimtalk kakao.Alimtalk

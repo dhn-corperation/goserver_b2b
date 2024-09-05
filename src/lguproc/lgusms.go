@@ -17,47 +17,24 @@ import (
 func SMSProcess(ctx context.Context) {
 	var wg sync.WaitGroup
 
-	var db = databasepool.DB
-	var errlog = config.Stdlog
-	var lguTable []string
-	var ltable sql.NullString
-
-	var LguQuery = "select distinct ifnull(a.dest, '') as table_name from DHN_CLIENT_LIST a where a.use_flag = 'Y' and a.dest = 'LGU' "
-
-	LguTable, err := db.Query(LguQuery)
-
-	if err != nil {
-		errlog.Fatal("lgusms / SMSProcess / DHN CLIENT LIST 조회 오류 ")
-	}
-	defer LguTable.Close()
-
-	for LguTable.Next() {
-		LguTable.Scan(&ltable)
-		lguTable = append(lguTable, ltable.String)
-	}
-	errlog.Println("Lgu SMS length : ", len(lguTable))
 	for {
 		select {
 			case <- ctx.Done():
 		
-		    config.Stdlog.Println("Lgu SMS process가 20초 후에 종료 됨.")
-		    time.Sleep(20 * time.Second)
+		    config.Stdlog.Println("Lgu SMS process가 10초 후에 종료 됨.")
+		    time.Sleep(10 * time.Second)
 		    config.Stdlog.Println("Lgu SMS process 종료 완료")
 		    return
-		default:	
-		
-			for range lguTable {
-				var t = time.Now()
-	
-				if t.Day() < 3 {
-					wg.Add(1)
-					go pre_smsProcess(&wg)
-				}
-	
+		default:
+			var t = time.Now()
+
+			if t.Day() < 3 {
 				wg.Add(1)
-				go smsProcess(&wg)
+				go pre_smsProcess(&wg)
 			}
-	
+
+			wg.Add(1)
+			go smsProcess(&wg)
 			wg.Wait()
 		}
 	}
@@ -90,8 +67,6 @@ func smsProcess(wg *sync.WaitGroup) {
 			db.Exec("Create Table IF NOT EXISTS " + SMSTable + " like LG_SC_TRAN")
 			errlog.Println(SMSTable + " 생성 !!")
 
-		} else {
-			//errlog.Fatal(err)
 		}
 
 		isProc = false

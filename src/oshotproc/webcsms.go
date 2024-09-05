@@ -28,7 +28,8 @@ func SMSProcess(ctx context.Context) {
 	OshotTable, err := db.Query(OshotQuery)
 
 	if err != nil {
-		errlog.Fatal("DHN CLIENT LIST 조회 오류 ")
+		errlog.Println("DHN CLIENT LIST 조회 오류 ")
+		time.Sleep(10 * time.Second)
 	}
 	defer OshotTable.Close()
 
@@ -41,8 +42,8 @@ func SMSProcess(ctx context.Context) {
 			select {
 				case <- ctx.Done():
 			
-			    config.Stdlog.Println("Oshot SMS process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
+			    config.Stdlog.Println("Oshot SMS process가 10초 후에 종료 됨.")
+			    time.Sleep(10 * time.Second)
 			    config.Stdlog.Println("Oshot SMS process 종료 완료")
 			    return
 			default:	
@@ -150,8 +151,6 @@ func smsProcess(wg *sync.WaitGroup, ostable string) {
 			db.Exec("Create Table IF NOT EXISTS " + SMSTable + " like " + ostable + "SMS")
 			errlog.Println(SMSTable + " 생성 !!")
 
-		} else {
-			//errlog.Fatal(err)
 		}
 
 		isProc = false
@@ -281,8 +280,6 @@ func pre_smsProcess(wg *sync.WaitGroup, ostable string) {
 			db.Exec("Create Table IF NOT EXISTS " + SMSTable + " like " + ostable + "SMS")
 			errlog.Println(SMSTable + " 생성 !!")
 
-		} else {
-			//errlog.Fatal(err)
 		}
 
 		isProc = false

@@ -50,12 +50,12 @@ func FriendInforeq(c *gin.Context) {
 
 		reqrows, err := db.Query(sqlstr)
 		if err != nil {
-			errlog.Fatal(err)
+			errlog.Println(err)
 		}
 
 		columnTypes, err := reqrows.ColumnTypes()
 		if err != nil {
-			errlog.Fatal(err)
+			errlog.Println(err)
 		}
 		count := len(columnTypes)
 
@@ -85,7 +85,7 @@ func FriendInforeq(c *gin.Context) {
 
 			err := reqrows.Scan(scanArgs...)
 			if err != nil {
-				errlog.Fatal(err)
+				errlog.Println(err)
 			}
 
 			masterData := map[string]interface{}{}

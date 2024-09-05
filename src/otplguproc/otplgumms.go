@@ -23,8 +23,8 @@ func LMSProcess(ctx context.Context) {
 		select {
 			case <- ctx.Done():
 		
-		    config.Stdlog.Println("Lgu OTP LMS process가 20초 후에 종료 됨.")
-		    time.Sleep(20 * time.Second)
+		    config.Stdlog.Println("Lgu OTP LMS process가 10초 후에 종료 됨.")
+		    time.Sleep(10 * time.Second)
 		    config.Stdlog.Println("Lgu OTP LMS process 종료 완료")
 		    return
 		default:

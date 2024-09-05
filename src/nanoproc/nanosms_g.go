@@ -23,8 +23,8 @@ func NanoSMSProcess_G(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 
-			config.Stdlog.Println("Nano SMS process_G가 20초 후에 종료 됨.")
-			time.Sleep(20 * time.Second)
+			config.Stdlog.Println("Nano SMS process_G가 10초 후에 종료 됨.")
+			time.Sleep(10 * time.Second)
 			config.Stdlog.Println("Nano SMS process_G 종료 완료")
 			return
 		default:
@@ -70,8 +70,6 @@ func smsProcess_G(wg *sync.WaitGroup) {
 			db.Exec("Create Table IF NOT EXISTS " + SMSTable + " like SMS_LOG")
 			errlog.Println(SMSTable + " 생성 !!")
 
-		} else {
-			//errlog.Fatal(err)
 		}
 
 		isProc = false

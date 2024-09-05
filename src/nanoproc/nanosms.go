@@ -19,26 +19,26 @@ func NanoSMSProcess(ctx context.Context) {
 	var wg sync.WaitGroup
 
 	for {
-			select {
-				case <- ctx.Done():
-			
-			    config.Stdlog.Println("Nano SMS process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
-			    config.Stdlog.Println("Nano SMS process 종료 완료")
-			    return
-			default:
-				var t = time.Now()
-	
-				if t.Day() < 3 {
-					wg.Add(1)
-					go pre_smsProcess(&wg)
-				}
-	
-				wg.Add(1)
-				go smsProcess(&wg)
+		select {
+			case <- ctx.Done():
 		
-				wg.Wait()
+		    config.Stdlog.Println("Nano SMS process가 10초 후에 종료 됨.")
+		    time.Sleep(10 * time.Second)
+		    config.Stdlog.Println("Nano SMS process 종료 완료")
+		    return
+		default:
+			var t = time.Now()
+
+			if t.Day() < 3 {
+				wg.Add(1)
+				go pre_smsProcess(&wg)
 			}
+
+			wg.Add(1)
+			go smsProcess(&wg)
+	
+			wg.Wait()
+		}
 	}
 
 }
@@ -68,8 +68,6 @@ func smsProcess(wg *sync.WaitGroup) {
 			db.Exec("Create Table IF NOT EXISTS " + SMSTable + " like SMS_LOG")
 			errlog.Println(SMSTable + " 생성 !!")
 
-		} else {
-			//errlog.Fatal(err)
 		}
 
 		isProc = false
