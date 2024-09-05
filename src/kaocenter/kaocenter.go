@@ -984,27 +984,30 @@ func Plugin_callbackUrl_Delete(c *fasthttp.RequestCtx) {
 
 func FT_Upload(c *fasthttp.RequestCtx) {
 	conf := config.Conf
-	res, _ := json.Marshal(map[string]string{
-		"code": "test",
-		"message": "발송 요청이 완료되었습니다.",
-	})
-
-	c.SetContentType("application/json")
-	c.SetStatusCode(fasthttp.StatusOK)
-	c.SetBody(res)
-	return
+	
 	form, err := c.MultipartForm()
 	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		res, _ := json.Marshal(map[string]string{
+			"code": "error",
+			"message": err.Error(),
+		})
+
+		c.SetContentType("application/json")
+		c.SetStatusCode(fasthttp.StatusBadRequest)
+		c.SetBody(res)
 		return
 	}
-	if form.File["image"] == nil {
-		c.Error("image is null", fasthttp.StatusBadRequest)
-		return
-	}
+
 	files := form.File["image"]
 	if len(files) == 0 {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		res, _ := json.Marshal(map[string]string{
+			"code": "error",
+			"message": err.Error(),
+		})
+
+		c.SetContentType("application/json")
+		c.SetStatusCode(fasthttp.StatusBadRequest)
+		c.SetBody(res)
 		return
 	}
 
@@ -1015,7 +1018,14 @@ func FT_Upload(c *fasthttp.RequestCtx) {
 
 	err = saveUploadedFile(file, config.BasePath+"upload/"+newFileName)
 	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusInternalServerError)
+		res, _ := json.Marshal(map[string]string{
+			"code": "error",
+			"message": err.Error(),
+		})
+
+		c.SetContentType("application/json")
+		c.SetStatusCode(fasthttp.StatusBadRequest)
+		c.SetBody(res)
 		return
 	}
 
