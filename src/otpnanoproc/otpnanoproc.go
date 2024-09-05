@@ -109,18 +109,28 @@ LIMIT 500
 }
 
 func resProcess(group_no string) {
-	//defer wg.Done()
+	defer func(){
+		if r := recover(); r != nil {
+			config.Stdlog.Println("OTPNANO smsProcess panic 발생 원인 : ", r)
+			procCnt--
+			if err, ok := r.(error); ok {
+				if s.Contains(err.Error(), "connection refused") {
+					for {
+						config.Stdlog.Println("OTPNANO smsProcess send ping to DB")
+						err := databasepool.DB.Ping()
+						if err == nil {
+							break
+						}
+						time.Sleep(10 * time.Second)
+					}
+				}
+			}
+		}
+	}()
 
 	procCnt++
 	var db = databasepool.DB
 	var stdlog = config.Stdlog
-
-	defer func() {
-		if err := recover(); err != nil {
-			procCnt--
-			stdlog.Println(group_no, " Nano OTP 문자 처리 중 오류 발생 : ", err)
-		}
-	}()
 
 	var msgid, code, message, message_type, msg_sms, phn, remark1, remark2, result, sms_lms_tit, sms_kind, sms_sender, res_dt, reserve_dt, mms_file1, mms_file2, mms_file3, userid, sms_len_check sql.NullString
 	var msgLen sql.NullInt64

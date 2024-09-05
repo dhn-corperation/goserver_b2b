@@ -118,17 +118,28 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 }
 
 func resProcess(ctx context.Context, group_no string, user_id string) {
-	//defer wg.Done()
+	defer func(){
+		if r := recover(); r != nil {
+			config.Stdlog.Println("OSHOT resProcess panic 발생 원인 : ", r)
+			procCnt--
+			if err, ok := r.(error); ok {
+				if s.Contains(err.Error(), "connection refused") {
+					for {
+						config.Stdlog.Println("OSHOT resProcess send ping to DB")
+						err := databasepool.DB.Ping()
+						if err == nil {
+							break
+						}
+						time.Sleep(10 * time.Second)
+					}
+				}
+			}
+		}
+	}()
+
 	procCnt++
 	var db = databasepool.DB
 	var stdlog = config.Stdlog
-
-	defer func() {
-		if err := recover(); err != nil {
-			procCnt--
-			stdlog.Println(user_id, "- ", group_no, "Oshot 처리 중 오류 발생 : ", err)
-		}
-	}()
 
 	var msgid, code, message, message_type, msg_sms, phn, remark1, remark2, result, sms_lms_tit, sms_kind, sms_sender, res_dt, reserve_dt, mms_file1, mms_file2, mms_file3, userid, sms_len_check, oshot sql.NullString
 	var msgLen sql.NullInt64

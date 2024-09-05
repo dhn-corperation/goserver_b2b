@@ -48,8 +48,25 @@ func NanoLMSProcess_G(ctx context.Context) {
 }
 
 func mmsProcess_G(wg *sync.WaitGroup) {
-
 	defer wg.Done()
+	defer func(){
+		if r := recover(); r != nil {
+			config.Stdlog.Println("NANO mmsProcess_G panic 발생 원인 : ", r)
+			if err, ok := r.(error); ok {
+				if s.Contains(err.Error(), "connection refused") {
+					for {
+						config.Stdlog.Println("NANO mmsProcess_G send ping to DB")
+						err := databasepool.DB.Ping()
+						if err == nil {
+							break
+						}
+						time.Sleep(10 * time.Second)
+					}
+				}
+			}
+		}
+	}()
+	
 	var db = databasepool.DB
 	var errlog = config.Stdlog
 

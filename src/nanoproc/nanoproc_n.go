@@ -117,18 +117,28 @@ func updateReqeust_N(group_no string, user_id string) error {
 }
 
 func resProcess_N(group_no string, user_id string) {
-	//defer wg.Done()
-
+	defer func(){
+		if r := recover(); r != nil {
+			config.Stdlog.Println("NANO resProcess_N panic 발생 원인 : ", r)
+			procCnt_N--
+			if err, ok := r.(error); ok {
+				if s.Contains(err.Error(), "connection refused") {
+					for {
+						config.Stdlog.Println("NANO resProcess_N send ping to DB")
+						err := databasepool.DB.Ping()
+						if err == nil {
+							break
+						}
+						time.Sleep(10 * time.Second)
+					}
+				}
+			}
+		}
+	}()
+	
 	procCnt_N++
 	var db = databasepool.DB
 	var stdlog = config.Stdlog
-
-	defer func() {
-		if err := recover(); err != nil {
-			procCnt_N--
-			stdlog.Println(user_id, "-", group_no, " Nano_N 문자 처리 중 오류 발생 : ", err)
-		}
-	}()
 
 	var msgid, code, message, message_type, msg_sms, phn, remark1, remark2, result, sms_lms_tit, sms_kind, sms_sender, res_dt, reserve_dt, mms_file1, mms_file2, mms_file3, userid, sms_len_check sql.NullString
 	var msgLen sql.NullInt64

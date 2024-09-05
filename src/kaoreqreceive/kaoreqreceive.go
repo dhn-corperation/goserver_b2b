@@ -166,7 +166,7 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 				if s.Contains(s.ToLower(msg[i].Crypto), "phn") && msg[i].Phn != "" {
 					reqinsValues = append(reqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
 				} else {
-					reqinsValues = append(reqinsValues, msg[i].Msgsms)
+					reqinsValues = append(reqinsValues, msg[i].Phn)
 				}
 				
 				if s.Contains(s.ToLower(msg[i].Crypto), "profile") && len(msg[i].Profile) > 0 {

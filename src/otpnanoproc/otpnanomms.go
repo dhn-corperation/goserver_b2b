@@ -48,8 +48,25 @@ func LMSProcess(ctx context.Context) {
 }
 
 func mmsProcess(wg *sync.WaitGroup) {
-
 	defer wg.Done()
+	defer func(){
+		if r := recover(); r != nil {
+			config.Stdlog.Println("OTPNANO mmsProcess panic 발생 원인 : ", r)
+			if err, ok := r.(error); ok {
+				if s.Contains(err.Error(), "connection refused") {
+					for {
+						config.Stdlog.Println("OTPNANO mmsProcess send ping to DB")
+						err := databasepool.DB.Ping()
+						if err == nil {
+							break
+						}
+						time.Sleep(10 * time.Second)
+					}
+				}
+			}
+		}
+	}()
+
 	var db = databasepool.DB
 	var errlog = config.Stdlog
 

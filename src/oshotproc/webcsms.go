@@ -67,8 +67,25 @@ func SMSProcess(ctx context.Context) {
 }
 
 func smsProcess(wg *sync.WaitGroup, ostable string) {
-
 	defer wg.Done()
+	defer func(){
+		if r := recover(); r != nil {
+			config.Stdlog.Println("OSHOT smsProcess panic 발생 원인 : ", r)
+			if err, ok := r.(error); ok {
+				if s.Contains(err.Error(), "connection refused") {
+					for {
+						config.Stdlog.Println("OSHOT smsProcess send ping to DB")
+						err := databasepool.DB.Ping()
+						if err == nil {
+							break
+						}
+						time.Sleep(10 * time.Second)
+					}
+				}
+			}
+		}
+	}()
+	
 	var db = databasepool.DB
 	var errlog = config.Stdlog
 
