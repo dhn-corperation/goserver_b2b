@@ -1,30 +1,19 @@
 package kaosendrequest
 
 import (
-	//"bytes"
-	//"database/sql"
 	"encoding/json"
 	"fmt"
-	kakao "mycs/src/kakaojson"
-	config "mycs/src/kaoconfig"
-
-	databasepool "mycs/src/kaodatabasepool"
-
-	//"io/ioutil"
-	//"net"
-	//"net/http"
-
 	"strconv"
 	s "strings"
 	"sync"
-	//"time"
-
 	"github.com/go-resty/resty/v2"
 	"context"
 	"time"
-)
 
-var polprocCnt int
+	kakao "mycs/src/kakaojson"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
+)
 
 func PollingProc(ctx context.Context) {
 	var wg sync.WaitGroup
@@ -50,6 +39,23 @@ func PollingProc(ctx context.Context) {
 func getPollingProcess(wg *sync.WaitGroup) {
 
 	defer wg.Done()
+	defer func(){
+		if r := recover(); r != nil {
+			config.Stdlog.Println("getPollingProcess panic 발생 원인 : ", r)
+			if err, ok := r.(error); ok {
+				if s.Contains(err.Error(), "connection refused") {
+					for {
+						config.Stdlog.Println("getPollingProcess send ping to DB")
+						err := databasepool.DB.Ping()
+						if err == nil {
+							break
+						}
+						time.Sleep(10 * time.Second)
+					}
+				}
+			}
+		}
+	}()
 	//fmt.Println("시작")
 	var db = databasepool.DB
 	var conf = config.Conf

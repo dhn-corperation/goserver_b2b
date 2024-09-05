@@ -1,23 +1,20 @@
 package kaosendrequest
 
 import (
-	//"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	kakao "mycs/src/kakaojson"
-	config "mycs/src/kaoconfig"
-	databasepool "mycs/src/kaodatabasepool"
-	cm "mycs/src/kaocommon"
-
-	//"io/ioutil"
-	//	"net"
-	//"net/http"
 	"strconv"
 	s "strings"
 	"sync"
 	"time"
 	"context"
+
+	kakao "mycs/src/kakaojson"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
+	cm "mycs/src/kaocommon"
+	
 )
 
 var atprocCnt int
@@ -68,6 +65,24 @@ func AlimtalkProc( user_id string, second_send_flag string, ctx context.Context 
 }
 
 func atsendProcess(group_no string, user_id string, second_send_flag string) {
+	defer func(){
+		if r := recover(); r != nil {
+			config.Stdlog.Println("atsendProcess panic 발생 원인 : ", r)
+			atprocCnt--
+			if err, ok := r.(error); ok {
+				if s.Contains(err.Error(), "connection refused") {
+					for {
+						config.Stdlog.Println("atsendProcess send ping to DB")
+						err := databasepool.DB.Ping()
+						if err == nil {
+							break
+						}
+						time.Sleep(10 * time.Second)
+					}
+				}
+			}
+		}
+	}()
 	atColumn := cm.GetResAtColumn()
 	atColumnStr := s.Join(atColumn, ",")
 
@@ -82,7 +97,7 @@ func atsendProcess(group_no string, user_id string, second_send_flag string) {
 	if err != nil {
 		errlog.Println("atsendProcess 쿼리 에러 group_no : ", group_no, " / userid  : ", user_id," / query : ", reqsql)
 		errlog.Println("atsendProcess 쿼리 에러 : ", err)
-		time.Sleep(5 * time.Second)
+		panic(err)
 	}
 
 	columnTypes, err := reqrows.ColumnTypes()

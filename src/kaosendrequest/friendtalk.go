@@ -1,24 +1,18 @@
 package kaosendrequest
 
 import (
-	//"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	kakao "mycs/src/kakaojson"
-	config "mycs/src/kaoconfig"
-	databasepool "mycs/src/kaodatabasepool"
-
-	//"io/ioutil"
-	//"net"
-	//"net/http"
 	s "strings"
-
 	"strconv"
 	"sync"
 	"time"
-	//"github.com/go-resty/resty"
 	"context"
+
+	kakao "mycs/src/kakaojson"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 )
 
 var ftprocCnt int
@@ -81,7 +75,24 @@ func FriendtalkProc(user_id string, second_send_flag string, ctx context.Context
 }
 
 func ftsendProcess(group_no string, user_id string, second_send_flag string) {
-
+	defer func(){
+		if r := recover(); r != nil {
+			config.Stdlog.Println("ftsendProcess panic 발생 원인 : ", r)
+			ftprocCnt--
+			if err, ok := r.(error); ok {
+				if s.Contains(err.Error(), "connection refused") {
+					for {
+						config.Stdlog.Println("ftsendProcess send ping to DB")
+						err := databasepool.DB.Ping()
+						if err == nil {
+							break
+						}
+						time.Sleep(10 * time.Second)
+					}
+				}
+			}
+		}
+	}()
 	var db = databasepool.DB
 	var conf = config.Conf
 	var stdlog = config.Stdlog
@@ -93,7 +104,7 @@ func ftsendProcess(group_no string, user_id string, second_send_flag string) {
 	if err != nil {
 		errlog.Println("ftsendProcess 쿼리 에러 group_no : ", group_no, " / userid  : ", user_id," / query : ", reqsql)
 		errlog.Println("ftsendProcess 쿼리 에러 : ", err)
-		time.Sleep(5 * time.Second)
+		panic(err)
 	}
 
 	columnTypes, err := reqrows.ColumnTypes()

@@ -36,10 +36,24 @@ func ResultProc(ctx context.Context) {
 func resPollingProcess(wg *sync.WaitGroup) {
 
 	defer wg.Done()
- 
+ 	defer func(){
+		if r := recover(); r != nil {
+			config.Stdlog.Println("resPollingProcess panic 발생 원인 : ", r)
+			if err, ok := r.(error); ok {
+				if s.Contains(err.Error(), "connection refused") {
+					for {
+						config.Stdlog.Println("resPollingProcess send ping to DB")
+						err := databasepool.DB.Ping()
+						if err == nil {
+							break
+						}
+						time.Sleep(10 * time.Second)
+					}
+				}
+			}
+		}
+	}()
 	var db = databasepool.DB
-	//var conf = config.Conf
-	//var stdlog = config.Stdlog
 	var errlog = config.Stdlog
 
 	pollingsql := "SELECT dpr.msg_id, dpr.type FROM DHN_POLLING_RESULT dpr INNER JOIN DHN_RESULT dr ON dpr.msg_id = dr.msgid WHERE dr.result = 'N' AND dr.sync = 'N'"
@@ -48,7 +62,7 @@ func resPollingProcess(wg *sync.WaitGroup) {
 	if err != nil {
 		errlog.Println("resPollingProcess 쿼리 에러 query : ", pollingsql)
 		errlog.Println("resPollingProcess 쿼리 에러 : ", err)
-		errlog.Println(err)
+		panic(err)
 	}
 
 	supmsgids := []interface{}{}

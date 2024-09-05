@@ -5,17 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	config "mycs/src/kaoconfig"
-	databasepool "mycs/src/kaodatabasepool"
 	"strconv"
-
-	//	"log"
-	// s "strings"
 	"sync"
 	"time"
-
 	"context"
+	s "strings"
 
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
+	
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -44,8 +42,25 @@ func SMSProcess(ctx context.Context, acc int) {
 }
 
 func smsProcess(wg *sync.WaitGroup, table string, seq int, acc int) {
-
 	defer wg.Done()
+	defer func(){
+		if r := recover(); r != nil {
+			config.Stdlog.Println("KTX smsProcess panic 발생 원인 : ", r)
+			if err, ok := r.(error); ok {
+				if s.Contains(err.Error(), "connection refused") {
+					for {
+						config.Stdlog.Println("KTX smsProcess send ping to DB")
+						err := databasepool.DB.Ping()
+						if err == nil {
+							break
+						}
+						time.Sleep(10 * time.Second)
+					}
+				}
+			}
+		}
+	}()
+
 	var db = databasepool.DB
 	var errlog = config.Stdlog
 

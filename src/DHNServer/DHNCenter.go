@@ -10,7 +10,7 @@ import (
 	// "time"
 	"runtime/debug"
 	"time"
-	"database/sql"
+	// "database/sql"
 	_ "github.com/go-sql-driver/mysql"
 
 	config "mycs/src/kaoconfig"
@@ -478,28 +478,23 @@ func recoveryMiddleware(next fasthttp.RequestHandler) fasthttp.RequestHandler {
 
 func statusDatabaseMaddleware(next fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(c *fasthttp.RequestCtx){
-		for {
-			db, err := sql.Open(config.Conf.DB, config.Conf.DBURL)
-
-			if err != nil {
-				config.Stdlog.Println("DB 연결 실패 5초 후 재시도합니다. err : ", err)
-				time.Sleep(5 * time.Second) // 5초 후 재시도
-				continue
+		if err := databasepool.DB.Ping(); err != nil {
+			config.Stdlog.Println("DB 핑 신호 없음 err : ", err)
+			for {
+				if err := databasepool.DB.Ping(); err != nil {
+					config.Stdlog.Println("DB 할당 중")
+					time.Sleep(5 * time.Second) // 5초 후 재시도
+					continue
+				} else {
+					// db, err := sql.Open(config.Conf.DB, config.Conf.DBURL)
+					// db.SetMaxIdleConns(100)
+					// db.SetMaxOpenConns(100)
+					// databasepool.DB = db
+					config.Stdlog.Println("DB 할당 완료")
+					break
+				}
 			}
-
-			// Ping으로 연결 상태 확인
-			if err := db.Ping(); err != nil {
-				config.Stdlog.Println("DB 핑 신호 없음 err : ", err)
-				time.Sleep(5 * time.Second) // 5초 후 재시도
-				continue
-			} else {
-				db.SetMaxIdleConns(50)
-				db.SetMaxOpenConns(50)
-				databasepool.DB = db
-				config.Stdlog.Println("DB 재할당 완료")
-			}
-
-			next(c)
 		}
+		next(c)
 	}
 }

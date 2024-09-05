@@ -5,16 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	config "mycs/src/kaoconfig"
-	databasepool "mycs/src/kaodatabasepool"
 	"strconv"
-
-	//	"log"
-	// s "strings"
 	"sync"
 	"time"
-
 	"context"
+	s "strings"
+
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -44,16 +42,26 @@ func LMSProcess(ctx context.Context, acc int) {
 }
 
 func mmsProcess(wg *sync.WaitGroup, table string, seq int, acc int) {
-
 	defer wg.Done()
-	var db = databasepool.DB
-	var errlog = config.Stdlog
-
-	defer func() {
-		if err := recover(); err != nil {
-			errlog.Println("KT크로샷 MMS 결과 처리 중 패닉 발생 : ", err)
+	defer func(){
+		if r := recover(); r != nil {
+			config.Stdlog.Println("KTX mmsProcess panic 발생 원인 : ", r)
+			if err, ok := r.(error); ok {
+				if s.Contains(err.Error(), "connection refused") {
+					for {
+						config.Stdlog.Println("KTX mmsProcess send ping to DB")
+						err := databasepool.DB.Ping()
+						if err == nil {
+							break
+						}
+						time.Sleep(10 * time.Second)
+					}
+				}
+			}
 		}
 	}()
+	var db = databasepool.DB
+	var errlog = config.Stdlog
 
 	var isProc = true
 	var t time.Time
@@ -78,7 +86,7 @@ func mmsProcess(wg *sync.WaitGroup, table string, seq int, acc int) {
 	if err != nil {
 		errcode := err.Error()
 		errlog.Println("KT크로샷 MMS 조회 중 오류 발생", searchQuery, errcode)
-		return
+		panic(err)
 	}
 	defer searchData.Close()
 
