@@ -992,7 +992,7 @@ func FT_Upload(c *fasthttp.RequestCtx) {
 	}
 
 	files := form.File["image"]
-	if len(files) == 0 {
+	if files == nil || len(files) == 0 {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
@@ -1015,6 +1015,7 @@ func FT_Upload(c *fasthttp.RequestCtx) {
 	resp, err := upload(conf.IMAGE_SERVER+"v1/"+conf.PROFILE_KEY+"/image/friendtalk", param)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
 	}
 	defer resp.Body.Close()
 
