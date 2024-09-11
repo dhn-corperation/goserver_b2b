@@ -575,7 +575,7 @@ Command :
 			var second_send_flag sql.NullString
 			var ssf string
 
-			ssferr := databasepool.DB.QueryRow("select distinct second_send_flag from DHN_CLIENT_LIST where userid = ?", uid).Scan(&second_send_flag)
+			ssferr := databasepool.DB.QueryRow("select distinct second_send_flag from DHN_CLIENT_LIST where user_id = ?", uid).Scan(&second_send_flag)
 			if ssferr != nil && ssferr != sql.ErrNoRows {
 				config.Stdlog.Println(uid," /arun 알림톡 second_send_flag 습득 실패 : ", err)
 				ssf = "N"
@@ -613,7 +613,7 @@ Command :
 			var nano_tel_seperate sql.NullString
 			var nts string
 
-			seperr := databasepool.DB.QueryRow("select distinct nano_tel_seperate from DHN_CLIENT_LIST where userid = ?", uid).Scan(&nano_tel_seperate)
+			seperr := databasepool.DB.QueryRow("select distinct nano_tel_seperate from DHN_CLIENT_LIST where user_id = ?", uid).Scan(&nano_tel_seperate)
 			if seperr != nil && seperr != sql.ErrNoRows {
 				config.Stdlog.Println(uid," /nrun 나노 nano_tel_seperate 습득 실패 : ", err)
 				nts = "N"
@@ -661,7 +661,7 @@ Command :
 			var nano_tel_seperate sql.NullString
 			var nts string
 
-			seperr := databasepool.DB.QueryRow("select distinct nano_tel_seperate from DHN_CLIENT_LIST where userid = ?", uid).Scan(&nano_tel_seperate)
+			seperr := databasepool.DB.QueryRow("select distinct nano_tel_seperate from DHN_CLIENT_LIST where user_id = ?", uid).Scan(&nano_tel_seperate)
 			if seperr != nil && seperr != sql.ErrNoRows {
 				config.Stdlog.Println(uid," /nrun 나노 nano_tel_seperate 습득 실패 : ", err)
 				nts = "N"
