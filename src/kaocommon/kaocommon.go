@@ -14,6 +14,7 @@ import(
 	"golang.org/x/text/transform"
 	"io/ioutil"
 	"unicode/utf16"
+	"github.com/goccy/go-json"
 )
 
 type SpecialCharacter struct {
@@ -25,6 +26,14 @@ var specialCharacters []SpecialCharacter
 
 func init(){
 	
+}
+
+func SetCenterResult(code, msg string) ([]byte) {
+	res, _ := json.Marshal(map[string]string{
+		"code": code,
+		"message": msg,
+	})
+	return res
 }
 
 func RemoveWs(msg string) (string, error){

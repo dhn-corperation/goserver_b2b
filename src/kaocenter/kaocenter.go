@@ -17,6 +17,7 @@ import (
 
 	config "mycs/src/kaoconfig"
 	db "mycs/src/kaodatabasepool"
+	cm "mycs/src/kaocommon"
 
 	"github.com/google/uuid"
 	"github.com/valyala/fasthttp"
@@ -984,61 +985,35 @@ func Plugin_callbackUrl_Delete(c *fasthttp.RequestCtx) {
 
 func FT_Upload(c *fasthttp.RequestCtx) {
 	conf := config.Conf
-	
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+
 	form, err := c.MultipartForm()
 	if err != nil {
-		res, _ := json.Marshal(map[string]string{
-			"code": "error",
-			"message": err.Error(),
-		})
-
-		c.SetContentType("application/json")
-		c.SetStatusCode(fasthttp.StatusOK)
-		c.SetBody(res)
+		c.SetBody(cm.SetCenterResult("error", "MultipartForm 파싱 실패"))
 		return
 	}
 
-	if form.File["image"] == nil {
-		res, _ := json.Marshal(map[string]string{
-			"code": "error",
-			"message": err.Error(),
-		})
-
-		c.SetContentType("application/json")
-		c.SetStatusCode(fasthttp.StatusOK)
-		c.SetBody(res)
+	if form.File == nil || form.File["image"] == nil{
+		c.SetBody(cm.SetCenterResult("error", "업로드 파일 존재하지 않음"))
 		return
 	}
 
 	files := form.File["image"]
 
 	if len(files) == 0 {
-		res, _ := json.Marshal(map[string]string{
-			"code": "error",
-			"message": err.Error(),
-		})
-
-		c.SetContentType("application/json")
-		c.SetStatusCode(fasthttp.StatusOK)
-		c.SetBody(res)
+		c.SetBody(cm.SetCenterResult("error", "이미지 파일 존재하지 않음"))
 		return
 	}
 
 	file := files[0]
-
 	extension := filepath.Ext(file.Filename)
 	newFileName := uuid.New().String() + extension
 
 	err = saveUploadedFile(file, config.BasePath+"upload/"+newFileName)
 	if err != nil {
-		res, _ := json.Marshal(map[string]string{
-			"code": "error",
-			"message": err.Error(),
-		})
-
-		c.SetContentType("application/json")
-		c.SetStatusCode(fasthttp.StatusOK)
-		c.SetBody(res)
+		c.SetBody(cm.SetCenterResult("error", "이미지 파일 업로드 실패"))
 		return
 	}
 
@@ -1048,7 +1023,7 @@ func FT_Upload(c *fasthttp.RequestCtx) {
 
 	resp, err := upload(conf.IMAGE_SERVER+"v1/"+conf.PROFILE_KEY+"/image/friendtalk", param)
 	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusOK)
+		c.SetBody(cm.SetCenterResult("error", "카카오톡 api 전송 실패"))
 		return
 	}
 	defer resp.Body.Close()
