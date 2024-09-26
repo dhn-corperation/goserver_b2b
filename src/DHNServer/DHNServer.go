@@ -391,6 +391,12 @@ Command :
 			allCtxC["OS"+uid] = cancel
 			allService["OS"+uid] = uid
 
+			_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = 'OSHOT' where use_flag = 'Y' and user_id = ?", uid)
+				
+			if err != nil {
+				config.Stdlog.Println(uid," /orun 오샷 DHN_CLIENT_LIST 업데이트 실패 : ", err)
+			}
+
 			c.String(200, uid+" 시작 신호 전달 완료")
 		}
 	})
@@ -462,6 +468,7 @@ Command :
 			delete(nanoUser, uid)
 			if s.EqualFold(config.Conf.PHONE_TYPE_FLAG, "N") { // 기본
 				delete(nanoCtxC, uid)
+				delete(nanoUser, uid)
 
 				delete(allService, "NN"+uid)
 				delete(allCtxC, "NN"+uid)
@@ -520,6 +527,12 @@ Command :
 				nanoCtxC[uid+"_N"] = cancelN
 				allCtxC["NN"+uid+"_N"] = cancelN
 				allService["NN"+uid+"_N"] = "NanoService N"
+			}
+
+			_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = 'NANO' where use_flag = 'Y' and user_id = ?", uid)
+				
+			if err != nil {
+				config.Stdlog.Println(uid," /nrun 나노 DHN_CLIENT_LIST 업데이트 실패 : ", err)
 			}
 
 			c.String(200, uid+" 시작 신호 전달 완료")
