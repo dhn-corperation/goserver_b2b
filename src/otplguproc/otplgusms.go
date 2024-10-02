@@ -23,9 +23,9 @@ func SMSProcess(ctx context.Context) {
 		select {
 			case <- ctx.Done():
 		
-		    config.Stdlog.Println("Lgu SMS process가 10초 후에 종료 됨.")
+		    config.Stdlog.Println("Lgu OTP SMS process가 10초 후에 종료 됨.")
 		    time.Sleep(10 * time.Second)
-		    config.Stdlog.Println("Lgu SMS process 종료 완료")
+		    config.Stdlog.Println("Lgu OTP SMS process 종료 완료")
 		    return
 		default:	
 			var t = time.Now()
@@ -80,8 +80,8 @@ func smsProcess(wg *sync.WaitGroup) {
 
 	groupRows, err := db.Query(groupQuery)
 	if err != nil {
-		errlog.Println("Lgu OTP SMS 조회 중 오류 발생")
 		errcode := err.Error()
+		errlog.Println("Lgu OTP SMS 조회 중 오류 발생", groupQuery, errcode)
 
 		if s.Index(errcode, "1146") > 0 {
 			db.Exec("Create Table IF NOT EXISTS " + SMSTable + " like LG_OTP_SC_TRAN")

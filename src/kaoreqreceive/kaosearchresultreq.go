@@ -97,13 +97,11 @@ func SearchResultReq(c *fasthttp.RequestCtx) {
 		if err1 := json.Unmarshal(c.PostBody(), &reqData); err1 != nil {
 			errlog.Println(err1)
 		}
-		// err1 := c.ShouldBindJSON(&reqData)
-
 		errlog.Println("발송 결과 재수신 시작 ( ", userid, ") : ", len(reqData.Msgid), startTime)
 
 		if len(reqData.Msgid) == 0 {
 			res, _ := json.Marshal(map[string]string{
-				"code":    "success",
+				"code":    "00",
 				"message": "msgid가 존재하지 않습니다.",
 			})
 			c.SetContentType("application/json")
@@ -132,7 +130,7 @@ func SearchResultReq(c *fasthttp.RequestCtx) {
 			joinSql = " "
 		}
 
-		resultSql := "select * from DHN_RESULT_PROC where userid = '" + userid + "' and msgid in (" + msgids + ")" + joinSql
+		resultSql := "select * from DHN_RESULT where userid = '" + userid + "' and msgid in (" + msgids + ")" + joinSql
 
 		reqrows, err := db.Query(resultSql)
 		if err != nil {
@@ -229,7 +227,7 @@ func SearchResultReq(c *fasthttp.RequestCtx) {
 		if len(finalRows) > 0 {
 			errlog.Println("결과 전송 ( ", userid, " ) : ", len(finalRows))
 			
-			var commastr = "update DHN_RESULT_PROC set sync='Y' where userid = '" + userid + "' and msgid in (?)"
+			var commastr = "update DHN_RESULT set sync='Y' where userid = '" + userid + "' and msgid in (?)"
 
 			_, err := db.Exec(commastr, msgids)
 
@@ -239,7 +237,14 @@ func SearchResultReq(c *fasthttp.RequestCtx) {
 
 		}
 
-		res, _ := json.Marshal(finalRows)
+		res, _ := json.Marshal(map[string]interface{}{
+			"code": "00",
+			"message": "성공",
+			"data": map[string]interface{}{
+				"count": len(finalRows),
+				"detail": finalRows,
+			},
+		})
 
 		c.SetContentType("application/json")
 		c.SetStatusCode(fasthttp.StatusOK)
@@ -247,9 +252,7 @@ func SearchResultReq(c *fasthttp.RequestCtx) {
 	} else {
 		res, _ := json.Marshal(map[string]string{
 			"code":    "error",
-			"message": "허용되지 않은 사용자 입니다",
-			"userid":  userid,
-			"ip":      userip,
+			"message": "허용되지 않은 사용자 입니다 / userid : " + userid + " / ip : " + userip,
 		})
 		c.SetContentType("application/json")
 		c.SetStatusCode(fasthttp.StatusNotAcceptable)

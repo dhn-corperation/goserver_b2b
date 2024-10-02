@@ -14,14 +14,14 @@ import (
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
 	cm "mycs/src/kaocommon"
-	
+	krt "mycs/src/kaoresulttable"
 )
 
 var atprocCnt int
 
-func AlimtalkProc(second_send_flag string, ctx context.Context ) {
+func AlimtalkProc(ctx context.Context) {
 	atprocCnt = 1
-	config.Stdlog.Println(user_id, " - 알림톡 OTP 프로세스 시작 됨 ") 
+	config.Stdlog.Println("알림톡 OTP 프로세스 시작 됨 ") 
 	for {
 		if atprocCnt <=5 {
 			
@@ -54,7 +54,7 @@ func AlimtalkProc(second_send_flag string, ctx context.Context ) {
 						if rowcnt > 0 {
 							config.Stdlog.Println("알림톡 OTP 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ")
 							atprocCnt++
-							go atsendProcess(group_no, second_send_flag)
+							go atsendProcess(group_no)
 				
 						}
 					}
@@ -65,7 +65,7 @@ func AlimtalkProc(second_send_flag string, ctx context.Context ) {
 
 }
 
-func atsendProcess(group_no string, second_send_flag string) {
+func atsendProcess(group_no string) {
 	defer func(){
 		if r := recover(); r != nil {
 			config.Stdlog.Println("atsendProcess OTP panic 발생 원인 : ", r)
@@ -103,7 +103,7 @@ func atsendProcess(group_no string, second_send_flag string) {
 
 	columnTypes, err := reqrows.ColumnTypes()
 	if err != nil {
-		errlog.Println("atsendProcess OTP 컬럼 초기화 에러 group_no : ", group_no, " / userid  : ", user_id)
+		errlog.Println("atsendProcess OTP 컬럼 초기화 에러 group_no : ", group_no)
 		errlog.Println("atsendProcess OTP 컬럼 초기화 에러 : ", err)
 		time.Sleep(5 * time.Second)
 	}
@@ -119,7 +119,7 @@ func atsendProcess(group_no string, second_send_flag string) {
 	resinsValues := []interface{}{}
 	resinsquery := `insert IGNORE into DHN_RESULT(`+atColumnStr+`) values %s`
 
-	resultChan := make(chan resultStr, config.Conf.SENDLIMIT) // resultStr 은 friendtalk에 정의 됨
+	resultChan := make(chan krt.ResultStr, config.Conf.SENDLIMIT)
 	var reswg sync.WaitGroup
 
 	for reqrows.Next() {
@@ -127,7 +127,7 @@ func atsendProcess(group_no string, second_send_flag string) {
 
 		err := reqrows.Scan(scanArgs...)
 		if err != nil {
-			errlog.Println("atsendProcess OTP 컬럼 스캔 에러 group_no : ", group_nos)
+			errlog.Println("atsendProcess OTP 컬럼 스캔 에러 group_no : ", group_no)
 			errlog.Println("atsendProcess OTP 컬럼 스캔 에러 : ", err)
 			time.Sleep(5 * time.Second)
 		}
@@ -250,7 +250,7 @@ func atsendProcess(group_no string, second_send_flag string) {
 		alimtalk.Attachment = attache
 		alimtalk.Supplement = supplement
 
-		var temp resultStr
+		var temp krt.ResultStr
 		temp.Result = result
 		reswg.Add(1)
 		go sendKakaoAlimtalk(&reswg, resultChan, alimtalk, temp)
@@ -318,8 +318,8 @@ func atsendProcess(group_no string, second_send_flag string) {
 				if s.EqualFold(resCode,"0000") {
 					resinsValues = append(resinsValues, "Y") // 
 				// 1차 카카오 발송 실패 후 2차 발송을 바로 하기 위해서는 이 조건을 맞춰야함
-				} else if len(result["sms_kind"])>=1 && s.EqualFold(second_send_flag, "Y") {
-					resinsValues = append(resinsValues, "P") // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
+				} else if len(result["sms_kind"])>=1 {
+					resinsValues = append(resinsValues, "O") // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
 				} else {
 					resinsValues = append(resinsValues, "Y") // 
 				} 
@@ -334,22 +334,7 @@ func atsendProcess(group_no string, second_send_flag string) {
 			resinsValues = append(resinsValues, "N") //sync
 			resinsValues = append(resinsValues, result["tmpl_id"])
 			resinsValues = append(resinsValues, result["wide"])
-
-			//send_group 컬럼 처리
-			if s.EqualFold(messageType, "AT") || !s.EqualFold(resCode, "0000") || (s.EqualFold(messageType, "AI") && s.EqualFold(conf.RESPONSE_METHOD, "push")) {
-
-				if s.EqualFold(resCode,"0000") {
-					resinsValues = append(resinsValues, nil) //send_group
-				} else if len(result["sms_kind"])>=1 && s.EqualFold(second_send_flag, "Y") {
-					resinsValues = append(resinsValues, nil) //send_group
-				} else {
-					resinsValues = append(resinsValues, nil) //send_group
-				} 
-				
-			} else if s.EqualFold(messageType, "AI") {
-				resinsValues = append(resinsValues, nil) //send_group
-			}
-			
+			resinsValues = append(resinsValues, nil) //send_group
 			resinsValues = append(resinsValues, result["supplement"])
 			resinsValues = append(resinsValues, result["price"])
 			resinsValues = append(resinsValues, result["currency_type"])
@@ -382,7 +367,7 @@ func atsendProcess(group_no string, second_send_flag string) {
 }
 
 //카카오 서버에 발송을 요청한다.
-func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- resultStr, alimtalk kakao.Alimtalk, temp resultStr) {
+func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- krt.ResultStr, alimtalk kakao.Alimtalk, temp krt.ResultStr) {
 	defer reswg.Done()
 
 	resp, err := config.Client.R().

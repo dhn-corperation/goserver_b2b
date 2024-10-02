@@ -17,6 +17,7 @@ import (
 	"mycs/src/oshotproc"
 	"mycs/src/ktproc"
 	"mycs/src/lguproc"
+	"mycs/src/otpatproc"
 	"mycs/src/otplguproc"
 	"mycs/src/otpnanoproc"
 
@@ -32,11 +33,11 @@ import (
 )
 
 const (
-	name        = "DHNServer"
+	name        = "DHNServer_hira"
 	description = "대형네트웍스 카카오 발송 서버"
 )
 
-var dependencies = []string{"DHNServer.service"}
+var dependencies = []string{name+".service"}
 
 var resultTable string
 
@@ -46,7 +47,7 @@ type Service struct {
 
 func (service *Service) Manage() (string, error) {
 
-	usage := "Usage: DHNServer install | remove | start | stop | status"
+	usage := "Usage: "+name+" install | remove | start | stop | status"
 
 	if len(os.Args) > 1 {
 		command := os.Args[1]
@@ -123,7 +124,7 @@ func main() {
 }
 
 func resultProc() {
-	config.Stdlog.Println("DHN Server 시작")
+	config.Stdlog.Println(name+" 시작")
 
 	_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set pre_send_type = 0, pre_update_date = null")
 				
@@ -137,7 +138,7 @@ func resultProc() {
 
 
 
-	alim_user_list, error := databasepool.DB.Query("select distinct user_id, second_send_flag from DHN_CLIENT_LIST where use_flag = 'Y' and alimtalk='Y'")
+	alim_user_list, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST where use_flag = 'Y' and alimtalk='Y'")
 	isAlim := true
 	if error != nil {
 		config.Stdlog.Println("알림톡 유저 select 오류 ")
@@ -149,13 +150,13 @@ func resultProc() {
 	alimCtxC := map[string]interface{}{}
 
 	if isAlim {
-		var user_id, second_send_flag sql.NullString
+		var user_id sql.NullString
 		for alim_user_list.Next() {
 
-			alim_user_list.Scan(&user_id, &second_send_flag)
+			alim_user_list.Scan(&user_id)
 
 			ctx, cancel := context.WithCancel(context.Background())
-			go kaosendrequest.AlimtalkProc(user_id.String, second_send_flag.String, ctx)
+			go kaosendrequest.AlimtalkProc(user_id.String, ctx)
 
 			alimCtxC[user_id.String] = cancel
 			alimUser[user_id.String] = user_id.String
@@ -166,7 +167,7 @@ func resultProc() {
 		}
 	}
 
-	friend_user_list, error := databasepool.DB.Query("select distinct user_id, second_send_flag from DHN_CLIENT_LIST where use_flag = 'Y' and friendtalk='Y'")
+	friend_user_list, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST where use_flag = 'Y' and friendtalk='Y'")
 	isFriend := true
 	if error != nil {
 		config.Stdlog.Println("알림톡 유저 select 오류 ")
@@ -178,13 +179,13 @@ func resultProc() {
 	friendCtxC := map[string]interface{}{}
 
 	if isFriend {
-		var user_id, second_send_flag sql.NullString
+		var user_id sql.NullString
 		for friend_user_list.Next() {
 
-			friend_user_list.Scan(&user_id, &second_send_flag)
+			friend_user_list.Scan(&user_id)
 
 			ctx, cancel := context.WithCancel(context.Background())
-			go kaosendrequest.FriendtalkProc(user_id.String, second_send_flag.String, ctx)
+			go kaosendrequest.FriendtalkProc(user_id.String, ctx)
 
 			friendCtxC[user_id.String] = cancel
 			friendUser[user_id.String] = user_id.String
@@ -415,43 +416,50 @@ func resultProc() {
 
 	//OTP 영역 시작
 
-
+	otpAtUser := map[string]string{}
+	otpAtCtxC := map[string]interface{}{} 
 	otpLguUser := map[string]string{}
 	otpLguCtxC := map[string]interface{}{}
 	otpNanoUser := map[string]string{}
 	otpNanoCtxC := map[string]interface{}{}
 
+	oatctx, cancel := context.WithCancel(context.Background())
+	go otpatproc.AlimtalkProc(oatctx)
 
-	if s.EqualFold(config.Conf.IS_OTP, "Y") {
-		ctx, cancel := context.WithCancel(context.Background())
-		go otpnanoproc.NanoProcess(ctx)
+	otpAtUser["OTPAT"] = "OTPAT"
+	otpAtCtxC["OTPAT"] = cancel
 
-		otpNanoUser["OTPNANO"] = "OTPNANO"
-		otpNanoCtxC["OTPNANO"] = cancel
+	allCtxC["OTPAT"] = cancel
+	allService["OTPAT"] = "OTPAT"
 
-		allCtxC["OTPNANO"] = cancel
-		allService["OTPNANO"] = "OTPNANO"
+	ctx, cancel := context.WithCancel(context.Background())
+	go otpnanoproc.NanoProcess(ctx)
 
-		ollctx, ollcancel := context.WithCancel(context.Background())
-		go otplguproc.LMSProcess(ollctx)
-		allCtxC["otplgulms"] = ollcancel
-		allService["otplgulms"] = "LGU OTP LMS"
+	otpNanoUser["OTPNANO"] = "OTPNANO"
+	otpNanoCtxC["OTPNANO"] = cancel
 
-		olsctx, olscancel := context.WithCancel(context.Background())
-		go otplguproc.SMSProcess(olsctx)
-		allCtxC["otplgusms"] = olscancel
-		allService["otplgusms"] = "LGU OTP SMS"
+	allCtxC["OTPNANO"] = cancel
+	allService["OTPNANO"] = "OTPNANO"
 
-		onlctx, onlcancel := context.WithCancel(context.Background())
-		go otpnanoproc.LMSProcess(onlctx)
-		allCtxC["otpnanolms"] = onlcancel
-		allService["otpnanolms"] = "NANO OTP LMS"
+	ollctx, ollcancel := context.WithCancel(context.Background())
+	go otplguproc.LMSProcess(ollctx)
+	allCtxC["otplgulms"] = ollcancel
+	allService["otplgulms"] = "LGU OTP LMS"
 
-		onsctx, onscancel := context.WithCancel(context.Background())
-		go otpnanoproc.SMSProcess(onsctx)
-		allCtxC["otpnanosms"] = onscancel
-		allService["otpnanosms"] = "NANO OTP SMS"
-	}
+	olsctx, olscancel := context.WithCancel(context.Background())
+	go otplguproc.SMSProcess(olsctx)
+	allCtxC["otplgusms"] = olscancel
+	allService["otplgusms"] = "LGU OTP SMS"
+
+	onlctx, onlcancel := context.WithCancel(context.Background())
+	go otpnanoproc.LMSProcess(onlctx)
+	allCtxC["otpnanolms"] = onlcancel
+	allService["otpnanolms"] = "NANO OTP LMS"
+
+	onsctx, onscancel := context.WithCancel(context.Background())
+	go otpnanoproc.SMSProcess(onsctx)
+	allCtxC["otpnanosms"] = onscancel
+	allService["otpnanosms"] = "NANO OTP SMS"
 
 	//OTP 영역 종료
 
@@ -459,11 +467,11 @@ func resultProc() {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	//r := gin.Default()
-	serCmd := `DHN Server 
+	serCmd := `DHN Server API
 Command :
-/astop?uid=dhn   	 -> dhn Alimtalk process stop.
-/arun?uid=dhn    	 -> dhn Alimtalk process run.
-/alist           	 -> 실행 중인 Alimtalk process User List.
+/astop?uid=dhn   	 -> dhn 알림톡 process stop.
+/arun?uid=dhn    	 -> dhn 알림톡 process run.
+/alist           	 -> 실행 중인 알림톡 process User List.
 
 /ostop?uid=dhn   	 -> dhn Oshot process stop.
 /orun?uid=dhn    	 -> dhn Oshot process run.
@@ -482,6 +490,7 @@ Command :
 /lglist           	 -> 실행 중인 Lgu process User List.
 
 /otpstop?uid=XXX  	 -> dhn OTP process stop.
+/otpatstop?uid=XXX   -> dhn 알림톡 OTP process stop.
 /otprun?uid=XXX   	 -> dhn OTP process run.
 /otplist          	 -> 실행 중인 OTP process User List.
 
@@ -572,20 +581,10 @@ Command :
 		if temp != nil {
 			c.String(200, uid+"이미 실행 중입니다.")
 		} else {
-			var second_send_flag sql.NullString
-			var ssf string
-
-			ssferr := databasepool.DB.QueryRow("select distinct second_send_flag from DHN_CLIENT_LIST where user_id = ?", uid).Scan(&second_send_flag)
-			if ssferr != nil && ssferr != sql.ErrNoRows {
-				config.Stdlog.Println(uid," /arun 알림톡 second_send_flag 습득 실패 : ", err)
-				ssf = "N"
-			} else {
-				ssf = second_send_flag.String
-			}
 
 			ctx, cancel := context.WithCancel(context.Background())
 			ctx = context.WithValue(ctx, "user_id", uid)
-			go kaosendrequest.AlimtalkProc(uid, ssf, ctx)
+			go kaosendrequest.AlimtalkProc(uid, ctx)
 
 			alimCtxC[uid] = cancel
 			alimUser[uid] = uid
@@ -631,16 +630,14 @@ Command :
 				delete(allService, "NN"+uid)
 				delete(allCtxC, "NN"+uid)
 			} else if s.EqualFold(nts, "Y") { // 콜비서
-				delete(nanoUser, uid+"_Y")
-				delete(nanoUser, uid+"_N")
-
 				delete(nanoCtxC, uid+"_Y")
-				delete(nanoCtxC, uid+"_N")
-
+				delete(nanoUser, uid+"_Y")
 				delete(allService, "NN"+uid+"_Y")
-				delete(allService, "NN"+uid+"_N")
-
 				delete(allCtxC, "NN"+uid+"_Y")
+
+				delete(nanoCtxC, uid+"_N")
+				delete(nanoUser, uid+"_N")
+				delete(allService, "NN"+uid+"_N")
 				delete(allCtxC, "NN"+uid+"_N")
 			}
 
@@ -669,7 +666,6 @@ Command :
 				nts = nano_tel_seperate.String
 			}
 
-			nanoUser[uid] = uid
 
 			if s.EqualFold(nts, "N") { // 기본
 				ctx, cancel := context.WithCancel(context.Background())
@@ -678,6 +674,7 @@ Command :
 				go nanoproc.NanoProcess(uid, ctx)
 
 				nanoCtxC[uid] = cancel
+				nanoUser[uid] = uid
 
 				allCtxC["NN"+uid] = cancel
 				allService["NN"+uid] = uid
@@ -693,10 +690,12 @@ Command :
 				go nanoproc.NanoProcess_N(uid, ctxN) // 010이 아닌 번호
 
 				nanoCtxC[uid+"_Y"] = cancelY
+				nanoUser[uid+"_Y"] = uid
 				allCtxC["NN"+uid+"_Y"] = cancelY
 				allService["NN"+uid+"_Y"] = "NanoService Y"
 
 				nanoCtxC[uid+"_N"] = cancelN
+				nanoUser[uid+"_N"] = uid
 				allCtxC["NN"+uid+"_N"] = cancelN
 				allService["NN"+uid+"_N"] = "NanoService N"
 			}
@@ -856,12 +855,31 @@ Command :
 			delete(allService, "OTPNANO")
 			delete(allCtxC, "OTPNANO")
 		}
+
+
 	}
 
 	r.GET("/otpstop", func(c *gin.Context) {
 		uid := c.Query("uid")
 		if uid == "dhn" {
 			otpstop()
+			c.String(200, "OTP 종료 신호 전달 완료")
+		} else {
+			c.String(200, "OTP 종료 불가")
+		}
+		
+	})
+
+	r.GET("/otpatstop", func(c *gin.Context) {
+		uid := c.Query("uid")
+		if uid == "dhn" {
+			cancel := otpAtCtxC["OTPAT"].(context.CancelFunc)
+			cancel()
+			delete(otpAtCtxC, "OTPAT")
+			delete(otpAtUser, "OTPAT")
+
+			delete(allService, "OTPAT")
+			delete(allCtxC, "OTPAT")
 			c.String(200, "OTP 종료 신호 전달 완료")
 		} else {
 			c.String(200, "OTP 종료 불가")
@@ -899,8 +917,19 @@ Command :
 				c.String(200, "OTP NANO 시작 신호 전달 완료")
 			}
 			
+		} else if uid == "dhn" && pf == "at" {
+			ctx, cancel := context.WithCancel(context.Background())
+			go otpatproc.AlimtalkProc(ctx)
+
+			otpAtUser["OTPAT"] = "OTPAT"
+			otpAtCtxC["OTPAT"] = cancel
+
+			allCtxC["OTPAT"] = cancel
+			allService["OTPAT"] = "OTPAT"
+
+			c.String(200, "OTP 알림톡 시작 신호 전달 완료")
 		} else {
-			c.String(400, "OTP 시작 불가")
+			c.String(200, "OTP 시작 불가")
 		}
 	})
 

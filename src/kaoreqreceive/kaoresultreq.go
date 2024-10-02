@@ -88,7 +88,7 @@ func Resultreq(c *fasthttp.RequestCtx) {
 			"title":         "title",
 		}
 
-		sqlstr := "select * from DHN_RESULT_PROC where userid = '" + userid + "' and sync='N' and result = 'Y' limit " + send_limit.String
+		sqlstr := "select * from DHN_RESULT where userid = '" + userid + "' and sync='N' and result = 'Y' limit " + send_limit.String
 
 		reqrows, err := db.Query(sqlstr)
 		if err != nil {
@@ -181,7 +181,7 @@ func Resultreq(c *fasthttp.RequestCtx) {
 
 			if len(upmsgids) >= 500 {
 
-				var commastr = "update DHN_RESULT_PROC set sync='Y' where userid = '" + userid + "' and MSGID in ("
+				var commastr = "update DHN_RESULT set sync='Y' where userid = '" + userid + "' and MSGID in ("
 
 				for i := 1; i < len(upmsgids); i++ {
 					commastr = commastr + "?,"
@@ -201,7 +201,7 @@ func Resultreq(c *fasthttp.RequestCtx) {
 
 		if len(upmsgids) > 0 {
 
-			var commastr = "update DHN_RESULT_PROC set sync='Y' where userid = '" + userid + "' and MSGID in ("
+			var commastr = "update DHN_RESULT set sync='Y' where userid = '" + userid + "' and MSGID in ("
 
 			for i := 1; i < len(upmsgids); i++ {
 				commastr = commastr + "?,"
@@ -221,7 +221,16 @@ func Resultreq(c *fasthttp.RequestCtx) {
 			errlog.Println("결과 전송 ( ", userid, " ) : ", len(finalRows))
 		}
 
-		res, _ := json.Marshal(finalRows)
+		json.Marshal(finalRows)
+
+		res, _ := json.Marshal(map[string]interface{}{
+			"code": "00",
+			"message": "성공",
+			"data": map[string]interface{}{
+				"count": len(finalRows),
+				"detail": finalRows,
+			},
+		})
 
 		c.SetContentType("application/json")
 		c.SetStatusCode(fasthttp.StatusOK)
@@ -229,10 +238,8 @@ func Resultreq(c *fasthttp.RequestCtx) {
 
 	} else {
 		res, _ := json.Marshal(map[string]string{
-			"code":    "error",
-			"message": "허용되지 않은 사용자 입니다",
-			"userid":  userid,
-			"ip":      userip,
+			"code":    "01",
+			"message": "허용되지 않은 사용자 입니다 / userid : " + userid + " / ip : " + userip,
 		})
 		c.SetContentType("application/json")
 		c.SetStatusCode(fasthttp.StatusNotAcceptable)

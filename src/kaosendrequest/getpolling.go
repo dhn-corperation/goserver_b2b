@@ -22,8 +22,8 @@ func PollingProc(ctx context.Context) {
 			select {
 				case <- ctx.Done():
 			
-			    config.Stdlog.Println("Polling process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
+			    config.Stdlog.Println("Polling process가 10초 후에 종료 됨.")
+			    time.Sleep(10 * time.Second)
 			    config.Stdlog.Println("Polling process 종료 완료")
 			    return
 			default:	

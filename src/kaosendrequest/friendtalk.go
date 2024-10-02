@@ -13,6 +13,7 @@ import (
 	kakao "mycs/src/kakaojson"
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
+	krt "mycs/src/kaoresulttable"
 )
 
 var ftprocCnt int
@@ -20,13 +21,7 @@ var FisRunning bool
 var isStoping bool
 //var limitcnt int = config.Conf.SENDLIMIT
 
-type resultStr struct {
-	Statuscode int
-	BodyData   []byte
-	Result     map[string]string
-}
-
-func FriendtalkProc(user_id string, second_send_flag string, ctx context.Context) {
+func FriendtalkProc(user_id string, ctx context.Context) {
 	ftprocCnt = 1
 	
 	for {
@@ -35,8 +30,8 @@ func FriendtalkProc(user_id string, second_send_flag string, ctx context.Context
 			select {
 				case <- ctx.Done():
 			
-			    config.Stdlog.Println("Friendtalk process가 20초 후에 종료 됨.")
-			    time.Sleep(20 * time.Second)
+			    config.Stdlog.Println("Friendtalk process가 10초 후에 종료 됨.")
+			    time.Sleep(10 * time.Second)
 			    config.Stdlog.Println("Friendtalk process 종료 완료")
 			    return
 			default:
@@ -65,7 +60,7 @@ func FriendtalkProc(user_id string, second_send_flag string, ctx context.Context
 						if rowcnt > 0 {
 							config.Stdlog.Println(user_id, " 친구톡 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ")
 							ftprocCnt ++
-							go ftsendProcess(group_no, user_id, second_send_flag)
+							go ftsendProcess(group_no, user_id)
 						}
 					}
 				}
@@ -75,7 +70,7 @@ func FriendtalkProc(user_id string, second_send_flag string, ctx context.Context
 
 }
 
-func ftsendProcess(group_no string, user_id string, second_send_flag string) {
+func ftsendProcess(group_no string, user_id string) {
 	defer func(){
 		if r := recover(); r != nil {
 			config.Stdlog.Println("ftsendProcess panic 발생 원인 : ", r)
@@ -166,14 +161,15 @@ supplement ,
 price ,
 currency_type,
 header,
-carousel      
+carousel,
+mms_image_id,
 ) values %s`
 
 	// friendClient := &http.Client{
 	// 	Timeout: time.Second * 20,
 	// }
 
-	resultChan := make(chan resultStr, config.Conf.SENDLIMIT)
+	resultChan := make(chan krt.ResultStr, config.Conf.SENDLIMIT)
 	var reswg sync.WaitGroup
 
 	for reqrows.Next() {
@@ -363,7 +359,7 @@ carousel
 		//restReq.Header.Add("Content-Type", "application/json")
 
 		//resp, err := friendClient.Do(restReq)
-		var temp resultStr
+		var temp krt.ResultStr
 		temp.Result = result
 		
 		//return
@@ -419,7 +415,7 @@ carousel
 
 			if s.EqualFold(kakaoResp.Code,"0000") {
 				resinsValues = append(resinsValues, "Y") // 
-			} else if len(result["sms_kind"])>=1 && s.EqualFold(second_send_flag, "Y") {
+			} else if len(result["sms_kind"])>=1 {
 				resinsValues = append(resinsValues, "P") // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
 			} else {
 				resinsValues = append(resinsValues, "Y") // 
@@ -432,20 +428,13 @@ carousel
 			resinsValues = append(resinsValues, "N")
 			resinsValues = append(resinsValues, result["tmpl_id"])
 			resinsValues = append(resinsValues, result["wide"])
-			
-			if s.EqualFold(kakaoResp.Code,"0000") {
-				resinsValues = append(resinsValues, nil) // send group
-			} else if len(result["sms_kind"])>=1 && s.EqualFold(second_send_flag, "Y") {
-				resinsValues = append(resinsValues, nil) // send group
-			} else {
-				resinsValues = append(resinsValues, nil) // send group
-			} 
-			
+			resinsValues = append(resinsValues, nil) // send group	
 			resinsValues = append(resinsValues, result["supplement"])
 			resinsValues = append(resinsValues, result["price"])
 			resinsValues = append(resinsValues, result["currency_type"])
 			resinsValues = append(resinsValues, result["header"])
 			resinsValues = append(resinsValues, result["carousel"])
+			resinsValues = append(resinsValues, result["mms_image_id"])
 
 			if len(resinsStrs) >= 500 {
 				stmt := fmt.Sprintf(resinsquery, s.Join(resinsStrs, ","))
@@ -491,7 +480,7 @@ carousel
 
 }
 
-func sendKakao(reswg *sync.WaitGroup, c chan<- resultStr, friendtalk kakao.Friendtalk, temp resultStr) {
+func sendKakao(reswg *sync.WaitGroup, c chan<- krt.ResultStr, friendtalk kakao.Friendtalk, temp krt.ResultStr) {
 	defer reswg.Done()
 
 	resp, err := config.Client.R().

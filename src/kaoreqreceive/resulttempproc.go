@@ -67,6 +67,7 @@ func TempCopyProc() {
                               ,title
                               ,header
                               ,carousel
+                              ,mms_image_id
                         from DHN_RESULT_TEMP
                         where send_group = '` + group_no + `'`
 				_, err := databasepool.DB.Exec(copyQuery)

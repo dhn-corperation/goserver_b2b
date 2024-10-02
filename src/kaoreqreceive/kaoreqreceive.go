@@ -65,10 +65,8 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 		if err1 := json.Unmarshal(c.PostBody(), &msg); err1 != nil {
 			errlog.Println(err1)
 			res, _ := json.Marshal(map[string]string{
-				"code":    "error",
-				"message": "허용되지 않은 사용자 입니다",
-				"userid":  userid,
-				"ip":      userip,
+				"code":    "01",
+				"message": "데이터 맵핑 실패",
 			})
 			c.SetContentType("application/json")
 			c.SetStatusCode(fasthttp.StatusBadRequest)
@@ -211,6 +209,7 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 				reqinsValues = append(reqinsValues, msg[i].Carousel)
 				reqinsValues = append(reqinsValues, msg[i].Att_items)
 				reqinsValues = append(reqinsValues, msg[i].Att_coupon)
+				reqinsValues = append(reqinsValues, msg[i].MmsImageId)
 			//문자 insert values 만들기
 			} else if s.EqualFold(msg[i].Messagetype, "PH") {
 				var resdt = time.Now()
@@ -285,6 +284,7 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 				resinsValues = append(resinsValues, nil) //currency_type
 				resinsValues = append(resinsValues, msg[i].Header)
 				resinsValues = append(resinsValues, msg[i].Carousel)
+				resinsValues = append(resinsValues, msg[i].MmsImageId)
 			//알림톡 insert values 만들기
 			} else {
 				atreqinsStrs = append(atreqinsStrs, "("+atQmarkStr+")")
@@ -357,6 +357,7 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 
 				atreqinsValues = append(atreqinsValues, msg[i].Currencytype)
 				atreqinsValues = append(atreqinsValues, msg[i].Title)
+				atreqinsValues = append(atreqinsValues, msg[i].MmsImageId)
 				// atreqinsValues = append(atreqinsValues, msg[i].Header)
 				// atreqinsValues = append(atreqinsValues, msg[i].Carousel)
 			}
@@ -392,7 +393,7 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 		errlog.Println("발송 메세지 수신 끝 ( ", userid, ") : ", len(msg), startTime)
 
 		res, _ := json.Marshal(map[string]string{
-			"code": "success",
+			"code": "00",
 			"message": "발송 요청이 완료되었습니다.",
 		})
 
@@ -401,10 +402,8 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 		c.SetBody(res)
 	} else {
 		res, _ := json.Marshal(map[string]string{
-			"code":    "error",
-			"message": "허용되지 않은 사용자 입니다",
-			"userid":  userid,
-			"ip":      userip,
+			"code":    "01",
+			"message": "허용되지 않은 사용자 입니다 / userid : " + userid + " / ip : " + userip,
 		})
 		c.SetContentType("application/json")
 		c.SetStatusCode(fasthttp.StatusNotAcceptable)

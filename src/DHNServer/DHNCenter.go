@@ -10,8 +10,9 @@ import (
 	// "time"
 	"runtime/debug"
 	"time"
+	"log"
+	"context"
 	// "database/sql"
-	_ "github.com/go-sql-driver/mysql"
 
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
@@ -19,17 +20,20 @@ import (
 
 	"mycs/src/kaocenter"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/takama/daemon"
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
+	"github.com/caddyserver/certmagic"
 )
 
 const (
-	name        = "DHNCenter"
+	name        = "DHNCenter_hira"
 	description = "대형네트웍스 카카오 Center API"
+	domain		= "dhntest.dhn.kr"
 )
 
-var dependencies = []string{"DHNCenter.service"}
+var dependencies = []string{name+".service"}
 
 var resultTable string
 
@@ -39,7 +43,7 @@ type Service struct {
 
 func (service *Service) Manage() (string, error) {
 
-	usage := "Usage: DHNCenter install | remove | start | stop | status"
+	usage := "Usage: "+name+" install | remove | start | stop | status"
 
 	if len(os.Args) > 1 {
 		command := os.Args[1]
@@ -446,9 +450,42 @@ func resultProc() {
 
 	topLevelHandler := recoveryMiddleware(r.Handler)
 
-	if err := fasthttp.ListenAndServe(":3033", topLevelHandler); err != nil {
-		config.Stdlog.Println("fasthttp 실행 실패")
+	//SSL 시작
+
+	certmagic.DefaultACME.Agreed = true
+	certmagic.DefaultACME.Email = "dohwe0528@dhncorp.co.kr"
+	certmagic.DefaultACME.CA = certmagic.LetsEncryptProductionCA
+
+	err := certmagic.ManageSync(context.TODO(), []string{domain})
+
+	if err != nil {
+		config.Stdlog.Println("certmagic.ManageSync 에러 : ", err)
+		log.Fatal("certmagic.ManageSync 에러 : ", err)
+	} else {
+		config.Stdlog.Println("certmagic.ManageSync 성공 인증서 자동갱신 시작")
 	}
+
+	certmagicCfg := certmagic.NewDefault()
+	tlsConfig := certmagicCfg.TLSConfig()
+
+	server := &fasthttp.Server{
+		Handler: topLevelHandler,
+		MaxRequestBodySize: 10 * 1024 * 1024,
+		TLSConfig: tlsConfig,
+	}
+
+	if err := server.ListenAndServeTLS(":443", "", ""); err != nil {
+		config.Stdlog.Println("fasthttp 443포트 실행 실패")
+		log.Fatal("fasthttp 443포트 실행 실패")
+	}
+
+	//SSL 끝
+
+	//HTTP 시작
+	// if err := fasthttp.ListenAndServe(":3033", topLevelHandler); err != nil {
+	// 	config.Stdlog.Println("fasthttp 실행 실패")
+	// }
+	//HTTP 끝
 }
 
 func recoveryMiddleware(next fasthttp.RequestHandler) fasthttp.RequestHandler {

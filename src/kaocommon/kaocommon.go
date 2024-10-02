@@ -127,6 +127,7 @@ func GetReqAtColumn() []string {
 		"price",
 		"currency_type",
 		"title",
+		"mms_image_id",
 		// "header",
 		// "carousel",
 	}
@@ -189,6 +190,7 @@ func GetReqMsgColumn() []string {
 		"currency_type",
 		"header",
 		"carousel",
+		"mms_image_id",
 	}
 	return msgColumn
 }
@@ -237,6 +239,7 @@ func GetResAtColumn() []string {
 		"price",
 		"currency_type",
 		"title",
+		"mms_image_id",
 	}
 	return atResColumn
 }
