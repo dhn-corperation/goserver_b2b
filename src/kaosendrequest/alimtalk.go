@@ -159,7 +159,13 @@ func atsendProcess(group_no string, user_id string) {
 
 			case "phn":
 				if z, ok := (scanArgs[i]).(*sql.NullString); ok {
-					alimtalk.Phone_number = z.String
+					var cPhn string
+					if s.HasPrefix(z.String, "0"){
+						cPhn = s.Replace(z.String, "0", "82", 1)
+					} else {
+						cPhn = z.String
+					}
+					alimtalk.Phone_number = cPhn
 				}
 
 			case "tmpl_id":

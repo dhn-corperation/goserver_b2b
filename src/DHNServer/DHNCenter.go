@@ -30,7 +30,8 @@ import (
 const (
 	name        = "DHNCenter_hira"
 	description = "대형네트웍스 카카오 Center API"
-	domain		= "dhntest.dhn.kr"
+	certEmail   = "dhn@dhncorp.co.kr"
+	certDomain	= "dhntest.dhn.kr"
 )
 
 var dependencies = []string{name+".service"}
@@ -453,10 +454,10 @@ func resultProc() {
 	//SSL 시작
 
 	certmagic.DefaultACME.Agreed = true
-	certmagic.DefaultACME.Email = "dohwe0528@dhncorp.co.kr"
+	certmagic.DefaultACME.Email = certEmail
 	certmagic.DefaultACME.CA = certmagic.LetsEncryptProductionCA
 
-	err := certmagic.ManageSync(context.TODO(), []string{domain})
+	err := certmagic.ManageSync(context.TODO(), []string{certDomain})
 
 	if err != nil {
 		config.Stdlog.Println("certmagic.ManageSync 에러 : ", err)
