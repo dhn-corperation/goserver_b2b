@@ -84,6 +84,7 @@ func atsendProcess(group_no string, user_id string) {
 			}
 		}
 	}()
+
 	atColumn := cm.GetResAtColumn()
 	atColumnStr := s.Join(atColumn, ",")
 

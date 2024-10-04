@@ -126,17 +126,9 @@ func main() {
 func resultProc() {
 	config.Stdlog.Println(name+" 시작")
 
-	_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set pre_send_type = 0, pre_update_date = null")
-				
-	if err != nil {
-		config.Stdlog.Println("DHN_CLIENT_LIST의 pre_send_type, pre_update_date 컬럼 초기화 실패 : ", err)
-	}
-
 	//모든 서비스
 	allService := map[string]string{}
 	allCtxC := map[string]interface{}{}
-
-
 
 	alim_user_list, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST where use_flag = 'Y' and alimtalk='Y'")
 	isAlim := true
@@ -463,39 +455,38 @@ func resultProc() {
 
 	//OTP 영역 종료
 
-
+	//API 영역 시작
 	r := gin.New()
 	r.Use(gin.Recovery())
-	//r := gin.Default()
 	serCmd := `DHN Server API
 Command :
-/astop?uid=dhn   	 -> dhn 알림톡 process stop.
-/arun?uid=dhn    	 -> dhn 알림톡 process run.
-/alist           	 -> 실행 중인 알림톡 process User List.
+/astop?uid=dhn   	 	-> dhn 알림톡 process stop.
+/arun?uid=dhn    	 	-> dhn 알림톡 process run.
+/alist           	 	-> 실행 중인 알림톡 process User List.
 
-/ostop?uid=dhn   	 -> dhn Oshot process stop.
-/orun?uid=dhn    	 -> dhn Oshot process run.
-/olist           	 -> 실행 중인 Oshot process User List.
+/ostop?uid=dhn   	 	-> dhn Oshot process stop.
+/orun?uid=dhn    	 	-> dhn Oshot process run.
+/olist           	 	-> 실행 중인 Oshot process User List.
 
-/nstop?uid=dhn   	 -> dhn Nano process stop.
-/nrun?uid=dhn        -> dhn Nano process run.
-/nlist               -> 실행 중인 Nano process User List.
+/nstop?uid=dhn   	 	-> dhn Nano process stop.
+/nrun?uid=dhn        	-> dhn Nano process run.
+/nlist               	-> 실행 중인 Nano process User List.
 
-/kstop?uid=dhn       -> dhn KTXRO process stop.
-/krun?uid=dhn&acc=0  -> dhn KTXRO process run.
-/klist               -> 실행 중인 KTXRO process User List.
+/kstop?uid=dhn       	-> dhn KTXRO process stop.
+/krun?uid=dhn&acc=0  	-> dhn KTXRO process run.
+/klist               	-> 실행 중인 KTXRO process User List.
 
-/lgstop?uid=dhn   	 -> dhn Lgu process stop.
-/lgrun?uid=dhn   	 -> dhn Lgu process run.
-/lglist           	 -> 실행 중인 Lgu process User List.
+/lgstop?uid=dhn   	 	-> dhn Lgu process stop.
+/lgrun?uid=dhn   	 	-> dhn Lgu process run.
+/lglist           	 	-> 실행 중인 Lgu process User List.
 
-/otpstop?uid=XXX  	 -> dhn OTP process stop.
-/otpatstop?uid=XXX   -> dhn 알림톡 OTP process stop.
-/otprun?uid=XXX   	 -> dhn OTP process run.
-/otplist          	 -> 실행 중인 OTP process User List.
+/otpstop?uid=dhn  	 	-> dhn OTP process stop.
+/otpatstop?uid=dhn   	-> dhn 알림톡 OTP process stop.
+/otprun?uid=dhn&pf=XX	-> dhn OTP process run.
+/otplist          	 	-> 실행 중인 OTP process User List.
 
-/all             	 -> DHNServer process list
-/allstop         	 -> DHNServer process stop
+/all             	 	-> DHNServer process list
+/allstop         	 	-> DHNServer process stop
 `
 	r.GET("/", func(c *gin.Context) {
 		c.String(200, serCmd)
@@ -614,7 +605,7 @@ Command :
 
 			seperr := databasepool.DB.QueryRow("select distinct nano_tel_seperate from DHN_CLIENT_LIST where user_id = ?", uid).Scan(&nano_tel_seperate)
 			if seperr != nil && seperr != sql.ErrNoRows {
-				config.Stdlog.Println(uid," /nrun 나노 nano_tel_seperate 습득 실패 : ", err)
+				config.Stdlog.Println(uid," /nrun 나노 nano_tel_seperate 습득 실패 : ", seperr)
 				nts = "N"
 			} else {
 				nts = nano_tel_seperate.String
@@ -660,7 +651,7 @@ Command :
 
 			seperr := databasepool.DB.QueryRow("select distinct nano_tel_seperate from DHN_CLIENT_LIST where user_id = ?", uid).Scan(&nano_tel_seperate)
 			if seperr != nil && seperr != sql.ErrNoRows {
-				config.Stdlog.Println(uid," /nrun 나노 nano_tel_seperate 습득 실패 : ", err)
+				config.Stdlog.Println(uid," /nrun 나노 nano_tel_seperate 습득 실패 : ", seperr)
 				nts = "N"
 			} else {
 				nts = nano_tel_seperate.String
@@ -974,4 +965,6 @@ Command :
 	})
 
 	r.Run(":" + config.Conf.SERVER_PORT)
+
+	//API 영역 종료
 }

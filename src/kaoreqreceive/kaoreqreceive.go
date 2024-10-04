@@ -19,7 +19,6 @@ import (
 var SecretKey = "9b4dabe9d4fed126a58f8639846143c7"
 
 func ReqReceive(c *fasthttp.RequestCtx) {
-
 	ftColumn := cm.GetReqFtColumn()
 	atColumn := cm.GetReqAtColumn()
 	msgColumn := cm.GetReqMsgColumn()

@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"crypto/tls"
+	// "crypto/tls"
 	// "net/http"
 	// "time"
 	"runtime/debug"
@@ -81,13 +81,13 @@ func (service *Service) Manage() (string, error) {
 	}
 }
 
-func loadTLSConfig(certFile, keyFile string) (*tls.Config, error) {
-	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-	if err != nil {
-		return nil, err
-	}
-	return &tls.Config{Certificates: []tls.Certificate{cert}}, nil
-}
+// func loadTLSConfig(certFile, keyFile string) (*tls.Config, error) {
+// 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return &tls.Config{Certificates: []tls.Certificate{cert}}, nil
+// }
 
 func main() {
 
@@ -110,7 +110,7 @@ func main() {
 }
 
 func resultProc() {
-	config.Stdlog.Println("DHN Center API 시작")
+	config.Stdlog.Println(name+" 시작")
 
 	go kaoreqreceive.TempCopyProc()
 
@@ -127,7 +127,7 @@ func resultProc() {
 
 	r.POST("/sresult", kaoreqreceive.SearchResultReq)
 
-	r.GET("/get_crypto", kaocenter.Get_crypto)
+	// r.GET("/get_crypto", kaocenter.Get_crypto)
 
 	// 카카오톡 채널 인증 토큰 요청
 	// GET /api/v1/{partner_key}/sender/token
