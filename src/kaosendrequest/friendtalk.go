@@ -162,7 +162,7 @@ price ,
 currency_type,
 header,
 carousel,
-mms_image_id,
+mms_image_id
 ) values %s`
 
 	// friendClient := &http.Client{
@@ -444,7 +444,7 @@ mms_image_id,
 
 			if len(resinsStrs) >= 500 {
 				stmt := fmt.Sprintf(resinsquery, s.Join(resinsStrs, ","))
-				//fmt.Println(stmt)
+				// fmt.Println(stmt)
 				_, err := databasepool.DB.Exec(stmt, resinsValues...)
 
 				if err != nil {
@@ -468,7 +468,7 @@ mms_image_id,
 
 	if len(resinsStrs) > 0 {
 		stmt := fmt.Sprintf(resinsquery, s.Join(resinsStrs, ","))
-		//fmt.Println(stmt)
+		// fmt.Println(stmt)
 		_, err := databasepool.DB.Exec(stmt, resinsValues...)
 
 		if err != nil {
