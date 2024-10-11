@@ -466,8 +466,9 @@ func resultProc() {
 		config.Stdlog.Println("certmagic.ManageSync 성공 인증서 자동갱신 시작")
 	}
 
-	certmagicCfg := certmagic.NewDefault()
-	tlsConfig := certmagicCfg.TLSConfig()
+	// certmagicCfg := certmagic.NewDefault()
+	// tlsConfig := certmagicCfg.TLSConfig()
+	tlsConfig := certmagic.TLSConfig()
 
 	server := &fasthttp.Server{
 		Handler: topLevelHandler,
