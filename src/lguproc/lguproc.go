@@ -18,12 +18,10 @@ import (
 	"context"
 )
 
-var procCnt int
-
 func LguProcess(user_id string, ctx context.Context) {
 	//var wg sync.WaitGroup
-	config.Stdlog.Println(user_id, " Lgu Process 시작 됨.")
-	procCnt = 0
+	config.Stdlog.Println(user_id, " Lgu Proc Process 시작 됨.")
+	procCnt := 0
 	for {
 
 		if procCnt < 5 {
@@ -32,9 +30,9 @@ func LguProcess(user_id string, ctx context.Context) {
 			case <-ctx.Done():
 
 				uid := ctx.Value("user_id")
-				config.Stdlog.Println(uid, " - Lgu process가 10초 후에 종료 됨.")
+				config.Stdlog.Println(uid, " - Lgu Proc process가 10초 후에 종료 됨.")
 				time.Sleep(10 * time.Second)
-				config.Stdlog.Println(uid, " - Lgu process 종료 완료")
+				config.Stdlog.Println(uid, " - Lgu Proc process 종료 완료")
 				return
 			default:
 
@@ -54,7 +52,7 @@ func LguProcess(user_id string, ctx context.Context) {
 				cnterr := databasepool.DB.QueryRowContext(ctx, tickSql, user_id).Scan(&count)
 
 				if cnterr != nil && cnterr != sql.ErrNoRows {
-					config.Stdlog.Println("DHN_RESULT Table - select 오류 : " + cnterr.Error())
+					config.Stdlog.Println(user_id, " - Lgu Proc DHN_RESULT Table - select error : " + cnterr.Error())
 					time.Sleep(10 * time.Second)
 				} else {
 					if count.Int64 > 0 {
@@ -63,9 +61,14 @@ func LguProcess(user_id string, ctx context.Context) {
 
 						upError := updateReqeust(ctx, group_no, user_id)
 						if upError != nil {
-							config.Stdlog.Println(user_id, "Group No Update 오류", group_no)
+							config.Stdlog.Println(user_id, " - 나노 Proc Group No Update error : ", upError, " / group_no : ", group_no)
 						} else {
-							go resProcess(ctx, group_no, user_id)
+							go func() {
+								defer func() {
+									procCnt--
+								}()
+								resProcess(ctx, group_no, user_id, procCnt)
+							}()
 						}
 					}
 				}
@@ -75,7 +78,7 @@ func LguProcess(user_id string, ctx context.Context) {
 	}
 }
 
-func updateReqeust(ctx context.Context, group_no string, user_id string) error {
+func updateReqeust(ctx context.Context, group_no, user_id string) error {
 
 	tx, err := databasepool.DB.Begin()
 	if err != nil {
@@ -92,7 +95,7 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 		return err
 	}()
 
-	config.Stdlog.Println(user_id, "- Lgu Group No Update 시작", group_no)
+	config.Stdlog.Println(user_id, "- Lgu Proc Group No Update 시작", group_no)
 
 	gudQuery := `
 	update DHN_RESULT dr
@@ -106,7 +109,7 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 	_, err = tx.ExecContext(ctx, gudQuery, group_no, user_id)
 
 	if err != nil {
-		config.Stdlog.Println(user_id, "- Group NO Update - Select error : ( group_no : "+group_no+" / user_id : "+user_id+" ) : "+err.Error())
+		config.Stdlog.Println(user_id, " - Lgu Proc Group NO Update - Select error : ( group_no : "+group_no+" ) : "+err.Error())
 		config.Stdlog.Println(gudQuery)
 		return err
 	}
@@ -114,15 +117,14 @@ func updateReqeust(ctx context.Context, group_no string, user_id string) error {
 	return nil
 }
 
-func resProcess(ctx context.Context, group_no string, user_id string) {
+func resProcess(ctx context.Context, group_no, user_id string, pc int) {
 	defer func(){
 		if r := recover(); r != nil {
-			config.Stdlog.Println("LGU resProcess panic 발생 원인 : ", r)
-			procCnt--
+			config.Stdlog.Println(user_id, " - Lgu Proc resProcess panic error : ", r)
 			if err, ok := r.(error); ok {
 				if s.Contains(err.Error(), "connection refused") {
 					for {
-						config.Stdlog.Println("LGU resProcess send ping to DB")
+						config.Stdlog.Println(user_id, " - Lgu Proc resProcess send ping to DB")
 						err := databasepool.DB.Ping()
 						if err == nil {
 							break
@@ -133,7 +135,6 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 			}
 		}
 	}()
-	procCnt++
 	var db = databasepool.DB
 	var stdlog = config.Stdlog
 
@@ -181,8 +182,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 	resrows, err := db.QueryContext(ctx, resquery, group_no, user_id)
 
 	if err != nil {
-		stdlog.Println("Result Table 조회 중 오류 발생")
-		stdlog.Println(err)
+		stdlog.Println(user_id, " - Lgu Proc Result Table select error : ", err)
 		stdlog.Println(resquery)
 	}
 	defer resrows.Close()
@@ -198,10 +198,6 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 
 		phnstr = phn.String
 
-		if tcnt == 0 {
-			stdlog.Println(user_id, "-", group_no, "문자발송 처리 시작 : ", " Process cnt : ", procCnt)
-		}
-
 		tcnt++
 		if len(ossmsStrs) > 500 {
 			stmt := fmt.Sprintf("insert into LG_SC_TRAN(TR_SENDDATE,TR_PHONE,TR_CALLBACK, TR_MSG, TR_ETC1, TR_ETC2, TR_ETC3, TR_KISAORIGCODE) values %s", s.Join(ossmsStrs, ","))
@@ -215,7 +211,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 					if err != nil {
 						msgKey := fmt.Sprintf("%v", ossmsValues[i+4])
 						useridt := fmt.Sprintf("%v", ossmsValues[i+5])
-						stdlog.Println(user_id, "- Lgu SMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
+						stdlog.Println(user_id, " - Lgu SMS Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 						errcodemsg := err.Error()
 						if s.Index(errcodemsg, "1366") > 0 {
 							db.ExecContext(ctx, "update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = ? and  msgid = ?", useridt, msgKey)
@@ -223,7 +219,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 					}
 				}
 			} else {
-				stdlog.Println(user_id, "- Lgu SMS Table Insert 처리 : ", len(ossmsStrs), " - LG_SC_TRAN")
+				stdlog.Println(user_id, " - Lgu SMS Table Insert 처리 : ", len(ossmsStrs), " - LG_SC_TRAN")
 			}
 			ossmsStrs = nil
 			ossmsValues = nil
@@ -241,7 +237,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 					if err != nil {
 						msgKey := fmt.Sprintf("%v", osmmsValues[i+9])
 						useridt := fmt.Sprintf("%v", osmmsValues[i+10])
-						stdlog.Println(user_id, "- Lgu LMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
+						stdlog.Println(user_id, " - Lgu MMS Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 						errcodemsg := err.Error()
 						if s.Index(errcodemsg, "1366") > 0 {
 							db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and msgid = '" + msgKey + "'")
@@ -249,7 +245,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 					}
 				}
 			} else {
-				stdlog.Println(user_id, "- Lgu MMS Table Insert 처리 : ", len(osmmsStrs), " - LG_MMS_MSG")
+				stdlog.Println(user_id, " - Lgu MMS Table Insert 처리 : ", len(osmmsStrs), " - LG_MMS_MSG")
 			}
 			osmmsStrs = nil
 			osmmsValues = nil
@@ -323,7 +319,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 				if err != nil {
 					msgKey := fmt.Sprintf("%v", ossmsValues[i+4])
 					useridt := fmt.Sprintf("%v", ossmsValues[i+5])
-					stdlog.Println(user_id, "- Lgu SMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
+					stdlog.Println(user_id, " - Lgu SMS Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 					errcodemsg := err.Error()
 					if s.Index(errcodemsg, "1366") > 0 {
 						db.ExecContext(ctx, "update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = ? and  msgid = ?", useridt, msgKey)
@@ -331,7 +327,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 				}
 			}
 		} else {
-			stdlog.Println(user_id, "- Lgu SMS Table Insert 처리 : ", len(ossmsStrs), " - LG_SC_TRAN")
+			stdlog.Println(user_id, " - Lgu SMS Table Insert 처리 : ", len(ossmsStrs), " - LG_SC_TRAN")
 		}
 
 	}
@@ -348,7 +344,7 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 				if err != nil {
 					msgKey := fmt.Sprintf("%v", osmmsValues[i+9])
 					useridt := fmt.Sprintf("%v", osmmsValues[i+10])
-					stdlog.Println(user_id, "- Lgu LMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
+					stdlog.Println(user_id, " - Lgu MMS Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 					errcodemsg := err.Error()
 					if s.Index(errcodemsg, "1366") > 0 {
 						db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and msgid = '" + msgKey + "'")
@@ -356,14 +352,13 @@ func resProcess(ctx context.Context, group_no string, user_id string) {
 				}
 			}
 		} else {
-			stdlog.Println(user_id, "- Lgu MMS Table Insert 처리 : ", len(osmmsStrs), " - LG_MMS_MSG")
+			stdlog.Println(user_id, " - Lgu MMS Table Insert 처리 : ", len(osmmsStrs), " - LG_MMS_MSG")
 		}
 	}
 
 	if scnt > 0 || smscnt > 0 || lmscnt > 0 || fcnt > 0 {
-		stdlog.Println(user_id, "-", group_no, "문자 발송 처리 완료 ( ", tcnt, " ) : 성공 -", scnt, " , SMS -", smscnt, " , LMS -", lmscnt, ", 실패 - ", fcnt, "  >> Process cnt : ", procCnt)
+		stdlog.Println(user_id, " - Lgu Proc 발송 처리 완료 ( ", group_no, " ) : 성공 -", scnt, " , SMS -", smscnt, " , LMS -", lmscnt, ", 총 - ", tcnt, " : ( Proc Cnt :", pc, ") - END")
 	}
-	procCnt--
 }
 
 func stringSplit(str string, lencnt int) string {

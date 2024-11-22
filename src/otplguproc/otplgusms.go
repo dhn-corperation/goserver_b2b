@@ -88,7 +88,7 @@ func smsProcess(wg *sync.WaitGroup) {
 			errlog.Println(SMSTable + " 생성 !!")
 
 		}
-
+		time.Sleep(10 * time.Second)
 		isProc = false
 		return
 	}

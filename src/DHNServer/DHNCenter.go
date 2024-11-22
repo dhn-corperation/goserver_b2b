@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	// "crypto/tls"
+	"crypto/tls"
 	// "net/http"
 	// "time"
 	"runtime/debug"
@@ -28,10 +28,9 @@ import (
 )
 
 const (
-	name        = "DHNCenter_hira"
+	name        = "DHNCenter"
 	description = "대형네트웍스 카카오 Center API"
 	certEmail   = "dhn@dhncorp.co.kr"
-	certDomain	= "dhntest.dhn.kr"
 )
 
 var dependencies = []string{name+".service"}
@@ -451,42 +450,54 @@ func resultProc() {
 
 	topLevelHandler := recoveryMiddleware(r.Handler)
 
-	//SSL 시작
+	if config.Conf.SSL_FLAG == "Y" {
+		//SSL 시작
+		certmagic.DefaultACME.Agreed = true
+		certmagic.DefaultACME.Email = certEmail
+		certmagic.DefaultACME.CA = certmagic.LetsEncryptProductionCA
 
-	certmagic.DefaultACME.Agreed = true
-	certmagic.DefaultACME.Email = certEmail
-	certmagic.DefaultACME.CA = certmagic.LetsEncryptProductionCA
+		err := certmagic.ManageSync(context.TODO(), []string{config.Conf.DNS})
 
-	err := certmagic.ManageSync(context.TODO(), []string{certDomain})
+		if err != nil {
+			config.Stdlog.Println("certmagic.ManageSync 에러 : ", err)
+			log.Fatal("certmagic.ManageSync 에러 : ", err)
+		} else {
+			config.Stdlog.Println("certmagic.ManageSync 성공 인증서 자동갱신 시작")
+		}
 
-	if err != nil {
-		config.Stdlog.Println("certmagic.ManageSync 에러 : ", err)
-		log.Fatal("certmagic.ManageSync 에러 : ", err)
+		certmagicCfg := certmagic.NewDefault()
+		tlsConfig := certmagicCfg.TLSConfig()
+
+		tlsConfig.MinVersion = tls.VersionTLS12
+
+		tlsConfig.CipherSuites = []uint16{
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+		}
+
+		tlsConfig.NextProtos = []string{"h2", "http/1.1"}
+
+
+		server := &fasthttp.Server{
+			Handler: topLevelHandler,
+			MaxRequestBodySize: 10 * 1024 * 1024,
+			TLSConfig: tlsConfig,
+		}
+
+		if err := server.ListenAndServeTLS(":" + config.Conf.SSL_PORT, "", ""); err != nil {
+			config.Stdlog.Println("fasthttp 443포트 실행 실패")
+			log.Fatal("fasthttp 443포트 실행 실패")
+		}
+		//SSL 끝
 	} else {
-		config.Stdlog.Println("certmagic.ManageSync 성공 인증서 자동갱신 시작")
+		//HTTP 시작
+		if err := fasthttp.ListenAndServe(":" + config.Conf.CENTER_PORT, topLevelHandler); err != nil {
+			config.Stdlog.Println("fasthttp 실행 실패")
+		}
+		//HTTP 끝
 	}
-
-	certmagicCfg := certmagic.NewDefault()
-	tlsConfig := certmagicCfg.TLSConfig()
-
-	server := &fasthttp.Server{
-		Handler: topLevelHandler,
-		MaxRequestBodySize: 10 * 1024 * 1024,
-		TLSConfig: tlsConfig,
-	}
-
-	if err := server.ListenAndServeTLS(":443", "", ""); err != nil {
-		config.Stdlog.Println("fasthttp 443포트 실행 실패")
-		log.Fatal("fasthttp 443포트 실행 실패")
-	}
-
-	//SSL 끝
-
-	//HTTP 시작
-	// if err := fasthttp.ListenAndServe(":3033", topLevelHandler); err != nil {
-	// 	config.Stdlog.Println("fasthttp 실행 실패")
-	// }
-	//HTTP 끝
 }
 
 func recoveryMiddleware(next fasthttp.RequestHandler) fasthttp.RequestHandler {

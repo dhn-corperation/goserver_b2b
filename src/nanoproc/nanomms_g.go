@@ -90,7 +90,7 @@ func mmsProcess_G(wg *sync.WaitGroup) {
 			db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like MMS_LOG")
 			errlog.Println(MMSTable + " 생성 !!")
 		}
-
+		time.Sleep(10 * time.Second)
 		isProc = false
 		return
 	}
@@ -183,7 +183,7 @@ func pre_mmsProcess_G(wg *sync.WaitGroup) {
 		} else {
 			//errlog.Fatal(err)
 		}
-
+		time.Sleep(10 * time.Second)
 		isProc = false
 		return
 	}

@@ -95,9 +95,9 @@ func SearchResultReq(c *fasthttp.RequestCtx) {
 		
 		var reqData kaoresulttable.ResultTable
 		if err1 := json.Unmarshal(c.PostBody(), &reqData); err1 != nil {
-			errlog.Println(err1)
+			errlog.Println(userid, " - 발송 결과 재수신 data decoding error : ", err1)
 		}
-		errlog.Println("발송 결과 재수신 시작 ( ", userid, ") : ", len(reqData.Msgid), startTime)
+		errlog.Println(userid, " - 발송 결과 재수신 init Msgid 건수 : ", len(reqData.Msgid), " / 수신 시각 : ", startTime)
 
 		if len(reqData.Msgid) == 0 {
 			res, _ := json.Marshal(map[string]string{
@@ -121,7 +121,7 @@ func SearchResultReq(c *fasthttp.RequestCtx) {
 
 		exists, err2 := checkTableExists(db, joinTable)
 		if err2 != nil {
-			errlog.Println("발송 결과 재수신 table 존재유무 조회 오류 err : ", err2)
+			errlog.Println(userid, " - 발송 결과 재수신 table 존재유무 조회 오류 err : ", err2)
 		}
 
 		if exists {
@@ -152,10 +152,10 @@ func SearchResultReq(c *fasthttp.RequestCtx) {
 		
 		isFirstRow := true
 
+		errlog.Println(userid, " - 발송 결과 재수신 결과 전송 시작 건수 : ", len(reqData.Msgid))
 		for reqrows.Next() {
 			
 			if isFirstRow {
-				errlog.Println("결과 전송 ( ", userid, " ) : 시작 " )
 				for i, v := range columnTypes {
 	
 					switch v.DatabaseTypeName() {
@@ -223,16 +223,15 @@ func SearchResultReq(c *fasthttp.RequestCtx) {
 		}
 
 		
-
+		errlog.Println(userid, " - 발송 결과 재수신 결과 전송 끝 건수 : ", len(finalRows))
 		if len(finalRows) > 0 {
-			errlog.Println("결과 전송 ( ", userid, " ) : ", len(finalRows))
 			
 			var commastr = "update DHN_RESULT set sync='Y' where userid = '" + userid + "' and msgid in (?)"
 
 			_, err := db.Exec(commastr, msgids)
 
 			if err != nil {
-				errlog.Println("searchResult Table Update 처리 중 오류 발생 ")
+				errlog.Println(userid, " - 발송 결과 재수신 searchResult Table Update 처리 중 오류 발생")
 			}
 
 		}

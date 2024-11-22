@@ -16,29 +16,24 @@ import (
 	krt "mycs/src/kaoresulttable"
 )
 
-var ftprocCnt int
-var FisRunning bool
-var isStoping bool
-//var limitcnt int = config.Conf.SENDLIMIT
-
 func FriendtalkProc(user_id string, ctx context.Context) {
-	ftprocCnt = 1
+	ftprocCnt := 0
 	
 	for {
-		if ftprocCnt <=5 {
+		if ftprocCnt < 5 {
 		
 			select {
-				case <- ctx.Done():
+			case <- ctx.Done():
 			
-			    config.Stdlog.Println("Friendtalk process가 10초 후에 종료 됨.")
+			    config.Stdlog.Println(user_id+" - Friendtalk process가 10초 후에 종료 됨.")
 			    time.Sleep(10 * time.Second)
-			    config.Stdlog.Println("Friendtalk process 종료 완료")
+			    config.Stdlog.Println(user_id+" - Friendtalk process 종료 완료")
 			    return
 			default:
 						
 				var count int
 	
-				cnterr := databasepool.DB.QueryRowContext(ctx, "select length(msgid) as cnt from DHN_REQUEST  where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid = ? limit 1", user_id).Scan(&count)
+				cnterr := databasepool.DB.QueryRowContext(ctx, "select count(1) as cnt from DHN_REQUEST  where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid = ? limit 1", user_id).Scan(&count)
 	
 				if cnterr != nil {
 					time.Sleep(10 * time.Second)
@@ -52,15 +47,20 @@ func FriendtalkProc(user_id string, ctx context.Context) {
 						updateRows, err := databasepool.DB.ExecContext(ctx, "update DHN_REQUEST set send_group = ? where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid = ? limit ?", group_no, user_id, strconv.Itoa(config.Conf.SENDLIMIT))
 				
 						if err != nil {
-							config.Stdlog.Println(user_id, " Request Table - send_group Update 오류")
+							config.Stdlog.Println(user_id, " - 친구톡 Request Table - send_group Update 오류")
 						}
 				
 						rowcnt, _ := updateRows.RowsAffected()
 				
 						if rowcnt > 0 {
-							config.Stdlog.Println(user_id, " 친구톡 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ")
 							ftprocCnt ++
-							go ftsendProcess(group_no, user_id)
+							config.Stdlog.Println(user_id, " - 친구톡 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ( Proc Cnt :", ftprocCnt, ") - START")
+							go func() {
+								defer func() {
+									ftprocCnt--
+								}()
+								ftsendProcess(group_no, user_id, ftprocCnt)
+							}()
 						}
 					}
 				}
@@ -70,15 +70,14 @@ func FriendtalkProc(user_id string, ctx context.Context) {
 
 }
 
-func ftsendProcess(group_no string, user_id string) {
+func ftsendProcess(group_no, user_id string, pc int) {
 	defer func(){
 		if r := recover(); r != nil {
-			config.Stdlog.Println("ftsendProcess panic 발생 원인 : ", r)
-			ftprocCnt--
+			config.Stdlog.Println(user_id, " - ftsendProcess panic 발생 원인 : ", r)
 			if err, ok := r.(error); ok {
 				if s.Contains(err.Error(), "connection refused") {
 					for {
-						config.Stdlog.Println("ftsendProcess send ping to DB")
+						config.Stdlog.Println(user_id, " - ftsendProcess send ping to DB")
 						err := databasepool.DB.Ping()
 						if err == nil {
 							break
@@ -98,15 +97,15 @@ func ftsendProcess(group_no string, user_id string) {
 
 	reqrows, err := db.Query(reqsql)
 	if err != nil {
-		errlog.Println("ftsendProcess 쿼리 에러 group_no : ", group_no, " / userid  : ", user_id," / query : ", reqsql)
-		errlog.Println("ftsendProcess 쿼리 에러 : ", err)
+		errlog.Println(user_id, " - ftsendProcess 쿼리 에러 group_no : ", group_no, " / userid  : ", user_id," / query : ", reqsql)
+		errlog.Println(user_id, " - ftsendProcess 쿼리 에러 : ", err)
 		panic(err)
 	}
 
 	columnTypes, err := reqrows.ColumnTypes()
 	if err != nil {
-		errlog.Println("ftsendProcess 컬럼 초기화 에러 group_no : ", group_no, " / userid  : ", user_id)
-		errlog.Println("ftsendProcess 컬럼 초기화 에러 : ", err)
+		errlog.Println(user_id, " - ftsendProcess 컬럼 초기화 에러 group_no : ", group_no)
+		errlog.Println(user_id, " - ftsendProcess 컬럼 초기화 에러 : ", err)
 		time.Sleep(5 * time.Second)
 	}
 	count := len(columnTypes)
@@ -472,7 +471,7 @@ mms_image_id
 		_, err := databasepool.DB.Exec(stmt, resinsValues...)
 
 		if err != nil {
-			stdlog.Println("Result Table Insert 처리 중 오류 발생 ", err)
+			stdlog.Println(user_id, " - 친구톡 Result Table Insert 처리 중 오류 발생 ", err)
 		}
 
 		resinsStrs = nil
@@ -480,9 +479,9 @@ mms_image_id
 	}
 
 	db.Exec("delete from DHN_REQUEST where send_group = '" + group_no + "'")
-	stdlog.Println("친구톡 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건  ( Proc Cnt :", ftprocCnt, ")" )
+
+	stdlog.Println(user_id, " - 친구톡 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건  ( Proc Cnt :", pc, ") - END" )
 	
-	ftprocCnt--
 
 }
 

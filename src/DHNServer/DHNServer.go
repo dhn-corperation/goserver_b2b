@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	name        = "DHNServer_hira"
+	name        = "DHNServer"
 	description = "대형네트웍스 카카오 발송 서버"
 )
 
@@ -162,7 +162,7 @@ func resultProc() {
 	friend_user_list, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST where use_flag = 'Y' and friendtalk='Y'")
 	isFriend := true
 	if error != nil {
-		config.Stdlog.Println("알림톡 유저 select 오류 ")
+		config.Stdlog.Println("친구톡 유저 select 오류 ")
 		isFriend = false
 	}
 	defer friend_user_list.Close()
@@ -212,7 +212,7 @@ func resultProc() {
 	oshotUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl where dcl.use_flag = 'Y' and upper(ifnull(dcl.dest, '')) = 'OSHOT'")
 	isOshot := true
 	if error != nil {
-		config.Stdlog.Println("Oshot 유저 select 오류 ")
+		config.Stdlog.Println("오샷 유저 select 오류 ")
 		isOshot = false
 	}
 	defer oshotUserList.Close()
@@ -290,7 +290,7 @@ func resultProc() {
 	nanoUserList, error := databasepool.DB.Query("select distinct user_id, nano_tel_seperate from DHN_CLIENT_LIST dcl where dcl.use_flag = 'Y' and upper(ifnull(dcl.dest, '')) = 'NANO'")
 	isNano := true
 	if error != nil {
-		config.Stdlog.Println("Nano 유저 select 오류 ")
+		config.Stdlog.Println("나노 유저 select 오류 ")
 		isNano = false
 	}
 	defer nanoUserList.Close()
@@ -515,7 +515,7 @@ Command :
 		uid = c.Query("uid")
 		temp := oshotCtxC[uid]
 		if temp != nil {
-			c.String(200, uid+"이미 실행 중입니다.")
+			c.String(200, uid+" 이미 실행 중입니다.")
 		} else {
 			ctx, cancel := context.WithCancel(context.Background())
 			ctx = context.WithValue(ctx, "user_id", uid)
@@ -570,7 +570,7 @@ Command :
 		uid = c.Query("uid")
 		temp := alimCtxC[uid]
 		if temp != nil {
-			c.String(200, uid+"이미 실행 중입니다.")
+			c.String(200, uid+" 이미 실행 중입니다.")
 		} else {
 
 			ctx, cancel := context.WithCancel(context.Background())
@@ -644,7 +644,7 @@ Command :
 		uid = c.Query("uid")
 		temp := nanoCtxC[uid]
 		if temp != nil {
-			c.String(200, uid+"이미 실행 중입니다.")
+			c.String(200, uid+" 이미 실행 중입니다.")
 		} else {
 			var nano_tel_seperate sql.NullString
 			var nts string
@@ -740,7 +740,7 @@ Command :
 		}
 		temp := ktxroCtxC[uid]
 		if temp != nil {
-			c.String(200, uid+"이미 실행 중입니다.")
+			c.String(200, uid+" 이미 실행 중입니다.")
 		} else {
 			ctx, cancel := context.WithCancel(context.Background())
 			ctx = context.WithValue(ctx, "user_id", uid)
@@ -795,7 +795,7 @@ Command :
 		uid = c.Query("uid")
 		temp := lguCtxC[uid]
 		if temp != nil {
-			c.String(200, uid+"이미 실행 중입니다.")
+			c.String(200, uid+" 이미 실행 중입니다.")
 		} else {
 			ctx, cancel := context.WithCancel(context.Background())
 			ctx = context.WithValue(ctx, "user_id", uid)

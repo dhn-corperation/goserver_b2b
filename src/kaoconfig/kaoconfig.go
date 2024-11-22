@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"time"
+	"crypto/tls"
 
 	ini "github.com/BurntSushi/toml"
 	"github.com/go-resty/resty/v2"
@@ -14,6 +15,9 @@ import (
 )
 
 type Config struct {
+	DNS              string
+	SSL_FLAG         string
+	SSL_PORT		 string
 	DB               string
 	DBURL            string
 	CENTER_PORT      string
@@ -65,7 +69,11 @@ func InitConfig() {
 
 	Conf = readConfig()
 	BasePath = dir + "/"
-	Client = resty.New()
+	Client = resty.New().
+		SetTimeout(100 * time.Second).
+		SetTLSClientConfig(&tls.Config{MinVersion: tls.VersionTLS12}).
+		SetRetryCount(3).
+		SetRetryWaitTime(2 * time.Second)
 
 }
 

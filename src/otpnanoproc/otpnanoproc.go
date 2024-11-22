@@ -3,29 +3,20 @@ package otpnanoproc
 import (
 	"database/sql"
 	"fmt"
-
-	//"sync"
-	config "mycs/src/kaoconfig"
-	databasepool "mycs/src/kaodatabasepool"
-
 	"encoding/hex"
 	"regexp"
 	s "strings"
 	"time"
 	"unicode/utf8"
-
-	//"bytes"
-	//iconv "github.com/djimenez/iconv-go"
-	//"golang.org/x/text/encoding/korean"
-	//"golang.org/x/text/transform"
 	"context"
-)
 
-var procCnt int
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
+)
 
 func NanoProcess(ctx context.Context) {
 	config.Stdlog.Println("Nano OTP Process 시작 됨.")
-	procCnt = 0
+	procCnt := 0
 
 	for {
 		if procCnt < 5 {
@@ -52,20 +43,25 @@ limit 1
 				cnterr := databasepool.DB.QueryRow(tickSql).Scan(&count)
 
 				if cnterr != nil {
+					config.Stdlog.Println("Nano OTP DHN_RESULT Table - select error : " + cnterr.Error())
 					time.Sleep(10 * time.Second)
-					//config.Stdlog.Println("DHN_RESULT Table - select 오류 : " + cnterr.Error())
 				} else {
-
 					if count > 0 {
-
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%02d%06d", startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), (startNow.Nanosecond() / 1000))
 
 						upError := updateReqeust(group_no)
 						if upError != nil {
-							config.Stdlog.Println("Nano OTP Group No Update 오류", group_no)
+							config.Stdlog.Println("Nano OTP Group No Update error : ", upError, " / group_no : ", group_no)
 						} else {
-							go resProcess(group_no)
+							go func() {
+								procCnt++
+								config.Stdlog.Println("Nano OTP 발송 처리 시작 ( ", group_no, " ) : ( Proc Cnt :", procCnt, ") - START")
+								defer func() {
+									procCnt--
+								}()
+								resProcess(group_no, procCnt)
+							}()
 						}
 					}
 				}
@@ -101,7 +97,7 @@ LIMIT 500
 	`
 	_, err = tx.Query(gudQuery)
 	if err != nil {
-		config.Stdlog.Println("Nano OTPGroup NO Update - Select error : ( "+group_no+" ) : "+err.Error())
+		config.Stdlog.Println("Nano OTP Group NO Update - Select error : ( "+group_no+" ) : "+err.Error())
 		config.Stdlog.Println(gudQuery)
 		return err
 	}
@@ -109,15 +105,14 @@ LIMIT 500
 	return nil
 }
 
-func resProcess(group_no string) {
+func resProcess(group_no string, pc int) {
 	defer func(){
 		if r := recover(); r != nil {
-			config.Stdlog.Println("OTPNANO smsProcess panic 발생 원인 : ", r)
-			procCnt--
+			config.Stdlog.Println("Nano OTP resProcess panic error : ", r)
 			if err, ok := r.(error); ok {
 				if s.Contains(err.Error(), "connection refused") {
 					for {
-						config.Stdlog.Println("OTPNANO smsProcess send ping to DB")
+						config.Stdlog.Println("Nano OTP resProcess send ping to DB")
 						err := databasepool.DB.Ping()
 						if err == nil {
 							break
@@ -129,7 +124,6 @@ func resProcess(group_no string) {
 		}
 	}()
 
-	procCnt++
 	var db = databasepool.DB
 	var stdlog = config.Stdlog
 
@@ -184,14 +178,12 @@ func resProcess(group_no string) {
 	resrows, err := db.Query(resquery)
 
 	if err != nil {
-		stdlog.Println("Nano OTP Result Table 조회 중 오류 발생")
-		stdlog.Println(err)
+		stdlog.Println("Nano OTP Result Table select error : ", err)
 		stdlog.Println(resquery)
 	}
 
 	defer resrows.Close()
 	scnt := 0
-	fcnt := 0
 	smscnt := 0
 	lmscnt := 0
 	tcnt := 0
@@ -202,10 +194,6 @@ func resProcess(group_no string) {
 
 		phnstr = phn.String
 
-		if tcnt == 0 {
-			stdlog.Println(group_no, " Nano OTP 문자발송 처리 시작 : ", " Process cnt : ", procCnt)
-		}
-
 		tcnt++
 
 		if len(ossmsStrs) > 500 {
@@ -213,7 +201,6 @@ func resProcess(group_no string) {
 			_, err := db.Exec(stmt, ossmsValues...)
 
 			if err != nil {
-				//stdlog.Println("Nano SMS Table Insert 처리 중 오류 발생 " + err.Error())
 				for i := 0; i < len(ossmsValues); i = i + 8 {
 					eQuery := fmt.Sprintf("insert into OTP_SMS_MSG(TR_CALLBACK,TR_PHONE,TR_MSG,TR_SENDDATE,TR_SENDSTAT,TR_MSGTYPE,TR_ETC9,TR_ETC10,TR_IDENTIFICATION_CODE,TR_ETC8) "+
 						"values('%v','%v','%v','%v', '%v', '%v','%v', '%v', 'Y')", ossmsValues[i], ossmsValues[i+1], ossmsValues[i+2], ossmsValues[i+3], ossmsValues[i+4], ossmsValues[i+5], ossmsValues[i+6], ossmsValues[i+7], ossmsValues[i+8])
@@ -221,14 +208,13 @@ func resProcess(group_no string) {
 					if err != nil {
 						msgKey := fmt.Sprintf("%v", ossmsValues[i+6])
 						useridt := fmt.Sprintf("%v", ossmsValues[i+7])
-						stdlog.Println("Nano OTP SMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
+						stdlog.Println("Nano OTP SMS Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 						errcodemsg := err.Error()
 						if s.Index(errcodemsg, "1366") > 0 {
 							db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and  msgid = '" + msgKey + "'")
 						}
 					}
 				}
-				//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = date_format(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
 			} else {
 				stdlog.Println("Nano OTP SMS Table Insert 처리 : ", len(ossmsStrs))
 			}
@@ -241,7 +227,6 @@ func resProcess(group_no string) {
 			_, err := db.Exec(stmt, osmmsValues...)
 
 			if err != nil {
-				//stdlog.Println("Nano SMS Table Insert 처리 중 오류 발생 " + err.Error())
 				for i := 0; i < len(osmmsValues); i = i + 12 {
 					eQuery := fmt.Sprintf("insert into OTP_MMS_MSG(CALLBACK,PHONE,SUBJECT,MSG,REQDATE,STATUS,FILE_CNT,FILE_PATH1,FILE_PATH2,FILE_PATH3,ETC9,ETC10,IDENTIFICATION_CODE,ETC8) "+
 						"values('%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','Y')", osmmsValues[i], osmmsValues[i+1], osmmsValues[i+2], osmmsValues[i+3], osmmsValues[i+4], osmmsValues[i+5], osmmsValues[i+6], osmmsValues[i+7], osmmsValues[i+8], osmmsValues[i+9], osmmsValues[i+10], osmmsValues[i+11], osmmsValues[i+12])
@@ -249,14 +234,13 @@ func resProcess(group_no string) {
 					if err != nil {
 						msgKey := fmt.Sprintf("%v", osmmsValues[i+10])
 						useridt := fmt.Sprintf("%v", osmmsValues[i+11])
-						stdlog.Println("Nano OTP LMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
+						stdlog.Println("Nano OTP MMS Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 						errcodemsg := err.Error()
 						if s.Index(errcodemsg, "1366") > 0 {
 							db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and msgid = '" + msgKey + "'")
 						}
 					}
 				}
-				//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = date_format(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
 			} else {
 				stdlog.Println("Nano OTP MMS Table Insert 처리 : ", len(osmmsStrs))
 			}
@@ -345,7 +329,6 @@ func resProcess(group_no string) {
 		_, err := db.Exec(stmt, ossmsValues...)
 
 		if err != nil {
-			//stdlog.Println("Nano SMS Table Insert 처리 중 오류 발생 " + err.Error())
 			for i := 0; i < len(ossmsValues); i = i + 8 {
 				eQuery := fmt.Sprintf("insert into OTP_SMS_MSG(TR_CALLBACK,TR_PHONE,TR_MSG,TR_SENDDATE,TR_SENDSTAT,TR_MSGTYPE,TR_ETC9,TR_ETC10,TR_IDENTIFICATION_CODE,TR_ETC8) "+
 					"values('%v','%v','%v','%v', '%v', '%v','%v', '%v', 'Y')", ossmsValues[i], ossmsValues[i+1], ossmsValues[i+2], ossmsValues[i+3], ossmsValues[i+4], ossmsValues[i+5], ossmsValues[i+6], ossmsValues[i+7], ossmsValues[i+8])
@@ -353,14 +336,13 @@ func resProcess(group_no string) {
 				if err != nil {
 					msgKey := fmt.Sprintf("%v", ossmsValues[i+6])
 					useridt := fmt.Sprintf("%v", ossmsValues[i+7])
-					stdlog.Println("Nano OTP SMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
+					stdlog.Println("Nano OTP SMS Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 					errcodemsg := err.Error()
 					if s.Index(errcodemsg, "1366") > 0 {
 						db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and  msgid = '" + msgKey + "'")
 					}
 				}
 			}
-			//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = date_format(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
 		} else {
 			stdlog.Println("Nano OTP SMS Table Insert 처리 : ", len(ossmsStrs))
 		}
@@ -372,7 +354,6 @@ func resProcess(group_no string) {
 		_, err := db.Exec(stmt, osmmsValues...)
 
 		if err != nil {
-			//stdlog.Println("Nano SMS Table Insert 처리 중 오류 발생 " + err.Error())
 			for i := 0; i < len(osmmsValues); i = i + 12 {
 				eQuery := fmt.Sprintf("insert into OTP_MMS_MSG(CALLBACK,PHONE,SUBJECT,MSG,REQDATE,STATUS,FILE_CNT,FILE_PATH1,FILE_PATH2,FILE_PATH3,ETC9,ETC10,IDENTIFICATION_CODE,ETC8) "+
 					"values('%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','%v','Y')", osmmsValues[i], osmmsValues[i+1], osmmsValues[i+2], osmmsValues[i+3], osmmsValues[i+4], osmmsValues[i+5], osmmsValues[i+6], osmmsValues[i+7], osmmsValues[i+8], osmmsValues[i+9], osmmsValues[i+10], osmmsValues[i+11], osmmsValues[i+12])
@@ -380,24 +361,22 @@ func resProcess(group_no string) {
 				if err != nil {
 					msgKey := fmt.Sprintf("%v", osmmsValues[i+10])
 					useridt := fmt.Sprintf("%v", osmmsValues[i+11])
-					stdlog.Println("Nano OTP LMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
+					stdlog.Println("Nano OTP MMS Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 					errcodemsg := err.Error()
 					if s.Index(errcodemsg, "1366") > 0 {
 						db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and msgid = '" + msgKey + "'")
 					}
 				}
 			}
-			//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = date_format(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
 		} else {
 			stdlog.Println("Nano OTP MMS Table Insert 처리 : ", len(osmmsStrs))
 		}
 
 	}
 
-	if scnt > 0 || smscnt > 0 || lmscnt > 0 || fcnt > 0 {
-		stdlog.Println(group_no, " Nano OTP 문자 발송 처리 완료 ( ", tcnt, " ) : 성공 -", scnt, " , SMS -", smscnt, " , LMS -", lmscnt, "실패 - ", fcnt, "  >> Process cnt : ", procCnt)
+	if scnt > 0 || smscnt > 0 || lmscnt > 0 {
+		stdlog.Println("Nano OTP 발송 처리 완료 ( ", group_no, " ) : 성공 - ", scnt, " , SMS - ", smscnt, " , LMS - ", lmscnt, ", 총 - ", tcnt, " : ( Proc Cnt :", pc, ") - END")
 	}
-	procCnt--
 }
 
 func stringSplit(str string, lencnt int) string {

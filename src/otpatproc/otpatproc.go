@@ -17,26 +17,24 @@ import (
 	krt "mycs/src/kaoresulttable"
 )
 
-var atprocCnt int
-
 func AlimtalkProc(ctx context.Context) {
-	atprocCnt = 1
+	atprocCnt := 0
 	config.Stdlog.Println("알림톡 OTP 프로세스 시작 됨 ") 
 	for {
-		if atprocCnt <=5 {
+		if atprocCnt < 5 {
 			
 			select {
 				case <- ctx.Done():
-			    config.Stdlog.Println("알림톡 OTP process가 10초 후에 종료 됨.")
+			    config.Stdlog.Println("Alimtalk OTP process가 10초 후에 종료 됨.")
 			    time.Sleep(10 * time.Second)
-			    config.Stdlog.Println("알림톡 OTP process 종료 완료")
+			    config.Stdlog.Println("Alimtalk OTP process 종료 완료")
 			    return
 			default:
 				var count sql.NullInt64
 				cnterr := databasepool.DB.QueryRowContext(ctx, "SELECT LENGTH(msgid) AS cnt FROM DHN_REQUEST_AT WHERE (upper(message_type) = 'AO' or upper(message_type) = 'IO') and send_group IS NULL AND IFNULL(reserve_dt,'00000000000000') <= DATE_FORMAT(NOW(), '%Y%m%d%H%i%S')").Scan(&count)
 				
 				if cnterr != nil && cnterr != sql.ErrNoRows {
-					config.Stdlog.Println("알림톡 OTP DHN_REQUEST Table - select 오류 : " + cnterr.Error())
+					config.Stdlog.Println("Alimtalk OTP DHN_REQUEST Table - select 오류 : " + cnterr.Error())
 					time.Sleep(10 * time.Second)
 				} else {
 					if count.Valid && count.Int64 > 0 {		
@@ -46,16 +44,20 @@ func AlimtalkProc(ctx context.Context) {
 						updateRows, err := databasepool.DB.ExecContext(ctx, "update DHN_REQUEST_AT set send_group = ? where (upper(message_type) = 'AO' or upper(message_type) = 'IO') and send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit ?", group_no, strconv.Itoa(config.Conf.SENDLIMIT))
 				
 						if err != nil {
-							config.Stdlog.Println("알림톡 OTP send_group Update 오류 : ", err)
+							config.Stdlog.Println("Alimtalk OTP send_group Update error : ", err, " / group_no : ", group_no)
 						}
 				
 						rowcnt, _ := updateRows.RowsAffected()
 				
 						if rowcnt > 0 {
-							config.Stdlog.Println("알림톡 OTP 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ")
-							atprocCnt++
-							go atsendProcess(group_no)
-				
+							go func() {
+								atprocCnt++
+								config.Stdlog.Println("Alimtalk 발송 처리 시작 ( ", group_no, " ) : ( Proc Cnt :", atprocCnt, ") - START")
+								defer func() {
+									atprocCnt--
+								}()
+								atsendProcess(group_no, atprocCnt)
+							}()
 						}
 					}
 				}
@@ -65,15 +67,14 @@ func AlimtalkProc(ctx context.Context) {
 
 }
 
-func atsendProcess(group_no string) {
+func atsendProcess(group_no string, pc int) {
 	defer func(){
 		if r := recover(); r != nil {
-			config.Stdlog.Println("atsendProcess OTP panic 발생 원인 : ", r)
-			atprocCnt--
+			config.Stdlog.Println("Alimtalk OTP atsendProcess OTP panic error : ", r)
 			if err, ok := r.(error); ok {
 				if s.Contains(err.Error(), "connection refused") {
 					for {
-						config.Stdlog.Println("atsendProcess OTP send ping to DB")
+						config.Stdlog.Println("Alimtalk OTP atsendProcess OTP send ping to DB")
 						err := databasepool.DB.Ping()
 						if err == nil {
 							break
@@ -96,15 +97,13 @@ func atsendProcess(group_no string) {
 
 	reqrows, err := db.Query(reqsql)
 	if err != nil {
-		errlog.Println("atsendProcess OTP 쿼리 에러 group_no : ", group_no, " / query : ", reqsql)
-		errlog.Println("atsendProcess OTP 쿼리 에러 : ", err)
+		errlog.Println("Alimtalk OTP atsendProcess select error : ", err, " / group_no : ", group_no, " / query : ", reqsql)
 		panic(err)
 	}
 
 	columnTypes, err := reqrows.ColumnTypes()
 	if err != nil {
-		errlog.Println("atsendProcess OTP 컬럼 초기화 에러 group_no : ", group_no)
-		errlog.Println("atsendProcess OTP 컬럼 초기화 에러 : ", err)
+		errlog.Println("Alimtalk OTP atsendProcess column init error : ", err, " / group_no : ", group_no)
 		time.Sleep(5 * time.Second)
 	}
 	count := len(columnTypes)
@@ -127,8 +126,7 @@ func atsendProcess(group_no string) {
 
 		err := reqrows.Scan(scanArgs...)
 		if err != nil {
-			errlog.Println("atsendProcess OTP 컬럼 스캔 에러 group_no : ", group_no)
-			errlog.Println("atsendProcess OTP 컬럼 스캔 에러 : ", err)
+			errlog.Println("Alimtalk OTP atsendProcess column scan error : ", err, " / group_no : ", group_no)
 			time.Sleep(5 * time.Second)
 		}
 
@@ -352,7 +350,7 @@ func atsendProcess(group_no string) {
 				resinsStrs, resinsValues = cm.InsMsg(resinsquery, resinsStrs, resinsValues)
 			}
 		} else {
-			stdlog.Println("알림톡 OTP 서버 처리 오류 !! ( ", string(resChan.BodyData), " )", result["msgid"])
+			stdlog.Println("Alimtalk OTP server process error : ( ", string(resChan.BodyData), " )", result["msgid"])
 			db.Exec("update DHN_REQUEST_AT set send_group = null where msgid = '" + result["msgid"] + "'")
 		}
 
@@ -367,9 +365,7 @@ func atsendProcess(group_no string) {
 	//알림톡 발송 후 DHN_REQUEST_AT 테이블의 데이터는 제거한다.
 	db.Exec("delete from DHN_REQUEST_AT where send_group = '" + group_no + "'")
 
-	stdlog.Println("알림톡 OTP 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건 ( Proc Cnt :", atprocCnt, ")")
-	
-	atprocCnt--
+	stdlog.Println("Alimtalk OTP 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건 ( Proc Cnt :", pc, ")")
 }
 
 //카카오 서버에 발송을 요청한다.
@@ -382,7 +378,7 @@ func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- krt.ResultStr, alimtalk k
 		Post(config.Conf.API_SERVER + "/v3/" + config.Conf.PROFILE_KEY + "/alimtalk/send")
 
 	if err != nil {
-		config.Stdlog.Println("알림톡 OTP 메시지 서버 호출 오류 : ", err)
+		config.Stdlog.Println("alimtalk OTP server request error : ", err, " / serial_number : ", alimtalk.Serial_number)
 	} else {
 		temp.Statuscode = resp.StatusCode()
 		temp.BodyData = resp.Body()

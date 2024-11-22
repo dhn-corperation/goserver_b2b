@@ -87,7 +87,7 @@ func mmsProcess(wg *sync.WaitGroup) {
 			db.Exec("Create Table IF NOT EXISTS " + MMSTable + " like LG_OTP_MMS_MSG")
 			errlog.Println(MMSTable + " 생성 !!")
 		}
-
+		time.Sleep(10 * time.Second)
 		isProc = false
 		return
 	}

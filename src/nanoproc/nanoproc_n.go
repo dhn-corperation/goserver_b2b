@@ -3,28 +3,18 @@ package nanoproc
 import (
 	"database/sql"
 	"fmt"
-
-	//"sync"
-	config "mycs/src/kaoconfig"
-	databasepool "mycs/src/kaodatabasepool"
-
 	"regexp"
 	s "strings"
 	"time"
-
-	//"bytes"
-	//iconv "github.com/djimenez/iconv-go"
-	//"golang.org/x/text/encoding/korean"
-	//"golang.org/x/text/transform"
 	"context"
+
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 )
 
-var procCnt_N int
-
 func NanoProcess_N(user_id string, ctx context.Context) {
-	//var wg sync.WaitGroup
-	config.Stdlog.Println(user_id, " Nano Process_N 시작 됨.")
-	procCnt_N = 0
+	config.Stdlog.Println(user_id, " - Nano Process_N 시작 됨.")
+	procCnt_N := 0
 
 	for {
 		if procCnt_N < 5 {
@@ -51,13 +41,12 @@ func NanoProcess_N(user_id string, ctx context.Context) {
 								and userid = '` + user_id + `'
 								and sms_sender not like '010%'
 								and 
-							limit 1
-			`
+							limit 1 `
 				cnterr := databasepool.DB.QueryRow(tickSql).Scan(&count)
 
 				if cnterr != nil {
+					config.Stdlog.Println(user_id, " - Nano Process_N DHN_RESULT Table - select error : " + cnterr.Error())
 					time.Sleep(10 * time.Second)
-					//config.Stdlog.Println("DHN_RESULT Table - select 오류 : " + cnterr.Error())
 				} else {
 
 					if count > 0 {
@@ -67,9 +56,16 @@ func NanoProcess_N(user_id string, ctx context.Context) {
 
 						upError := updateReqeust_N(group_no, user_id)
 						if upError != nil {
-							config.Stdlog.Println(user_id, "- Nano Group_N No Update 오류", group_no)
+							config.Stdlog.Println(user_id, " - Nano Process_N Group_N No Update error : ", upError, " / group_no : ", group_no)
 						} else {
-							go resProcess_N(group_no, user_id)
+							go func() {
+								procCnt_N++
+								config.Stdlog.Println(user_id, " - Nano Process_N 발송 처리 시작 ( ", group_no, " ) : ( Proc Cnt :", procCnt_N, ") - START")
+								defer func() {
+									procCnt_N--
+								}()
+								resProcess_N(group_no, user_id, procCnt_N)
+							}()
 						}
 					}
 				}
@@ -78,7 +74,7 @@ func NanoProcess_N(user_id string, ctx context.Context) {
 	}
 }
 
-func updateReqeust_N(group_no string, user_id string) error {
+func updateReqeust_N(group_no, user_id string) error {
 
 	tx, err := databasepool.DB.Begin()
 	if err != nil {
@@ -95,7 +91,7 @@ func updateReqeust_N(group_no string, user_id string) error {
 		return err
 	}()
 
-	config.Stdlog.Println(user_id, "- Nano Group_N No Update 시작", group_no)
+	config.Stdlog.Println(user_id, " - Nano Process_N Nano Group_N No Update 시작", group_no)
 
 	gudQuery := `update	DHN_RESULT dr
 						set	send_group = '` + group_no + `'
@@ -109,7 +105,7 @@ func updateReqeust_N(group_no string, user_id string) error {
 	_, err = tx.Query(gudQuery)
 
 	if err != nil {
-		config.Stdlog.Println(user_id, "-", "Group_N NO Update - Select error : ( "+group_no+" ) : "+err.Error())
+		config.Stdlog.Println(user_id, " - Nano Process_N Group_N NO Update - Select error : ( "+group_no+" ) : "+err.Error())
 		config.Stdlog.Println(gudQuery)
 		return err
 	}
@@ -117,15 +113,14 @@ func updateReqeust_N(group_no string, user_id string) error {
 	return nil
 }
 
-func resProcess_N(group_no string, user_id string) {
+func resProcess_N(group_no, user_id string, pc int) {
 	defer func(){
 		if r := recover(); r != nil {
-			config.Stdlog.Println("NANO resProcess_N panic 발생 원인 : ", r)
-			procCnt_N--
+			config.Stdlog.Println(user_id, " - Nano Process_N resProcess_N panic error : ", r)
 			if err, ok := r.(error); ok {
 				if s.Contains(err.Error(), "connection refused") {
 					for {
-						config.Stdlog.Println("NANO resProcess_N send ping to DB")
+						config.Stdlog.Println(user_id, " - Nano Process_N resProcess_N send ping to DB")
 						err := databasepool.DB.Ping()
 						if err == nil {
 							break
@@ -137,7 +132,6 @@ func resProcess_N(group_no string, user_id string) {
 		}
 	}()
 	
-	procCnt_N++
 	var db = databasepool.DB
 	var stdlog = config.Stdlog
 
@@ -168,11 +162,11 @@ func resProcess_N(group_no string, user_id string) {
 						sms_kind, 
 						sms_sender, 
 						res_dt, 
-						(case when reserve_dt = '00000000000000'  then 
+						(case when reserve_dt = '00000000000000' then 
 								now()
 							when reserve_dt is null  then 
 								now()
-							when length(trim(reserve_dt)) < 4  then 
+							when length(trim(reserve_dt)) < 4 then 
 								now()
 							else
 								STR_TO_DATE(reserve_dt, '%Y%m%d%H%i%S')
@@ -194,13 +188,11 @@ func resProcess_N(group_no string, user_id string) {
 	resrows, err := db.Query(resquery)
 
 	if err != nil {
-		stdlog.Println("Result Table 조회 중 오류 발생")
-		stdlog.Println(err)
+		stdlog.Println(user_id, " - Nano Process_N Result Table select error : ", err)
 		stdlog.Println(resquery)
 	}
 	defer resrows.Close()
 	scnt := 0
-	fcnt := 0
 	smscnt := 0
 	lmscnt := 0
 	tcnt := 0
@@ -211,10 +203,6 @@ func resProcess_N(group_no string, user_id string) {
 		resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check)
 
 		phnstr = phn.String
-
-		if tcnt == 0 {
-			stdlog.Println(user_id, "-", group_no, "문자발송 처리 시작 : ", " Process cnt : ", procCnt_N)
-		}
 
 		tcnt++
 
@@ -231,7 +219,7 @@ func resProcess_N(group_no string, user_id string) {
 					if err != nil {
 						msgKey := fmt.Sprintf("%v", ossmsValues[i+6])
 						useridt := fmt.Sprintf("%v", ossmsValues[i+7])
-						stdlog.Println(user_id, "- Nano SMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
+						stdlog.Println(user_id, " - Nano Process_N SMS Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 						errcodemsg := err.Error()
 						if s.Index(errcodemsg, "1366") > 0 {
 							db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and  msgid = '" + msgKey + "'")
@@ -240,7 +228,7 @@ func resProcess_N(group_no string, user_id string) {
 				}
 				//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = date_format(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
 			} else {
-				stdlog.Println(user_id, "- Nano SMS Table Insert 처리 : ", len(ossmsStrs), " - ", preOshot)
+				stdlog.Println(user_id, " - Nano Process_N SMS Table Insert 처리 : ", len(ossmsStrs), " - ", preOshot)
 			}
 			ossmsStrs = nil
 			ossmsValues = nil
@@ -259,7 +247,7 @@ func resProcess_N(group_no string, user_id string) {
 					if err != nil {
 						msgKey := fmt.Sprintf("%v", osmmsValues[i+10])
 						useridt := fmt.Sprintf("%v", osmmsValues[i+11])
-						stdlog.Println(user_id, "- Nano LMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
+						stdlog.Println(user_id, " - Nano Process_N MMS Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 						errcodemsg := err.Error()
 						if s.Index(errcodemsg, "1366") > 0 {
 							db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and msgid = '" + msgKey + "'")
@@ -268,7 +256,7 @@ func resProcess_N(group_no string, user_id string) {
 				}
 				//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = date_format(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
 			} else {
-				stdlog.Println(user_id, "- Nano MMS Table Insert 처리 : ", len(osmmsStrs), " - ", preOshot)
+				stdlog.Println(user_id, " - Nano Process_N MMS Table Insert 처리 : ", len(osmmsStrs), " - ", preOshot)
 			}
 			osmmsStrs = nil
 			osmmsValues = nil
@@ -355,7 +343,7 @@ func resProcess_N(group_no string, user_id string) {
 				if err != nil {
 					msgKey := fmt.Sprintf("%v", ossmsValues[i+6])
 					useridt := fmt.Sprintf("%v", ossmsValues[i+7])
-					stdlog.Println(user_id, "- Nano SMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
+					stdlog.Println(user_id, " - Nano Process_N SMS Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 					errcodemsg := err.Error()
 					if s.Index(errcodemsg, "1366") > 0 {
 						db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and  msgid = '" + msgKey + "'")
@@ -364,7 +352,7 @@ func resProcess_N(group_no string, user_id string) {
 			}
 			//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = date_format(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
 		} else {
-			stdlog.Println(user_id, "- Nano SMS Table Insert 처리 : ", len(ossmsStrs), " - ", preOshot)
+			stdlog.Println(user_id, " - Nano Process_N SMS Table Insert 처리 : ", len(ossmsStrs), " - ", preOshot)
 		}
 
 	}
@@ -382,7 +370,7 @@ func resProcess_N(group_no string, user_id string) {
 				if err != nil {
 					msgKey := fmt.Sprintf("%v", osmmsValues[i+10])
 					useridt := fmt.Sprintf("%v", osmmsValues[i+11])
-					stdlog.Println(user_id, "- Nano LMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
+					stdlog.Println(user_id, " - Nano Process_N MMS Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 					errcodemsg := err.Error()
 					if s.Index(errcodemsg, "1366") > 0 {
 						db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and msgid = '" + msgKey + "'")
@@ -391,15 +379,14 @@ func resProcess_N(group_no string, user_id string) {
 			}
 			//db.Exec("update API_RESULT ar set ar.msg_type = '" + sms_kind.String + "', result_code = '9999', error_text = '기타오류', report_time = date_format(now(), '%Y-%m-%d %H:%i:%S') where dhn_msg_id = '" + msgid.String + "'")
 		} else {
-			stdlog.Println(user_id, "- Nano MMS Table Insert 처리 : ", len(osmmsStrs), " - ", preOshot)
+			stdlog.Println(user_id, " - Nano Process_N MMS Table Insert 처리 : ", len(osmmsStrs), " - ", preOshot)
 		}
 
 	}
 
-	if scnt > 0 || smscnt > 0 || lmscnt > 0 || fcnt > 0 {
-		stdlog.Println(user_id, "-", group_no, "문자 발송 처리 완료 ( ", tcnt, " ) : 성공 -", scnt, " , SMS -", smscnt, " , LMS -", lmscnt, "실패 - ", fcnt, "  >> Process cnt : ", procCnt_N)
+	if scnt > 0 || smscnt > 0 || lmscnt > 0 {
+		stdlog.Println(user_id, " - Nano Process_N 발송 처리 완료 ( ", group_no, " ) : 성공 - ", scnt, " , SMS - ", smscnt, " , LMS - ", lmscnt, ", 총 - ", tcnt, " : ( Proc Cnt :", pc, ") - END")
 	}
-	procCnt_N--
 }
 
 /*

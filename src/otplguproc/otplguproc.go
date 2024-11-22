@@ -3,27 +3,21 @@ package otplguproc
 import (
 	"database/sql"
 	"fmt"
-	//"strconv"
-
-	//"sync"
-	config "mycs/src/kaoconfig"
-	databasepool "mycs/src/kaodatabasepool"
-
 	"encoding/hex"
 	"regexp"
 	s "strings"
 	"time"
 	"unicode/utf8"
-
 	"context"
-)
 
-var procCnt int
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
+)
 
 func LguProcess(ctx context.Context) {
 	//var wg sync.WaitGroup
 	config.Stdlog.Println("Lgu OTP Process 시작 됨.")
-	procCnt = 0
+	procCnt := 0
 	for {
 
 		if procCnt < 5 {
@@ -52,7 +46,7 @@ func LguProcess(ctx context.Context) {
 				cnterr := databasepool.DB.QueryRowContext(ctx, tickSql).Scan(&count)
 
 				if cnterr != nil && cnterr != sql.ErrNoRows {
-					config.Stdlog.Println("DHN_RESULT Table - select 오류 : " + cnterr.Error())
+					config.Stdlog.Println("Lgu Proc DHN_RESULT Table - select error : " + cnterr.Error())
 					time.Sleep(10 * time.Second)
 				} else {
 					if count.Int64 > 0 {
@@ -61,9 +55,14 @@ func LguProcess(ctx context.Context) {
 
 						upError := updateReqeust(ctx, group_no)
 						if upError != nil {
-							config.Stdlog.Println("Group No Update 오류", group_no)
+							config.Stdlog.Println("Lgu Proc Group No Update error : ", upError, " / group_no : ", group_no)
 						} else {
-							go resProcess(ctx, group_no)
+							go func() {
+								defer func() {
+									procCnt--
+								}()
+								resProcess(ctx, group_no, procCnt)
+							}()
 						}
 					}
 				}
@@ -111,15 +110,14 @@ func updateReqeust(ctx context.Context, group_no string) error {
 	return nil
 }
 
-func resProcess(ctx context.Context, group_no string) {
+func resProcess(ctx context.Context, group_no string, pc int) {
 	defer func(){
 		if r := recover(); r != nil {
-			config.Stdlog.Println("OTPLGU mmsProcess panic 발생 원인 : ", r)
-			procCnt--
+			config.Stdlog.Println("Lgu OTP resProcess panic error : ", r)
 			if err, ok := r.(error); ok {
 				if s.Contains(err.Error(), "connection refused") {
 					for {
-						config.Stdlog.Println("OTPLGU mmsProcess send ping to DB")
+						config.Stdlog.Println("Lgu OTP resProcess send ping to DB")
 						err := databasepool.DB.Ping()
 						if err == nil {
 							break
@@ -131,7 +129,6 @@ func resProcess(ctx context.Context, group_no string) {
 		}
 	}()
 
-	procCnt++
 	var db = databasepool.DB
 	var stdlog = config.Stdlog
 
@@ -178,14 +175,12 @@ func resProcess(ctx context.Context, group_no string) {
 	resrows, err := db.QueryContext(ctx, resquery, group_no)
 
 	if err != nil {
-		stdlog.Println("Lgu OTP Result Table 조회 중 오류 발생")
-		stdlog.Println(err)
+		stdlog.Println("Lgu OTP Result Table select error : ", err)
 		stdlog.Println(resquery)
 	}
 	defer resrows.Close()
 
 	scnt := 0
-	fcnt := 0
 	smscnt := 0
 	lmscnt := 0
 	tcnt := 0
@@ -194,10 +189,6 @@ func resProcess(ctx context.Context, group_no string) {
 		resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check)
 
 		phnstr = phn.String
-
-		if tcnt == 0 {
-			stdlog.Println(group_no, " Lgu OTP 문자발송 처리 시작 : ", "Process cnt : ", procCnt)
-		}
 
 		tcnt++
 		if len(ossmsStrs) > 500 {
@@ -212,7 +203,7 @@ func resProcess(ctx context.Context, group_no string) {
 					if err != nil {
 						msgKey := fmt.Sprintf("%v", ossmsValues[i+4])
 						useridt := fmt.Sprintf("%v", ossmsValues[i+5])
-						stdlog.Println("Lgu OTP SMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
+						stdlog.Println("Lgu OTP SMS Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 						errcodemsg := err.Error()
 						if s.Index(errcodemsg, "1366") > 0 {
 							db.ExecContext(ctx, "update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = ? msgid = ?", useridt, msgKey)
@@ -238,7 +229,7 @@ func resProcess(ctx context.Context, group_no string) {
 					if err != nil {
 						msgKey := fmt.Sprintf("%v", osmmsValues[i+9])
 						useridt := fmt.Sprintf("%v", osmmsValues[i+10])
-						stdlog.Println("Lgu OTP LMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
+						stdlog.Println("Lgu OTP MMS Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 						errcodemsg := err.Error()
 						if s.Index(errcodemsg, "1366") > 0 {
 							db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and msgid = '" + msgKey + "'")
@@ -320,7 +311,7 @@ func resProcess(ctx context.Context, group_no string) {
 				if err != nil {
 					msgKey := fmt.Sprintf("%v", ossmsValues[i+4])
 					useridt := fmt.Sprintf("%v", ossmsValues[i+5])
-					stdlog.Println("Lgu OTP SMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
+					stdlog.Println("Lgu OTP SMS Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 					errcodemsg := err.Error()
 					if s.Index(errcodemsg, "1366") > 0 {
 						db.ExecContext(ctx, "update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = ? and  msgid = ?", useridt, msgKey)
@@ -345,7 +336,7 @@ func resProcess(ctx context.Context, group_no string) {
 				if err != nil {
 					msgKey := fmt.Sprintf("%v", osmmsValues[i+9])
 					useridt := fmt.Sprintf("%v", osmmsValues[i+10])
-					stdlog.Println("Lgu OTP LMS Table Insert 처리 중 오류 발생 : "+err.Error(), " - DHN Msg Key : ", msgKey)
+					stdlog.Println("Lgu OTP MMS Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 					errcodemsg := err.Error()
 					if s.Index(errcodemsg, "1366") > 0 {
 						db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and msgid = '" + msgKey + "'")
@@ -357,10 +348,9 @@ func resProcess(ctx context.Context, group_no string) {
 		}
 	}
 
-	if scnt > 0 || smscnt > 0 || lmscnt > 0 || fcnt > 0 {
-		stdlog.Println(group_no, " Lgu OTP 문자 발송 처리 완료 ( ", tcnt, " ) : 성공 -", scnt, " , SMS -", smscnt, " , LMS -", lmscnt, ", 실패 - ", fcnt, "  >> Process cnt : ", procCnt)
+	if scnt > 0 || smscnt > 0 || lmscnt > 0 {
+		stdlog.Println("Lgu OTP 발송 처리 완료 ( ", group_no, " ) : 성공 -", scnt, " , SMS -", smscnt, " , LMS -", lmscnt, ", 총 - ", tcnt, " : ( Proc Cnt :", pc, ") - END")
 	}
-	procCnt--
 }
 
 func stringSplit(str string, lencnt int) string {
