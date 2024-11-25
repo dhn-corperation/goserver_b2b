@@ -31,7 +31,7 @@ func NanoProcess(ctx context.Context) {
 
 				var count int
 				tickSql := `select
-	length(msgid) as cnt
+	count(msgid) as cnt
 from
 	DHN_RESULT dr
 where

@@ -34,7 +34,7 @@ func LguProcess(ctx context.Context) {
 				var count sql.NullInt64
 				tickSql := `
 				select
-					length(msgid) as cnt
+					count(msgid) as cnt
 				from
 					DHN_RESULT dr
 				where

@@ -31,7 +31,7 @@ func AlimtalkProc(ctx context.Context) {
 			    return
 			default:
 				var count sql.NullInt64
-				cnterr := databasepool.DB.QueryRowContext(ctx, "SELECT LENGTH(msgid) AS cnt FROM DHN_REQUEST_AT WHERE (upper(message_type) = 'AO' or upper(message_type) = 'IO') and send_group IS NULL AND IFNULL(reserve_dt,'00000000000000') <= DATE_FORMAT(NOW(), '%Y%m%d%H%i%S')").Scan(&count)
+				cnterr := databasepool.DB.QueryRowContext(ctx, "SELECT count(msgid) AS cnt FROM DHN_REQUEST_AT WHERE (upper(message_type) = 'AO' or upper(message_type) = 'IO') and send_group IS NULL AND IFNULL(reserve_dt,'00000000000000') <= DATE_FORMAT(NOW(), '%Y%m%d%H%i%S')").Scan(&count)
 				
 				if cnterr != nil && cnterr != sql.ErrNoRows {
 					config.Stdlog.Println("Alimtalk OTP DHN_REQUEST Table - select 오류 : " + cnterr.Error())
@@ -147,7 +147,13 @@ func atsendProcess(group_no string, pc int) {
 
 			case "message_type":
 				if z, ok := (scanArgs[i]).(*sql.NullString); ok {
-					alimtalk.Message_type = s.ToUpper(z.String)
+					mt := ""
+					if s.ToUpper(z.String) == "AO" {
+						mt = "AT"
+					} else if s.ToUpper(z.String) == "IO" {
+						mt = "AI"
+					}
+					alimtalk.Message_type = mt
 				}
 
 			case "profile":
@@ -317,7 +323,7 @@ func atsendProcess(group_no string, pc int) {
 			messageType := s.ToUpper(result["message_type"])
 
 			//result 컬럼 처리
-			if s.EqualFold(messageType, "AT") || !s.EqualFold(resCode, "0000") || (s.EqualFold(messageType, "AI") && s.EqualFold(conf.RESPONSE_METHOD, "push")) {
+			if s.EqualFold(messageType, "AO") || !s.EqualFold(resCode, "0000") || (s.EqualFold(messageType, "IO") && s.EqualFold(conf.RESPONSE_METHOD, "push")) {
 
 				if s.EqualFold(resCode,"0000") {
 					resinsValues = append(resinsValues, "Y") // 
@@ -328,7 +334,7 @@ func atsendProcess(group_no string, pc int) {
 					resinsValues = append(resinsValues, "Y") // 
 				} 
 				
-			} else if s.EqualFold(messageType, "AI") {
+			} else if s.EqualFold(messageType, "IO") {
 				resinsValues = append(resinsValues, "N") // result
 			}
 			resinsValues = append(resinsValues, resCode)
