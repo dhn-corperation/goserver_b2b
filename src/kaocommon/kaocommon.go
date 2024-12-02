@@ -130,6 +130,7 @@ func GetReqAtColumn() []string {
 		"mms_image_id",
 		// "header",
 		// "carousel",
+		"real_send_flag",
 	}
 	return atReqColumn
 }

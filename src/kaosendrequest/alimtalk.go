@@ -320,7 +320,7 @@ func atsendProcess(group_no, user_id string, pc int) {
 			//result 컬럼 처리
 			if s.EqualFold(messageType, "AT") || !s.EqualFold(resCode, "0000") || (s.EqualFold(messageType, "AI") && s.EqualFold(conf.RESPONSE_METHOD, "push")) {
 
-				if s.EqualFold(resCode,"0000") {
+				if s.EqualFold(resCode,"0000") || result["real_send_flag"] == "0" {
 					resinsValues = append(resinsValues, "Y") // 
 				// 1차 카카오 발송 실패 후 2차 발송을 바로 하기 위해서는 이 조건을 맞춰야함
 				} else if len(result["sms_kind"])>=1 {
@@ -374,17 +374,28 @@ func atsendProcess(group_no, user_id string, pc int) {
 func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- krt.ResultStr, alimtalk kakao.Alimtalk, temp krt.ResultStr) {
 	defer reswg.Done()
 
-	resp, err := config.Client.R().
-		SetHeaders(map[string]string{"Content-Type": "application/json"}).
-		SetBody(alimtalk).
-		Post(config.Conf.API_SERVER + "/v3/" + config.Conf.PROFILE_KEY + "/alimtalk/send")
+	if temp.Result["real_send_flag"] == "1" {
+		resp, err := config.Client.R().
+			SetHeaders(map[string]string{"Content-Type": "application/json"}).
+			SetBody(alimtalk).
+			Post(config.Conf.API_SERVER + "/v3/" + config.Conf.PROFILE_KEY + "/alimtalk/send")
 
-	if err != nil {
-		config.Stdlog.Println("alimtalk server request error : ", err, " / serial_number : ", alimtalk.Serial_number)
+		if err != nil {
+			config.Stdlog.Println("alimtalk server request error : ", err, " / serial_number : ", alimtalk.Serial_number)
+		} else {
+			temp.Statuscode = resp.StatusCode()
+			temp.BodyData = resp.Body()
+		}
 	} else {
-		temp.Statuscode = resp.StatusCode()
-		temp.BodyData = resp.Body()
+		temp.Statuscode = 200
+		md, _ := json.Marshal(kakao.KakaoResponse{
+			Code : "8888",
+			Received_at : "",
+			Message : "발송 거부 메시지",
+		})
+		temp.BodyData = md
 	}
+
 	c <- temp
 
 }

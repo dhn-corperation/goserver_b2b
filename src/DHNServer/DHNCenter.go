@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	name        = "DHNCenter"
+	name        = "DHNCenter_b2b_test"
 	description = "대형네트웍스 카카오 Center API"
 	certEmail   = "dhn@dhncorp.co.kr"
 )
