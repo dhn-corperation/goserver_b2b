@@ -113,12 +113,7 @@ func Sender_Create(c *fasthttp.RequestCtx) {
 	token := string(c.Request.Header.Peek("token"))
 	phoneNumber := string(c.Request.Header.Peek("phoneNumber"))
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v3/"+conf.PROFILE_KEY+"/sender/create", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -170,13 +165,7 @@ func Sender_(c *fasthttp.RequestCtx) {
 func Sender_Delete(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/sender/delete", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -201,13 +190,7 @@ func Sender_Delete(c *fasthttp.RequestCtx) {
 func Sender_Recover(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/sender/recover", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -232,13 +215,7 @@ func Sender_Recover(c *fasthttp.RequestCtx) {
 func Template_Create(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/create", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -292,13 +269,7 @@ func Template_(c *fasthttp.RequestCtx) {
 func Template_Request(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/request", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -323,13 +294,7 @@ func Template_Request(c *fasthttp.RequestCtx) {
 func Template_Cancel_Request(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/cancel_request", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -354,13 +319,7 @@ func Template_Cancel_Request(c *fasthttp.RequestCtx) {
 func Template_Update(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 	
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/update", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -385,13 +344,7 @@ func Template_Update(c *fasthttp.RequestCtx) {
 func Template_Stop(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/stop", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -416,13 +369,7 @@ func Template_Stop(c *fasthttp.RequestCtx) {
 func Template_Reuse(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/reuse", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -447,13 +394,7 @@ func Template_Reuse(c *fasthttp.RequestCtx) {
 func Template_Delete(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/delete", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -555,13 +496,7 @@ func Template_Category_(c *fasthttp.RequestCtx) {
 func Template_Dormant_Release(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/dormant/release", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -634,13 +569,7 @@ func Group_Sender(c *fasthttp.RequestCtx) {
 func Group_Sender_Add(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/group/sender/add", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -665,13 +594,7 @@ func Group_Sender_Add(c *fasthttp.RequestCtx) {
 func Group_Sender_Remove(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/group/sender/remove", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -696,13 +619,7 @@ func Group_Sender_Remove(c *fasthttp.RequestCtx) {
 func Channel_Create_(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/create", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -775,13 +692,7 @@ func Channel_(c *fasthttp.RequestCtx) {
 func Channel_Update_(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/update", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -806,13 +717,7 @@ func Channel_Update_(c *fasthttp.RequestCtx) {
 func Channel_Senders_(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/senders", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -837,13 +742,7 @@ func Channel_Senders_(c *fasthttp.RequestCtx) {
 func Channel_Delete_(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/delete", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -893,13 +792,7 @@ func Plugin_CallbackUrls_List(c *fasthttp.RequestCtx) {
 func Plugin_callbackUrl_Create(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/plugin/callbackUrl/create", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -924,13 +817,7 @@ func Plugin_callbackUrl_Create(c *fasthttp.RequestCtx) {
 func Plugin_callbackUrl_Update(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/plugin/callbackUrl/update", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -955,13 +842,7 @@ func Plugin_callbackUrl_Update(c *fasthttp.RequestCtx) {
 func Plugin_callbackUrl_Delete(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/plugin/callbackUrl/delete", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -1536,13 +1417,7 @@ func DM_Carousel_Commerce_Image(c *fasthttp.RequestCtx) {
 func Bizform_upload_(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/bizform/upload", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -1568,13 +1443,7 @@ func Bizform_upload_(c *fasthttp.RequestCtx) {
 func Ft_possible_(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/friendtalk/possible", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -1691,13 +1560,7 @@ func Template_request_with_file(c *fasthttp.RequestCtx) {
 func Template_cancel_approval_(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/cancel_approval", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -1723,13 +1586,7 @@ func Template_cancel_approval_(c *fasthttp.RequestCtx) {
 func Template_convertAddCh_(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/convertAddCh", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -1755,13 +1612,7 @@ func Template_convertAddCh_(c *fasthttp.RequestCtx) {
 func Channel_sender_add_(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/sender/add", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -1788,13 +1639,7 @@ func Channel_sender_add_(c *fasthttp.RequestCtx) {
 func Channel_sender_remove_(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/channel/sender/remove", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -1854,13 +1699,7 @@ func Stat_daily(c *fasthttp.RequestCtx) {
 func GroupTag_create(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/groupTag/create", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -1949,13 +1788,7 @@ func GroupTag_list(c *fasthttp.RequestCtx) {
 func GroupTag_update(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/groupTag/update", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -1981,13 +1814,7 @@ func GroupTag_update(c *fasthttp.RequestCtx) {
 func GroupTag_delete(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/groupTag/delete", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -2013,13 +1840,7 @@ func GroupTag_delete(c *fasthttp.RequestCtx) {
 func Direct_template_create_(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v3/"+conf.PROFILE_KEY+"/direct/template/create", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -2073,13 +1894,7 @@ func Direct_template_update_(c *fasthttp.RequestCtx) {
 
 	code := c.UserValue("code").(string)
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v3/"+conf.PROFILE_KEY+"/direct/template/update/"+code, buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -2133,13 +1948,7 @@ func Direct_template_delete_(c *fasthttp.RequestCtx) {
 func Direct_convert_(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/sender/direct/convert", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -2196,13 +2005,7 @@ func Direct_convert_result(c *fasthttp.RequestCtx) {
 func Direct_bizWallet_change_(c *fasthttp.RequestCtx) {
 	conf := config.Conf
 
-	jsonstr, err := json.Marshal(c.PostBody())
-	if err != nil {
-		c.Error(err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	buff := bytes.NewBuffer(jsonstr)
+	buff := bytes.NewBuffer(c.PostBody())
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v1/"+conf.PROFILE_KEY+"/sender/direct/bizWallet/change", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
