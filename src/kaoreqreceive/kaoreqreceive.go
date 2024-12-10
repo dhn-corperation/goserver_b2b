@@ -2,13 +2,14 @@ package kaoreqreceive
 
 import (
 	"fmt"
-	config "mycs/src/kaoconfig"
-	databasepool "mycs/src/kaodatabasepool"
-	"mycs/src/kaoreqtable"
-	cm "mycs/src/kaocommon"
+	"time"
 	"strconv"
 	s "strings"
-	"time"
+
+	"mycs/src/kaoreqtable"
+	cm "mycs/src/kaocommon"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/valyala/fasthttp"
@@ -87,6 +88,10 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 		//문자 value interface 배열 생성
 		resinsValues := []interface{}{}
 
+		insStrs := []string{}
+		//수신 value interface 배열 생성
+		insValues := []interface{}{}
+
 		//친구톡 insert 컬럼 셋팅
 		reqinsQuery := `insert IGNORE into DHN_REQUEST(`+ftColumnStr+`) values %s`
 
@@ -94,7 +99,10 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 		atreqinsQuery := `insert IGNORE into DHN_REQUEST_AT(`+atColumnStr+`) values %s`
 
 		//문자 insert 컬럼 셋팅
-		resinsquery := `insert IGNORE into DHN_RESULT(`+msgColumnStr+`) values %s`
+		resinsQuery := `insert IGNORE into DHN_RESULT(`+msgColumnStr+`) values %s`
+
+		//수신 insert 컬럼 셋팅
+		insQuery := `insert IGNORE into DHN_RECEPTION(msgid, userid) values %s`
 
 		//temp 테이블 컬럼 셋팅(DHN_RESULT_TEMP : 에러 시 데이터 유실을 막기 위한 테이블)
 		resinstempquery := `insert IGNORE into DHN_RESULT_TEMP(`+msgColumnStr+`) values %s`
@@ -105,6 +113,10 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 
 		//맵핑한 데이터 row 처리
 		for i, _ := range msg {
+
+			insStrs = append(insStrs, "(?,?)")
+			insValues = append(insValues, msg[i].Msgid)
+			insValues = append(insValues, userid)
 
 			var nonce string
 			if len(msg[i].Crypto) > 0 {
@@ -359,6 +371,7 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 				atreqinsValues = append(atreqinsValues, msg[i].MmsImageId)
 				// atreqinsValues = append(atreqinsValues, msg[i].Header)
 				// atreqinsValues = append(atreqinsValues, msg[i].Carousel)
+				atreqinsValues = append(atreqinsValues, msg[i].RealSendFlag)
 			}
 
 			// 500건 단위로 처리한다(클라이언트에서 1000건씩 전송하더라도 지정한 단위의 건수로 insert한다.)
@@ -372,7 +385,11 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 			}
 
 			if len(resinsStrs) >= saveCount {
-				resinsStrs, resinsValues = cm.InsMsgTemp(resinsquery, resinsStrs, resinsValues, true, resinstempquery)
+				resinsStrs, resinsValues = cm.InsMsgTemp(resinsQuery, resinsStrs, resinsValues, true, resinstempquery)
+			}
+
+			if len(insStrs) >= saveCount {
+				insStrs, insValues = cm.InsMsg(insQuery, insStrs, insValues)
 			}
 		}
 		
@@ -386,7 +403,11 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 		}
 
 		if len(resinsStrs) > 0 {
-			resinsStrs, resinsValues = cm.InsMsgTemp(resinsquery, resinsStrs, resinsValues, true, resinstempquery)
+			resinsStrs, resinsValues = cm.InsMsgTemp(resinsQuery, resinsStrs, resinsValues, true, resinstempquery)
+		}
+
+		if len(insStrs) > 0 {
+			insStrs, insValues = cm.InsMsg(insQuery, insStrs, insValues)
 		}
 
 		errlog.Println("발송 메세지 수신 끝 ( ", userid, ") : ", len(msg), startTime)
@@ -409,8 +430,3 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 		c.SetBody(res)
 	}
 }
-
-
-
-
-
