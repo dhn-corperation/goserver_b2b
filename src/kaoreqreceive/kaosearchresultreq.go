@@ -1,14 +1,15 @@
 package kaoreqreceive
 
 import (
-	"database/sql"
-	"time"
 	"fmt"
+	"time"
+	"database/sql"
 	s "strings"
 
+	"mycs/src/kaoresulttable"
+	cm "mycs/src/kaocommon"
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
-	"mycs/src/kaoresulttable"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/valyala/fasthttp"
@@ -110,8 +111,11 @@ func SearchResultReq(c *fasthttp.RequestCtx) {
 			return
 		}
 
+		ids := []string{}
+
 		for i, v := range reqData.Msgid {
 			reqData.Msgid[i] = fmt.Sprintf("'%s'", v)
+			ids = append(ids, v)
 		}
 
 		msgids := s.Join(reqData.Msgid, ", ")
@@ -181,6 +185,7 @@ func SearchResultReq(c *fasthttp.RequestCtx) {
 			}
 
 			masterData := map[string]interface{}{}
+			mid := ""
 
 			for i, v := range columnTypes {
 
@@ -216,10 +221,12 @@ func SearchResultReq(c *fasthttp.RequestCtx) {
 
 				if s.EqualFold(v.Name(), "MSGID") {
 					upmsgids = append(upmsgids, masterData[db2json[s.ToLower(v.Name())]])
+					mid, _ = masterData[db2json[s.ToLower(v.Name())]].(string)
 				}
 			}
 
 			finalRows = append(finalRows, masterData)
+			ids = cm.RemoveValueInPlace(ids, mid)
 		}
 
 		
@@ -236,14 +243,47 @@ func SearchResultReq(c *fasthttp.RequestCtx) {
 
 		}
 
-		res, _ := json.Marshal(map[string]interface{}{
+		unmarshalRes := map[string]interface{}{
 			"code": "00",
 			"message": "성공",
 			"data": map[string]interface{}{
 				"count": len(finalRows),
 				"detail": finalRows,
 			},
-		})
+		}
+
+		if len(ids) > 0 {
+			searchIds := []string{}
+			for _, v := range ids {
+				searchIds = append(searchIds, fmt.Sprintf("'%s'", v))
+			}
+
+			searchSql := `
+				select msgid
+				from DHN_RECEPTION
+				where msgid in (` + s.Join(searchIds, ", ") + `)
+					and userid = '` + userid + `'
+			`
+			searchProc := true
+			searchRow, err := db.Query(searchSql)
+			if err != nil {
+				errcode := err.Error()
+				errlog.Println(userid, " - DHN_RECEPTION 테이블 조회 중 오류 발생 sql : ", searchSql , " / err : ", errcode)
+				searchProc = false
+			}
+			defer searchRow.Close()
+
+			if searchProc {
+				for searchRow.Next() {
+					var msgid sql.NullString
+					searchRow.Scan(&msgid)
+					ids = cm.RemoveValueInPlace(ids, msgid.String)
+				}
+				unmarshalRes["norec"] = ids
+			}
+		}
+
+		res, _ := json.Marshal(unmarshalRes)
 
 		c.SetContentType("application/json")
 		c.SetStatusCode(fasthttp.StatusOK)
