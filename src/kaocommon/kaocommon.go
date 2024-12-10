@@ -359,3 +359,14 @@ func InitDatabaseColumn(columnTypes []*sql.ColumnType, length int) []interface{}
 
 	return scanArgs
 }
+
+func RemoveValueInPlace(slice []string, value string) []string {
+    i := 0
+    for _, v := range slice {
+        if v != value {
+            slice[i] = v
+            i++
+        }
+    }
+    return slice[:i]
+}
