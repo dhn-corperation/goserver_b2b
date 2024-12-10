@@ -371,7 +371,6 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 				atreqinsValues = append(atreqinsValues, msg[i].MmsImageId)
 				// atreqinsValues = append(atreqinsValues, msg[i].Header)
 				// atreqinsValues = append(atreqinsValues, msg[i].Carousel)
-				atreqinsValues = append(atreqinsValues, msg[i].RealSendFlag)
 			}
 
 			// 500건 단위로 처리한다(클라이언트에서 1000건씩 전송하더라도 지정한 단위의 건수로 insert한다.)
