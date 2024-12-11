@@ -89,8 +89,8 @@ func LengthInUTF16(msg string) int {
 }
 
 //발송 전 친구톡, 알림톡 공통 컬럼(알림톡 칼럼, 알림톡의 삽입 테이블 DHN_REQUEST_AT)
-func GetReqAtColumn() []string {
-	atReqColumn := []string{
+func getCommonColumn() []string {
+	reqColumn := []string{
 		"msgid",
 		"userid",
 		"ad_flag",
@@ -128,20 +128,39 @@ func GetReqAtColumn() []string {
 		"currency_type",
 		"title",
 		"mms_image_id",
-		// "header",
-		// "carousel",
+		"header",
+		"attachments",
 	}
-	return atReqColumn
+	return reqColumn
+}
+
+func GetReqAtColumn() []string {
+	reqAtColumn := getCommonColumn()
+	reqAtColumn = append(reqAtColumn, "link")
+	return reqAtColumn
 }
 
 //발송 전 친구톡 추가 칼럼(사입 테이블 : DHN_REQUEST)
 func GetReqFtColumn() []string {
-	ftReqColumn := GetReqAtColumn()
-	ftReqColumn = append(ftReqColumn, "header")
-	ftReqColumn = append(ftReqColumn, "carousel")
-	ftReqColumn = append(ftReqColumn, "att_items")
-	ftReqColumn = append(ftReqColumn, "att_coupon")
-	return ftReqColumn
+	reqFtColumn := getCommonColumn()
+	reqFtColumn = append(reqFtColumn, "carousel")
+	reqFtColumn = append(reqFtColumn, "att_items")
+	reqFtColumn = append(reqFtColumn, "att_coupon")
+	return reqFtColumn
+}
+
+//재발송 전 알림톡 추가 칼럼(사입 테이블 : DHN_REQUEST)
+func GetResendReqAtColumn() []string {
+	resendReqAtColumn := GetReqAtColumn()
+	resendReqAtColumn = append(resendReqAtColumn, "real_msgid")
+	return resendReqAtColumn
+}
+
+//재발송 전 알림톡 추가 칼럼(사입 테이블 : DHN_REQUEST)
+func GetResendReqFtColumn() []string {
+	resendReqFtColumn := GetReqFtColumn()
+	resendReqFtColumn = append(resendReqFtColumn, "real_msgid")
+	return resendReqFtColumn
 }
 
 //발송 전 메시지 삽입 데이터 컬럼(삽입 테이블 DHN_RESULT)
@@ -240,6 +259,9 @@ func GetResAtColumn() []string {
 		"currency_type",
 		"title",
 		"mms_image_id",
+		"header",
+		"attachments",
+		"link",
 	}
 	return atResColumn
 }

@@ -412,7 +412,7 @@ mms_image_id
 			resinsValues = append(resinsValues, result["reg_dt"])
 			resinsValues = append(resinsValues, result["remark1"])
 			resinsValues = append(resinsValues, result["remark2"])
-			resinsValues = append(resinsValues, result["remark3"])
+			resinsValues = append(resinsValues, 1)
 			resinsValues = append(resinsValues, result["remark4"])
 			resinsValues = append(resinsValues, result["remark5"])
 			resinsValues = append(resinsValues, resdtstr) // res_dt

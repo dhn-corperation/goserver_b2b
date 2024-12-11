@@ -9,10 +9,12 @@ type Alimtalk struct {
 	Template_code   string      `json:"template_code"`
 	Message         string      `json:"message"`
 	Title           string      `json:"title,omitempty"`
+	Header          string      `json:"header,omitempty"`
 	Response_method string      `json:"response_method"`
 	Timeout         int         `json:"timeout,omitempty"`
 	Attachment      AttachmentB `json:"attachment,omitempty"`
 	Supplement      Supplement  `json:"supplement,omitempty"`
+	Link            *Link       `json:"link,omitempty"`
 	Channel_key     string      `json:"channel_key,omitempty"`
 	Price           int64       `json:"price,omitempty"`
 	Currency_type   string      `json:"currency_type,omitempty"`
@@ -88,10 +90,44 @@ type Attachment struct {
 
 type AttachmentB struct {
 	Buttons []Button `json:"button,omitempty"`
+	Item_highlights *Item_highlight `json:"item_highlight,omitempty"`
+	Items *Item `json:"item,omitempty"`
+}
+
+type AttachmentC struct {
+	Item_highlights *Item_highlight `json:"item_highlight,omitempty"`
+	Items *Item `json:"item,omitempty"`
+}
+
+type Item_highlight struct {
+	Title string `json:"title,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
+type Item struct {
+	Lists []AtItemList `json:"list,omitempty"`
+	Summary Summary `json:"summary,omitempty"`
+}
+
+type AtItemList struct {
+	Title string `json:"title,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
+type Summary struct {
+	Title string `json:"title,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 
 type Supplement struct {
 	Quick_reply []Quickreply `json:"quick_reply,omitempty"`
+}
+
+type Link struct {
+	Url_mobile string `json:"url_mobile,omitempty"`
+	Url_pc string `json:"url_pc,omitempty"`
+	Scheme_android string `json:"scheme_android,omitempty"`
+	Scheme_ios string `json:"scheme_ios,omitempty"`
 }
 
 type Image struct {
@@ -111,6 +147,11 @@ type AttCoupon struct {
 type KakaoResponse struct {
 	Code        string
 	Received_at string
+	Message     string
+}
+
+type KakaoResponse2 struct {
+	Code        string
 	Message     string
 }
 

@@ -38,6 +38,8 @@ type Reqtable struct {
 	Currencytype string `json:"currencytype"`
 	Title        string `json:"title"`
 	Header       string `json:"header"`
+	Attachments  string `json:"attachments"`
+	Link  		 string `json:"link"`
 	Carousel     string `json:"carousel"`
 	Att_items    string `json:"att_items"`
 	Att_coupon   string `json:"att_coupon"`

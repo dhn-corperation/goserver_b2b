@@ -294,6 +294,7 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 				resinsValues = append(resinsValues, nil) //price
 				resinsValues = append(resinsValues, nil) //currency_type
 				resinsValues = append(resinsValues, msg[i].Header)
+				resinsValues = append(resinsValues, nil) //attachments
 				resinsValues = append(resinsValues, msg[i].Carousel)
 				resinsValues = append(resinsValues, msg[i].MmsImageId)
 			//알림톡 insert values 만들기
@@ -369,8 +370,9 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 				atreqinsValues = append(atreqinsValues, msg[i].Currencytype)
 				atreqinsValues = append(atreqinsValues, msg[i].Title)
 				atreqinsValues = append(atreqinsValues, msg[i].MmsImageId)
-				// atreqinsValues = append(atreqinsValues, msg[i].Header)
-				// atreqinsValues = append(atreqinsValues, msg[i].Carousel)
+				atreqinsValues = append(atreqinsValues, msg[i].Header)
+				atreqinsValues = append(atreqinsValues, msg[i].Attachments)
+				atreqinsValues = append(atreqinsValues, msg[i].Link)
 			}
 
 			// 500건 단위로 처리한다(클라이언트에서 1000건씩 전송하더라도 지정한 단위의 건수로 insert한다.)
