@@ -45,4 +45,5 @@ type Reqtable struct {
 	Att_coupon   string `json:"att_coupon"`
 	MmsImageId   string `json:"mmsimageid"`
 	Crypto       string `json:"crypto"`
+	RealSendFlag string `json:"realsendflag"`
 }

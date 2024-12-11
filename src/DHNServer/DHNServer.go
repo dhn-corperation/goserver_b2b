@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	name        = "DHNServer"
+	name        = "DHNServer_b2b_test"
 	description = "대형네트웍스 카카오 발송 서버"
 )
 

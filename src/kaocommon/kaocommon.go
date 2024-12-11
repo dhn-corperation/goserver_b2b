@@ -137,6 +137,7 @@ func getCommonColumn() []string {
 func GetReqAtColumn() []string {
 	reqAtColumn := getCommonColumn()
 	reqAtColumn = append(reqAtColumn, "link")
+	reqAtColumn = append(reqAtColumn, "real_send_flag")
 	return reqAtColumn
 }
 
