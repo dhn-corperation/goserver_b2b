@@ -471,7 +471,7 @@ func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- krt.ResultStr, alimtalk k
 		temp.Statuscode = 200
 		body.Code = "8888"
 		body.Received_at = ""
-		body.Message = "발송 거무 메시지"
+		body.Message = "발송 거부 메시지"
 		mBody, _ := json.Marshal(body)
 		temp.BodyData = mBody
 	}
