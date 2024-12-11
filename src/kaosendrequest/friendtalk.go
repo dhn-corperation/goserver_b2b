@@ -1,18 +1,19 @@
 package kaosendrequest
 
 import (
-	"database/sql"
-	"encoding/json"
 	"fmt"
-	s "strings"
-	"strconv"
 	"sync"
 	"time"
+	"strconv"
 	"context"
+	"database/sql"
+	"encoding/json"
+	s "strings"
 
 	kakao "mycs/src/kakaojson"
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
+	cm "mycs/src/kaocommon"
 	krt "mycs/src/kaoresulttable"
 )
 
@@ -88,6 +89,10 @@ func ftsendProcess(group_no, user_id string, pc int) {
 			}
 		}
 	}()
+
+	ftColumn := cm.GetResFtColumn()
+	ftColumnStr := s.Join(ftColumn, ",")
+
 	var db = databasepool.DB
 	var conf = config.Conf
 	var stdlog = config.Stdlog
@@ -109,6 +114,7 @@ func ftsendProcess(group_no, user_id string, pc int) {
 		time.Sleep(5 * time.Second)
 	}
 	count := len(columnTypes)
+	initScanArgs := cm.InitDatabaseColumn(columnTypes, count)
 
 	var procCount int
 	procCount = 0
@@ -117,56 +123,7 @@ func ftsendProcess(group_no, user_id string, pc int) {
 
 	resinsStrs := []string{}
 	resinsValues := []interface{}{}
-	resinsquery := `insert IGNORE into DHN_RESULT(
-msgid ,
-userid ,
-ad_flag ,
-button1 ,
-button2 ,
-button3 ,
-button4 ,
-button5 ,
-code ,
-image_link ,
-image_url ,
-kind ,
-message ,
-message_type ,
-msg ,
-msg_sms ,
-only_sms ,
-p_com ,
-p_invoice ,
-phn ,
-profile ,
-reg_dt ,
-remark1 ,
-remark2 ,
-remark3 ,
-remark4 ,
-remark5 ,
-res_dt ,
-reserve_dt ,
-result ,
-s_code ,
-sms_kind ,
-sms_lms_tit ,
-sms_sender ,
-sync ,
-tmpl_id ,
-wide ,
-send_group ,
-supplement ,
-price ,
-currency_type,
-header,
-carousel,
-mms_image_id
-) values %s`
-
-	// friendClient := &http.Client{
-	// 	Timeout: time.Second * 20,
-	// }
+	resinsquery := `insert IGNORE into DHN_RESULT(`+ftColumnStr+`) values %s`
 
 	resultChan := make(chan krt.ResultStr, config.Conf.SENDLIMIT)
 	var reswg sync.WaitGroup

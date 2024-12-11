@@ -158,6 +158,8 @@ func resultProc() {
 
 		}
 	}
+	atrsctx, _ := context.WithCancel(context.Background())
+	go kaosendrequest.AlimtalkResendProc(atrsctx)
 
 	friend_user_list, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST where use_flag = 'Y' and friendtalk='Y'")
 	isFriend := true
