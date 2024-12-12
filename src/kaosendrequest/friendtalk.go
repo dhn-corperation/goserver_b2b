@@ -26,9 +26,9 @@ func FriendtalkProc(user_id string, ctx context.Context) {
 			select {
 			case <- ctx.Done():
 			
-			    config.Stdlog.Println(user_id+" - Friendtalk process가 10초 후에 종료 됨.")
+			    config.Stdlog.Println(user_id, " - Friendtalk process가 10초 후에 종료 됨.")
 			    time.Sleep(10 * time.Second)
-			    config.Stdlog.Println(user_id+" - Friendtalk process 종료 완료")
+			    config.Stdlog.Println(user_id, " - Friendtalk process 종료 완료")
 			    return
 			default:
 						
@@ -37,8 +37,8 @@ func FriendtalkProc(user_id string, ctx context.Context) {
 				cnterr := databasepool.DB.QueryRowContext(ctx, "select count(1) as cnt from DHN_REQUEST  where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid = ? limit 1", user_id).Scan(&count)
 	
 				if cnterr != nil {
+					config.Stdlog.Println(user_id, " - Friendtalk DHN_REQUEST Table - select error : " + cnterr.Error())
 					time.Sleep(10 * time.Second)
-					//config.Stdlog.Println("DHN_REQUEST Table - select 오류 : " + cnterr.Error())
 				} else {
 	
 					if count > 0 {
@@ -48,14 +48,14 @@ func FriendtalkProc(user_id string, ctx context.Context) {
 						updateRows, err := databasepool.DB.ExecContext(ctx, "update DHN_REQUEST set send_group = ? where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid = ? limit ?", group_no, user_id, strconv.Itoa(config.Conf.SENDLIMIT))
 				
 						if err != nil {
-							config.Stdlog.Println(user_id, " - 친구톡 Request Table - send_group Update 오류")
+							config.Stdlog.Println(user_id, " - Friendtalk Request Table - send_group Update 오류")
 						}
 				
 						rowcnt, _ := updateRows.RowsAffected()
 				
 						if rowcnt > 0 {
 							ftprocCnt ++
-							config.Stdlog.Println(user_id, " - 친구톡 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ( Proc Cnt :", ftprocCnt, ") - START")
+							config.Stdlog.Println(user_id, " - Friendtalk 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ( Proc Cnt :", ftprocCnt, ") - START")
 							go func() {
 								defer func() {
 									ftprocCnt--
@@ -93,6 +93,9 @@ func ftsendProcess(group_no, user_id string, pc int) {
 	ftColumn := cm.GetResFtColumn()
 	ftColumnStr := s.Join(ftColumn, ",")
 
+	resendFtColumn := cm.GetResendReqFtColumn()
+	resendFtColumnStr := s.Join(resendFtColumn, ",")
+
 	var db = databasepool.DB
 	var conf = config.Conf
 	var stdlog = config.Stdlog
@@ -123,33 +126,21 @@ func ftsendProcess(group_no, user_id string, pc int) {
 
 	resinsStrs := []string{}
 	resinsValues := []interface{}{}
-	resinsquery := `insert IGNORE into DHN_RESULT(`+ftColumnStr+`) values %s`
+	resinsQuery := `insert IGNORE into DHN_RESULT(`+ftColumnStr+`) values %s`
+
+	ftreqinsStrs := []string{}
+	ftreqinsValues := []interface{}{}
+	ftreqinsQuery := `insert IGNORE into DHN_REQUEST_RESEND(`+resendFtColumnStr+`) values %s`
 
 	resultChan := make(chan krt.ResultStr, config.Conf.SENDLIMIT)
 	var reswg sync.WaitGroup
 
 	for reqrows.Next() {
-		scanArgs := make([]interface{}, count)
-
-		for i, v := range columnTypes {
-
-			switch v.DatabaseTypeName() {
-			case "VARCHAR", "TEXT", "UUID", "TIMESTAMP":
-				scanArgs[i] = new(sql.NullString)
-				break
-			case "BOOL":
-				scanArgs[i] = new(sql.NullBool)
-				break
-			case "INT4":
-				scanArgs[i] = new(sql.NullInt64)
-				break
-			default:
-				scanArgs[i] = new(sql.NullString)
-			}
-		}
+		scanArgs := initScanArgs
 
 		err := reqrows.Scan(scanArgs...)
 		if err != nil {
+			errlog.Println(user_id, " - ftsendProcess column scan error : ", err, " / group_no : ", group_no)
 			time.Sleep(5 * time.Second)
 		}
 
@@ -224,9 +215,7 @@ func ftsendProcess(group_no, user_id string, pc int) {
 						tcarlist.Attachment = catt
 						carousel.List = append(carousel.List, tcarlist)
 					}
-					//fmt.Println(len(carousel.List))
 					if len(carousel.List) > 0 {
-						//fmt.Println(carousel)
 						friendtalk.Carousel = &carousel
 					}  
 				}
@@ -245,7 +234,7 @@ func ftsendProcess(group_no, user_id string, pc int) {
 				if z, ok := (scanArgs[i]).(*sql.NullString); ok {
 					error := json.Unmarshal([]byte(z.String), &itemList)
 					if error == nil {
-						attache.Item    = &itemList
+						attache.Item = &itemList
 					}
 				}
 
@@ -253,7 +242,7 @@ func ftsendProcess(group_no, user_id string, pc int) {
 				if z, ok := (scanArgs[i]).(*sql.NullString); ok {
 					error := json.Unmarshal([]byte(z.String), &coupon)
 					if error == nil {
-						attache.Coupon    = &coupon
+						attache.Coupon = &coupon
 					}
 				}
 
@@ -297,8 +286,6 @@ func ftsendProcess(group_no, user_id string, pc int) {
 			}
 		}
 
-		//result["message_type"] = friendtalk.Message_type
-
 		attache.Buttons = button
 		if len(image.Img_url) > 0 {
 			attache.Ftimage = &image
@@ -308,43 +295,39 @@ func ftsendProcess(group_no, user_id string, pc int) {
 		if s.EqualFold(conf.DEBUG,"Y") {
 		  	jsonstr, _ := json.Marshal(friendtalk)
 			stdlog.Println(string(jsonstr))
-		  //fmt.Println(string(jsonstr))
 		}
-		//buff := bytes.NewBuffer(jsonstr)
 
-		//restReq, err := http.NewRequest("POST", conf.API_SERVER+"v3/"+conf.PROFILE_KEY+"/friendtalk/send", buff)
-		// if err != nil {
-		// 	errlog.Println(err)
-		// 	errlog.Println("메시지 서버 호출 오류")
-		// } else {
-
-		//restReq.Header.Add("Content-Type", "application/json")
-
-		//resp, err := friendClient.Do(restReq)
 		var temp krt.ResultStr
 		temp.Result = result
-		
-		//return
-		
 		reswg.Add(1)
 		go sendKakao(&reswg, resultChan, friendtalk, temp)
 
 	}
+
 	reswg.Wait()
-	//fmt.Println("Size :", len(resultChan))
 	chanCnt := len(resultChan)
+
+	ftQmarkStr := cm.GetQuestionMark(ftColumn)
+	resendFtQmarkStr := cm.GetQuestionMark(resendFtColumn)
+
+	nineErrCnt := 0
+
 	for i := 0; i < chanCnt; i++ {
+
 		resChan := <-resultChan
-		//resp := resChan.Statuscode
 		result := resChan.Result
-		//fmt.Println(result["msgid"], " / ", len(resultChan), " / ", i, "/ ", resChan.Statuscode)
+
 		if resChan.Statuscode == 200 {
-			//str := string(resChan.BodyData)
+
 			var kakaoResp kakao.KakaoResponse
 			json.Unmarshal(resChan.BodyData, &kakaoResp)
+
 			var resdt = time.Now()
 			var resdtstr = fmt.Sprintf("%4d-%02d-%02d %02d:%02d:%02d", resdt.Year(), resdt.Month(), resdt.Day(), resdt.Hour(), resdt.Minute(), resdt.Second())
-			resinsStrs = append(resinsStrs, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+
+			var resCode = kakaoResp.Code
+
+			resinsStrs = append(resinsStrs, "("+ftQmarkStr+")")
 			resinsValues = append(resinsValues, result["msgid"])
 			resinsValues = append(resinsValues, result["userid"])
 			resinsValues = append(resinsValues, result["ad_flag"])
@@ -353,7 +336,7 @@ func ftsendProcess(group_no, user_id string, pc int) {
 			resinsValues = append(resinsValues, result["button3"])
 			resinsValues = append(resinsValues, result["button4"])
 			resinsValues = append(resinsValues, result["button5"])
-			resinsValues = append(resinsValues, kakaoResp.Code) // 결과 code
+			resinsValues = append(resinsValues, resCode) // 결과 code
 			resinsValues = append(resinsValues, result["image_link"])
 			resinsValues = append(resinsValues, result["image_url"])
 			resinsValues = append(resinsValues, nil)               // kind
@@ -375,7 +358,7 @@ func ftsendProcess(group_no, user_id string, pc int) {
 			resinsValues = append(resinsValues, resdtstr) // res_dt
 			resinsValues = append(resinsValues, result["reserve_dt"])
 
-			if s.EqualFold(kakaoResp.Code,"0000") {
+			if s.EqualFold(resCode,"0000") {
 				resinsValues = append(resinsValues, "Y") // 
 			} else if len(result["sms_kind"])>=1 {
 				resinsValues = append(resinsValues, "P") // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
@@ -383,7 +366,7 @@ func ftsendProcess(group_no, user_id string, pc int) {
 				resinsValues = append(resinsValues, "Y") // 
 			} 
 
-			resinsValues = append(resinsValues, kakaoResp.Code)
+			resinsValues = append(resinsValues, resCode)
 			resinsValues = append(resinsValues, result["sms_kind"])
 			resinsValues = append(resinsValues, result["sms_lms_tit"])
 			resinsValues = append(resinsValues, result["sms_sender"])
@@ -397,47 +380,60 @@ func ftsendProcess(group_no, user_id string, pc int) {
 			resinsValues = append(resinsValues, result["header"])
 			resinsValues = append(resinsValues, result["carousel"])
 			resinsValues = append(resinsValues, result["mms_image_id"])
+			resinsValues = append(resinsValues, result["att_items"])
+			resinsValues = append(resinsValues, result["att_coupon"])
 
 			if len(resinsStrs) >= 500 {
-				stmt := fmt.Sprintf(resinsquery, s.Join(resinsStrs, ","))
-				// fmt.Println(stmt)
-				_, err := databasepool.DB.Exec(stmt, resinsValues...)
-
-				if err != nil {
-					stdlog.Println("Result Table Insert 처리 중 오류 발생 " + err.Error())
-				}
-
-				resinsStrs = nil
-				resinsValues = nil
+				resinsStrs, resinsValues = cm.InsMsg(resinsQuery, resinsStrs, resinsValues)
 			}
 
+		} else if resChan.Statuscode == 500 {
+
+			var kakaoResp2 kakao.KakaoResponse2
+			json.Unmarshal(resChan.BodyData, &kakaoResp2)
+			
+			var resCode = kakaoResp2.Code
+
+			if s.EqualFold(resCode, "9999"){
+				nineErrCnt++
+				ftreqinsStrs, ftreqinsValues = insAtErrResend(result, ftreqinsStrs, ftreqinsValues, resendFtQmarkStr)
+
+				if len(ftreqinsStrs) >= 500 {
+					stmt := fmt.Sprintf(ftreqinsQuery, s.Join(ftreqinsStrs, ","))
+					_, err := databasepool.DB.Exec(stmt, ftreqinsValues...)
+
+					if err != nil {
+						stdlog.Println(user_id, " - Friendtalk 9999 resend - Resend Table Insert 처리 중 오류 발생 ", err)
+					}
+
+					ftreqinsStrs = nil
+					ftreqinsValues = nil
+				}
+			}
 		} else {
-			stdlog.Println("친구톡 서버 처리 오류 : ( ", string(resChan.BodyData), " )", result["msgid"])
+			stdlog.Println(user_id, " - Friendtalk server process error : ( ", string(resChan.BodyData), " )", result["msgid"])
 			db.Exec("update DHN_REQUEST set send_group = null where msgid = '" + result["msgid"] + "'")
 		}
-		//}
-
-		//}
 
 		procCount++
 	}
 
-	if len(resinsStrs) > 0 {
-		stmt := fmt.Sprintf(resinsquery, s.Join(resinsStrs, ","))
-		// fmt.Println(stmt)
-		_, err := databasepool.DB.Exec(stmt, resinsValues...)
+	if len(ftreqinsStrs) > 0 {
+		stmt := fmt.Sprintf(ftreqinsQuery, s.Join(ftreqinsStrs, ","))
+		_, err := databasepool.DB.Exec(stmt, ftreqinsValues...)
 
 		if err != nil {
-			stdlog.Println(user_id, " - 친구톡 Result Table Insert 처리 중 오류 발생 ", err)
+			stdlog.Println(user_id, " - Friendtalk 9999 resend - Resend Table Insert 처리 중 오류 발생 ", err)
 		}
+	}
 
-		resinsStrs = nil
-		resinsValues = nil
+	if len(resinsStrs) > 0 {
+		resinsStrs, resinsValues = cm.InsMsg(resinsQuery, resinsStrs, resinsValues)
 	}
 
 	db.Exec("delete from DHN_REQUEST where send_group = '" + group_no + "'")
 
-	stdlog.Println(user_id, " - 친구톡 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건  ( Proc Cnt :", pc, ") - END" )
+	stdlog.Println(user_id, " - Friendtalk 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건  ( Proc Cnt :", pc, ") - END" )
 	
 
 }
@@ -450,15 +446,67 @@ func sendKakao(reswg *sync.WaitGroup, c chan<- krt.ResultStr, friendtalk kakao.F
 		SetBody(friendtalk).
 		Post(config.Conf.API_SERVER + "v3/" + config.Conf.PROFILE_KEY + "/friendtalk/send")
 
-	//fmt.Println("SEND :", resp, err)
-
 	if err != nil {
 		config.Stdlog.Println("친구톡 메시지 서버 호출 오류 : ", err)
-		//	return nil
 	} else {
 		temp.Statuscode = resp.StatusCode()
 		temp.BodyData = resp.Body()
 	}
 	c <- temp
 
+}
+
+func insFtErrResend(result map[string]string, rs []string, rv []interface{}, qm string) ([]string, []interface{}) {
+	rs = append(rs, "("+qm+")")
+	rv = append(rv, result["msgid"] + "_rs")
+	rv = append(rv, result["userid"])
+	rv = append(rv, result["ad_flag"])
+	rv = append(rv, result["button1"])
+	rv = append(rv, result["button2"])
+	rv = append(rv, result["button3"])
+	rv = append(rv, result["button4"])
+	rv = append(rv, result["button5"])
+	rv = append(rv, result["image_link"])
+	rv = append(rv, result["image_url"])
+	rv = append(rv, result["message_type"])
+	rv = append(rv, result["msg"])
+	rv = append(rv, result["msg_sms"])
+	rv = append(rv, result["only_sms"])
+	rv = append(rv, result["phn"])
+	rv = append(rv, result["profile"])
+	rv = append(rv, result["p_com"])
+	rv = append(rv, result["p_invoice"])
+	rv = append(rv, result["reg_dt"])
+	rv = append(rv, result["remark1"])
+	rv = append(rv, result["remark2"])
+	rv = append(rv, 1)
+	rv = append(rv, result["remark4"])
+	rv = append(rv, result["remark5"])
+	rv = append(rv, result["reserve_dt"])
+	rv = append(rv, result["sms_kind"])
+	rv = append(rv, result["sms_lms_tit"])
+	rv = append(rv, result["sms_sender"])
+	rv = append(rv, result["s_code"])
+	rv = append(rv, result["tmpl_id"])
+	rv = append(rv, result["wide"])
+	rv = append(rv, nil)
+	rv = append(rv, result["supplement"])
+
+	if len(result["price"]) > 0 {
+		price, _ := strconv.Atoi(result["price"])
+		rv = append(rv, price)
+	} else {
+		rv = append(rv, nil)
+	}
+
+	rv = append(rv, result["currency_type"])
+	rv = append(rv, result["title"])
+    rv = append(rv, result["header"])
+    rv = append(rv, result["attachments"])
+    rv = append(rv, result["carousel"])
+    rv = append(rv, result["att_items"])
+    rv = append(rv, result["att_coupon"])
+    rv = append(rv, result["msgid"])
+
+	return rs, rv
 }

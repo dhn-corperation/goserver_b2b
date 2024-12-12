@@ -124,7 +124,7 @@ func atsendProcess(group_no, user_id string, pc int) {
 
 	atreqinsStrs := []string{}
 	atreqinsValues := []interface{}{}
-	atreqinsQuery := `insert IGNORE into DHN_RESULT_RESEND(`+resendAtColumnStr+`) values %s`
+	atreqinsQuery := `insert IGNORE into DHN_REQUEST_AT_RESEND(`+resendAtColumnStr+`) values %s`
 
 	resultChan := make(chan krt.ResultStr, config.Conf.SENDLIMIT)
 	var reswg sync.WaitGroup
@@ -392,11 +392,10 @@ func atsendProcess(group_no, user_id string, pc int) {
 			resinsValues = append(resinsValues, result["attachments"])
 			resinsValues = append(resinsValues, result["link"])
 
-
-			//Center에서도 사용하고 있는 함수이므로 공용 라이브러리 생성이 필요함
 			if len(resinsStrs) >= 500 {
 				resinsStrs, resinsValues = cm.InsMsg(resinsQuery, resinsStrs, resinsValues)
 			}
+			
 		} else if resChan.Statuscode == 500 {
 
 			var kakaoResp2 kakao.KakaoResponse2

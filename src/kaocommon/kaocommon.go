@@ -140,7 +140,7 @@ func GetReqAtColumn() []string {
 	return reqAtColumn
 }
 
-//발송 전 친구톡 추가 칼럼(사입 테이블 : DHN_REQUEST)
+//발송 전 친구톡 추가 칼럼(삽입 테이블 : DHN_REQUEST)
 func GetReqFtColumn() []string {
 	reqFtColumn := getCommonColumn()
 	reqFtColumn = append(reqFtColumn, "carousel")
@@ -149,14 +149,14 @@ func GetReqFtColumn() []string {
 	return reqFtColumn
 }
 
-//재발송 전 알림톡 추가 칼럼(사입 테이블 : DHN_REQUEST)
+//재발송 전 알림톡 추가 칼럼(삽입 테이블 : DHN_REQUEST_AT_RESEND)
 func GetResendReqAtColumn() []string {
 	resendReqAtColumn := GetReqAtColumn()
 	resendReqAtColumn = append(resendReqAtColumn, "real_msgid")
 	return resendReqAtColumn
 }
 
-//재발송 전 알림톡 추가 칼럼(사입 테이블 : DHN_REQUEST)
+//재발송 전 알림톡 추가 칼럼(삽입 테이블 : DHN_REQUEST_RESEND)
 func GetResendReqFtColumn() []string {
 	resendReqFtColumn := GetReqFtColumn()
 	resendReqFtColumn = append(resendReqFtColumn, "real_msgid")
@@ -312,6 +312,8 @@ func GetResFtColumn() []string {
 		"header",
 		"carousel",
 		"mms_image_id",
+		"att_items",
+		"att_coupon",
 	}
 	return ftResColumn
 }
