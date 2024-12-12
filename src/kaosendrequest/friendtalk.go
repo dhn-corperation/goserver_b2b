@@ -97,7 +97,6 @@ func ftsendProcess(group_no, user_id string, pc int) {
 	resendFtColumnStr := s.Join(resendFtColumn, ",")
 
 	var db = databasepool.DB
-	var conf = config.Conf
 	var stdlog = config.Stdlog
 	var errlog = config.Stdlog
 
@@ -291,11 +290,6 @@ func ftsendProcess(group_no, user_id string, pc int) {
 			attache.Ftimage = &image
 		}
 		friendtalk.Attachment = attache
-		
-		if s.EqualFold(conf.DEBUG,"Y") {
-		  	jsonstr, _ := json.Marshal(friendtalk)
-			stdlog.Println(string(jsonstr))
-		}
 
 		var temp krt.ResultStr
 		temp.Result = result
@@ -396,7 +390,7 @@ func ftsendProcess(group_no, user_id string, pc int) {
 
 			if s.EqualFold(resCode, "9999"){
 				nineErrCnt++
-				ftreqinsStrs, ftreqinsValues = insAtErrResend(result, ftreqinsStrs, ftreqinsValues, resendFtQmarkStr)
+				ftreqinsStrs, ftreqinsValues = insFtErrResend(result, ftreqinsStrs, ftreqinsValues, resendFtQmarkStr)
 
 				if len(ftreqinsStrs) >= 500 {
 					stmt := fmt.Sprintf(ftreqinsQuery, s.Join(ftreqinsStrs, ","))
@@ -501,6 +495,7 @@ func insFtErrResend(result map[string]string, rs []string, rv []interface{}, qm 
 
 	rv = append(rv, result["currency_type"])
 	rv = append(rv, result["title"])
+	rv = append(rv, result["mms_image_id"])
     rv = append(rv, result["header"])
     rv = append(rv, result["attachments"])
     rv = append(rv, result["carousel"])

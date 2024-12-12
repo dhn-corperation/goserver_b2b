@@ -1,16 +1,16 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
 	"os"
-	"os/signal"
+	"fmt"
+	"sort"
 	"syscall"
+	"context"
+	"strconv"
+	"os/signal"
+	"database/sql"
+	s "strings"
 
-	_ "github.com/go-sql-driver/mysql"
-
-	config "mycs/src/kaoconfig"
-	databasepool "mycs/src/kaodatabasepool"
 
 	"mycs/src/kaosendrequest"
 	"mycs/src/nanoproc"
@@ -20,16 +20,12 @@ import (
 	"mycs/src/otpatproc"
 	"mycs/src/otplguproc"
 	"mycs/src/otpnanoproc"
-
-	"strconv"
-	s "strings"
+	config "mycs/src/kaoconfig"
+	databasepool "mycs/src/kaodatabasepool"
 
 	"github.com/gin-gonic/gin"
 	"github.com/takama/daemon"
-
-	"context"
-	"sort"
-
+	_ "github.com/go-sql-driver/mysql"
 )
 
 const (
@@ -189,6 +185,8 @@ func resultProc() {
 
 		} 
 	}
+	ftrsctx, _ := context.WithCancel(context.Background())
+	go kaosendrequest.FriendtalkResendProc(ftrsctx)
 
 	if s.EqualFold(config.Conf.RESPONSE_METHOD, "polling") {
 

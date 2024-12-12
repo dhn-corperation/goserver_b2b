@@ -16,22 +16,24 @@ import (
 
 type Config struct {
 	DNS              string
+
 	SSL_FLAG         string
 	SSL_PORT		 string
+
 	DB               string
 	DBURL            string
+	SENDLIMIT        int
+
 	CENTER_PORT      string
 	SERVER_PORT      string
+	
 	PROFILE_KEY      string
 	API_SERVER       string
 	CENTER_SERVER    string
 	IMAGE_SERVER     string
-	CHANNEL          string
 	RESPONSE_METHOD  string
-	SENDLIMIT        int
-	DEBUG            string
+	CHANNEL          string
 	KISA_CODE        string
-	IS_OTP			 string
 }
 
 var Conf Config
@@ -178,17 +180,32 @@ func createConfig(dirName string) error {
 		return fmt.Errorf("Config file create fail: %w", err)
 	}
 	configData := []string{
-		`# DB 관련`,
+		`# DNS`,
+		`DNS = "주소"`,
+		``,
+		`# SSL`,
+		`SSL_FLAG = "Y" or "N"`,
+		`SSL_PORT = "포트"`,
+		``,
+		`# DB`,
 		`DB = "DB종류"`,
 		`DBURL = "사용자:패스워드@tcp(000.000.000.000:포트번호)/데이터베이스"`,
+		`SENDLIMIT = 숫자`,
 		``,
-		`# kakao Server`,
-		`PORT = "서버 포트번호"`,
+		`# AGENT`,
+		`CENTER_PORT = "센터서버 포트번호"`,
+		`SERVER_PORT = "발송서버 포트번호"`,
+		``,
+		`# KAKAO`,
 		`PROFILE_KEY = "프로필키"`,
 		`API_SERVER = "https://bzm-api.kakao.com/"`,
 		`CENTER_SERVER = "https://bzm-center.kakao.com/"`,
 		`IMAGE_SERVER = "https://bzm-upload-api.kakao.com/"`,
+		`RESPONSE_METHOD = "push"`,
 		`CHANNEL = "채널명"`,
+		``,
+		`# SMS`,
+		`KISA_CODE = "KISA코드"`,
 		``,
 		`#추가할 설정 내용 필요에 따라 작성`,
 	}

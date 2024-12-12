@@ -1,24 +1,20 @@
 package main
 
 import (
-	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
-	"crypto/tls"
-	// "net/http"
-	// "time"
-	"runtime/debug"
-	"time"
+	"fmt"
 	"log"
+	"time"
 	"context"
-	// "database/sql"
+	"syscall"
+	"os/signal"
+	"crypto/tls"
+	"runtime/debug"
 
+	"mycs/src/kaoreqreceive"
+	"mycs/src/kaocenter"
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
-	"mycs/src/kaoreqreceive"
-
-	"mycs/src/kaocenter"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/takama/daemon"
