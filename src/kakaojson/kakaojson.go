@@ -105,8 +105,8 @@ type Item_highlight struct {
 }
 
 type Item struct {
-	Lists []AtItemList `json:"list,omitempty"`
-	Summary Summary `json:"summary,omitempty"`
+	Lists *[]AtItemList `json:"list,omitempty"`
+	Summary *Summary `json:"summary,omitempty"`
 }
 
 type AtItemList struct {
