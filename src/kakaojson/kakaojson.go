@@ -124,10 +124,10 @@ type Supplement struct {
 }
 
 type Link struct {
-	Url_mobile string `json:"url_mobile,omitempty"`
-	Url_pc string `json:"url_pc,omitempty"`
-	Scheme_android string `json:"scheme_android,omitempty"`
-	Scheme_ios string `json:"scheme_ios,omitempty"`
+	Url_mobile *string `json:"url_mobile,omitempty"`
+	Url_pc *string `json:"url_pc,omitempty"`
+	Scheme_android *string `json:"scheme_android,omitempty"`
+	Scheme_ios *string `json:"scheme_ios,omitempty"`
 }
 
 type Image struct {
