@@ -208,6 +208,7 @@ func GetReqMsgColumn() []string {
 		"price",
 		"currency_type",
 		"header",
+		"attachments",
 		"carousel",
 		"mms_image_id",
 	}
