@@ -268,6 +268,58 @@ func GetResAtColumn() []string {
 	return atResColumn
 }
 
+func GetResFtColumn() []string {
+	ftResColumn := []string{
+		"msgid",
+		"userid",
+		"ad_flag",
+		"button1",
+		"button2",
+		"button3",
+		"button4",
+		"button5",
+		"code",
+		"image_link",
+		"image_url",
+		"kind",
+		"message",
+		"message_type",
+		"msg",
+		"msg_sms",
+		"only_sms",
+		"p_com",
+		"p_invoice",
+		"phn",
+		"profile",
+		"reg_dt",
+		"remark1",
+		"remark2",
+		"remark3",
+		"remark4",
+		"remark5",
+		"res_dt",
+		"reserve_dt",
+		"result",
+		"s_code",
+		"sms_kind",
+		"sms_lms_tit",
+		"sms_sender",
+		"sync",
+		"tmpl_id",
+		"wide",
+		"send_group",
+		"supplement",
+		"price",
+		"currency_type",
+		"header",
+		"carousel",
+		"mms_image_id",
+		"att_items",
+		"att_coupon",
+	}
+	return ftResColumn
+}
+
 //물음표 컬럼 개수만큼 조인
 func GetQuestionMark(column []string) string {
 	var placeholders []string
