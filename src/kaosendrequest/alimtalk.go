@@ -235,6 +235,7 @@ func atsendProcess(group_no, user_id string, pc int) {
 				}
 			case "attachments":
 				if z, ok := (scanArgs[i]).(*sql.NullString); ok {
+					stdlog.Println(z.String)
 					if len(z.String) > 0 {
 						json.Unmarshal([]byte(z.String), &attache2)
 					}
