@@ -29,6 +29,7 @@ type Config struct {
 	CHANNEL          string
 	RESPONSE_METHOD  string
 	SENDLIMIT        int
+	REALLIMIT 		int
 	DEBUG            string
 	KISA_CODE        string
 	IS_OTP			 string
@@ -40,6 +41,7 @@ var BasePath string
 var IsRunning bool = true
 var ResultLimit int = 1000
 var Client *resty.Client
+var RL int
 
 func InitConfig() {
 	realpath, _ := os.Executable()
@@ -74,6 +76,15 @@ func InitConfig() {
 		SetTLSClientConfig(&tls.Config{MinVersion: tls.VersionTLS12}).
 		SetRetryCount(3).
 		SetRetryWaitTime(2 * time.Second)
+
+	RL = Conf.REALLIMIT
+
+	go func(){
+		for{
+			time.Sleep(1 * time.Second)
+			RL = Conf.REALLIMIT
+		}
+	}()
 
 }
 

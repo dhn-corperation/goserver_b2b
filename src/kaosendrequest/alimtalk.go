@@ -21,48 +21,48 @@ func AlimtalkProc(user_id string, ctx context.Context) {
 	atprocCnt := 0
 	config.Stdlog.Println(user_id, " - Alimtalk Process 시작 됨.") 
 	for {
-		if atprocCnt < 10 {
+		// if atprocCnt < 10 {
 			
-			select {
-			case <- ctx.Done():
-			    config.Stdlog.Println(user_id, " - Alimtalk process가 10초 후에 종료 됨.")
-			    time.Sleep(10 * time.Second)
-			    config.Stdlog.Println(user_id, " - Alimtalk process 종료 완료")
-			    return
-			default:
-				var count sql.NullInt64
-				cnterr := databasepool.DB.QueryRowContext(ctx, "SELECT count(1) AS cnt FROM DHN_REQUEST_AT WHERE (upper(message_type) = 'AT' or upper(message_type) = 'AI') and send_group IS NULL AND IFNULL(reserve_dt,'00000000000000') <= DATE_FORMAT(NOW(), '%Y%m%d%H%i%S') AND userid=? limit 1", user_id).Scan(&count)
-				
-				if cnterr != nil && cnterr != sql.ErrNoRows {
-					config.Stdlog.Println(user_id, " - Alimtalk DHN_REQUEST Table - select error : " + cnterr.Error())
-					time.Sleep(10 * time.Second)
-				} else {
-					if count.Valid && count.Int64 > 0 {		
-						var startNow = time.Now()
-						var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
-						
-						updateRows, err := databasepool.DB.ExecContext(ctx, "update DHN_REQUEST_AT set send_group = ? where (upper(message_type) = 'AT' or upper(message_type) = 'AI') and send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid = ?  limit ?", group_no, user_id, strconv.Itoa(config.Conf.SENDLIMIT))
-				
-						if err != nil {
-							config.Stdlog.Println(user_id," - Alimtalk send_group Update error : ", err, " / group_no : ", group_no)
-						}
-				
-						rowcnt, _ := updateRows.RowsAffected()
-				
-						if rowcnt > 0 {
-							atprocCnt++
-							config.Stdlog.Println(user_id, " - Alimtalk 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ( Proc Cnt :", atprocCnt, ") - START")
-							go func() {
-								defer func() {
-									atprocCnt--
-								}()
-								atsendProcess(group_no, user_id, atprocCnt)
+		select {
+		case <- ctx.Done():
+		    config.Stdlog.Println(user_id, " - Alimtalk process가 10초 후에 종료 됨.")
+		    time.Sleep(10 * time.Second)
+		    config.Stdlog.Println(user_id, " - Alimtalk process 종료 완료")
+		    return
+		default:
+			var count sql.NullInt64
+			cnterr := databasepool.DB.QueryRowContext(ctx, "SELECT count(1) AS cnt FROM (SELECT userid FROM DHN_REQUEST_AT WHERE (upper(message_type) = 'AT' or upper(message_type) = 'AI') and send_group IS NULL AND IFNULL(reserve_dt,'00000000000000') <= DATE_FORMAT(NOW(), '%Y%m%d%H%i%S') AND userid=? limit 1) a", user_id).Scan(&count)
+			
+			if cnterr != nil && cnterr != sql.ErrNoRows {
+				config.Stdlog.Println(user_id, " - Alimtalk DHN_REQUEST Table - select error : " + cnterr.Error())
+				time.Sleep(10 * time.Second)
+			} else {
+				if count.Valid && count.Int64 > 0 {		
+					var startNow = time.Now()
+					var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
+					
+					updateRows, err := databasepool.DB.ExecContext(ctx, "update DHN_REQUEST_AT set send_group = ? where (upper(message_type) = 'AT' or upper(message_type) = 'AI') and send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid = ?  limit ?", group_no, user_id, strconv.Itoa(config.Conf.SENDLIMIT))
+			
+					if err != nil {
+						config.Stdlog.Println(user_id," - Alimtalk send_group Update error : ", err, " / group_no : ", group_no)
+					}
+			
+					rowcnt, _ := updateRows.RowsAffected()
+			
+					if rowcnt > 0 {
+						atprocCnt++
+						config.Stdlog.Println(user_id, " - Alimtalk 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ( Proc Cnt :", atprocCnt, ") - START")
+						go func() {
+							defer func() {
+								atprocCnt--
 							}()
-						}
+							atsendProcess(group_no, user_id, atprocCnt)
+						}()
 					}
 				}
 			}
 		}
+		// }
 	}
 
 }
@@ -235,7 +235,6 @@ func atsendProcess(group_no, user_id string, pc int) {
 				}
 			case "attachments":
 				if z, ok := (scanArgs[i]).(*sql.NullString); ok {
-					stdlog.Println(z.String)
 					if len(z.String) > 0 {
 						json.Unmarshal([]byte(z.String), &attache2)
 					}
@@ -453,6 +452,13 @@ func atsendProcess(group_no, user_id string, pc int) {
 //카카오 서버에 발송을 요청한다.
 func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- krt.ResultStr, alimtalk kakao.Alimtalk, temp krt.ResultStr) {
 	defer reswg.Done()
+
+	for {
+		if config.RL > 0 {
+			config.RL--
+			break
+		}
+	}
 
 	flag, _ := strconv.Atoi(temp.Result["real_send_flag"])
 	if flag > 0 {
