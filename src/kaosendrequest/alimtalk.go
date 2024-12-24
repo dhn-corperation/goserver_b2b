@@ -29,37 +29,52 @@ func AlimtalkProc(user_id string, ctx context.Context) {
 		    config.Stdlog.Println(user_id, " - Alimtalk process 종료 완료")
 		    return
 		default:
-			var count sql.NullInt64
-			cnterr := databasepool.DB.QueryRowContext(ctx, "SELECT count(1) AS cnt FROM (SELECT userid FROM DHN_REQUEST_AT WHERE (upper(message_type) = 'AT' or upper(message_type) = 'AI') and send_group IS NULL AND IFNULL(reserve_dt,'00000000000000') <= DATE_FORMAT(NOW(), '%Y%m%d%H%i%S') AND userid=? limit 1) a", user_id).Scan(&count)
-			
-			if cnterr != nil && cnterr != sql.ErrNoRows {
-				config.Stdlog.Println(user_id, " - Alimtalk DHN_REQUEST Table - select error : " + cnterr.Error())
-				time.Sleep(10 * time.Second)
-			} else {
-				if count.Valid && count.Int64 > 0 {		
-					var startNow = time.Now()
-					var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
-					
-					updateRows, err := databasepool.DB.ExecContext(ctx, "update DHN_REQUEST_AT set send_group = ? where (upper(message_type) = 'AT' or upper(message_type) = 'AI') and send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid = ?  limit ?", group_no, user_id, strconv.Itoa(config.Conf.SENDLIMIT))
-			
-					if err != nil {
-						config.Stdlog.Println(user_id," - Alimtalk send_group Update error : ", err, " / group_no : ", group_no)
-					}
-			
-					rowcnt, _ := updateRows.RowsAffected()
-			
-					if rowcnt > 0 {
-						atprocCnt++
-						config.Stdlog.Println(user_id, " - Alimtalk 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ( Proc Cnt :", atprocCnt, ") - START")
-						go func() {
-							defer func() {
-								atprocCnt--
-							}()
-							atsendProcess(group_no, user_id, atprocCnt)
-						}()
-					}
-				}
+			tx, err := databasepool.DB.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
+
+			if err != nil {
+				config.Stdlog.Println(user_id, " - Alimtalk init tx : ", err)
+				continue
 			}
+
+			var startNow = time.Now()
+			var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond()) + strconv.Itoa(atprocCnt)
+
+			updateRows, err := databasepool.DB.Exec("update DHN_REQUEST_AT set send_group = ? where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid = ? limit ?", group_no, user_id, strconv.Itoa(config.Conf.SENDLIMIT))
+
+			if err != nil {
+				config.Stdlog.Println(user_id, " - Alimtalk send_group update error : ", err)
+				tx.Rollback()
+				continue
+			}
+
+			rowCount, err := updateRows.RowsAffected()
+
+			if err != nil {
+				config.Stdlog.Println(user_id, " - Alimtalk RowsAffected error : ", err)
+				tx.Rollback()
+				continue
+			}
+
+			if rowCount == 0 {
+				tx.Rollback()
+				continue
+			}
+
+			if err := tx.Commit(); err != nil {
+				config.Stdlog.Println(user_id, " - Alimtalk tx Commit 오류 : ", err)
+				tx.Rollback()
+				continue
+			}
+
+			atprocCnt++
+			config.Stdlog.Println(user_id, " - Alimtalk 발송 처리 시작 ( ", group_no, " ) : ", rowCount, " 건  ( Proc Cnt :", atprocCnt, ") - START")
+
+			go func() {
+				defer func() {
+					atprocCnt--
+				}()
+				atsendProcess(group_no, user_id, atprocCnt)
+			}()
 		}
 	}
 
@@ -455,6 +470,7 @@ func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- krt.ResultStr, alimtalk k
 			config.RL--
 			break
 		}
+		time.Sleep(10 * time.Millisecond)
 	}
 
 	resp, err := config.Client.R().

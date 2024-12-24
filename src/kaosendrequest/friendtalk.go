@@ -19,56 +19,65 @@ import (
 
 func FriendtalkProc(user_id string, ctx context.Context) {
 	ftprocCnt := 0
-	
+	config.Stdlog.Println(user_id, " - Friendtalk Process 시작 됨.") 
 	for {
-		if ftprocCnt < 5 {
+		select {
+		case <- ctx.Done():
 		
-			select {
-			case <- ctx.Done():
-			
-			    config.Stdlog.Println(user_id, " - Friendtalk process가 10초 후에 종료 됨.")
-			    time.Sleep(10 * time.Second)
-			    config.Stdlog.Println(user_id, " - Friendtalk process 종료 완료")
-			    return
-			default:
-						
-				var count int
-	
-				cnterr := databasepool.DB.QueryRowContext(ctx, "select count(1) as cnt from DHN_REQUEST  where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid = ? limit 1", user_id).Scan(&count)
-	
-				if cnterr != nil {
-					config.Stdlog.Println(user_id, " - Friendtalk DHN_REQUEST Table - select error : " + cnterr.Error())
-					time.Sleep(10 * time.Second)
-				} else {
-	
-					if count > 0 {
-						var startNow = time.Now()
-						var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
-				
-						updateRows, err := databasepool.DB.ExecContext(ctx, "update DHN_REQUEST set send_group = ? where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid = ? limit ?", group_no, user_id, strconv.Itoa(config.Conf.SENDLIMIT))
-				
-						if err != nil {
-							config.Stdlog.Println(user_id, " - Friendtalk Request Table - send_group Update 오류")
-						}
-				
-						rowcnt, _ := updateRows.RowsAffected()
-				
-						if rowcnt > 0 {
-							ftprocCnt ++
-							config.Stdlog.Println(user_id, " - Friendtalk 발송 처리 시작 ( ", group_no, " ) : ", rowcnt, " 건 ( Proc Cnt :", ftprocCnt, ") - START")
-							go func() {
-								defer func() {
-									ftprocCnt--
-								}()
-								ftsendProcess(group_no, user_id, ftprocCnt)
-							}()
-						}
-					}
-				}
+		    config.Stdlog.Println(user_id, " - Friendtalk process가 10초 후에 종료 됨.")
+		    time.Sleep(10 * time.Second)
+		    config.Stdlog.Println(user_id, " - Friendtalk process 종료 완료")
+		    return
+		default:
+
+			tx, err := databasepool.DB.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
+
+			if err != nil {
+				config.Stdlog.Println(user_id, " - Friendtalk init tx : ", err)
+				continue
 			}
+
+			var startNow = time.Now()
+			var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond()) + strconv.Itoa(ftprocCnt)
+
+			updateRows, err := databasepool.DB.Exec("update DHN_REQUEST set send_group = ? where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid = ? limit ?", group_no, user_id, strconv.Itoa(config.Conf.SENDLIMIT))
+
+			if err != nil {
+				config.Stdlog.Println(user_id, " - Friendtalk send_group update error : ", err)
+				tx.Rollback()
+				continue
+			}
+
+			rowCount, err := updateRows.RowsAffected()
+
+			if err != nil {
+				config.Stdlog.Println(user_id, " - Friendtalk RowsAffected error : ", err)
+				tx.Rollback()
+				continue
+			}
+
+			if rowCount == 0 {
+				tx.Rollback()
+				continue
+			}
+
+			if err := tx.Commit(); err != nil {
+				config.Stdlog.Println(user_id, " - Friendtalk tx Commit 오류 : ", err)
+				tx.Rollback()
+				continue
+			}
+
+			ftprocCnt++
+			config.Stdlog.Println(user_id, " - Friendtalk 발송 처리 시작 ( ", group_no, " ) : ", rowCount, " 건  ( Proc Cnt :", ftprocCnt, ") - START")
+
+			go func() {
+				defer func() {
+					ftprocCnt--
+				}()
+				ftsendProcess(group_no, user_id, ftprocCnt)
+			}()
 		}
 	}
-
 }
 
 func ftsendProcess(group_no, user_id string, pc int) {
@@ -434,6 +443,14 @@ func ftsendProcess(group_no, user_id string, pc int) {
 
 func sendKakao(reswg *sync.WaitGroup, c chan<- krt.ResultStr, friendtalk kakao.Friendtalk, temp krt.ResultStr) {
 	defer reswg.Done()
+
+	for {
+		if config.RL > 0 {
+			config.RL--
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
 
 	resp, err := config.Client.R().
 		SetHeaders(map[string]string{"Content-Type": "application/json"}).
