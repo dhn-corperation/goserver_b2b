@@ -40,7 +40,7 @@ func FriendtalkProc(user_id string, ctx context.Context) {
 			var startNow = time.Now()
 			var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond()) + strconv.Itoa(ftprocCnt)
 
-			updateRows, err := databasepool.DB.Exec("update DHN_REQUEST set send_group = ? where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') and userid = ? limit ?", group_no, user_id, strconv.Itoa(config.Conf.SENDLIMIT))
+			updateRows, err := databasepool.DB.Exec("update DHN_REQUEST as a join (select id from DHN_REQUEST where send_group is null and userid = ? and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit ?) as b on a.id = b.id set send_group = ?", user_id, strconv.Itoa(config.Conf.SENDLIMIT), group_no)
 
 			if err != nil {
 				config.Stdlog.Println(user_id, " - Friendtalk send_group update error : ", err)
