@@ -17,32 +17,31 @@ import (
 	krt "mycs/src/kaoresulttable"
 )
 
-func AlimtalkProc(user_id string, ctx context.Context) {
+func AlimtalkProc(ctx context.Context) {
 	atprocCnt := 0
-	config.Stdlog.Println(user_id, " - Alimtalk Process 시작 됨.") 
+	config.Stdlog.Println("Alimtalk Process 시작 됨.") 
 	for {
-			
 		select {
 		case <- ctx.Done():
-		    config.Stdlog.Println(user_id, " - Alimtalk process가 10초 후에 종료 됨.")
+		    config.Stdlog.Println("Alimtalk process가 10초 후에 종료 됨.")
 		    time.Sleep(10 * time.Second)
-		    config.Stdlog.Println(user_id, " - Alimtalk process 종료 완료")
+		    config.Stdlog.Println("Alimtalk process 종료 완료")
 		    return
 		default:
 			tx, err := databasepool.DB.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
 
 			if err != nil {
-				config.Stdlog.Println(user_id, " - Alimtalk init tx : ", err)
+				config.Stdlog.Println("Alimtalk init tx : ", err)
 				continue
 			}
 
 			var startNow = time.Now()
 			var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond()) + strconv.Itoa(atprocCnt)
 
-			updateRows, err := databasepool.DB.Exec("update DHN_REQUEST_AT as a join (select id from DHN_REQUEST_AT where send_group is null and userid = ? and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit ?) as b on a.id = b.id set send_group = ?", user_id, strconv.Itoa(config.Conf.SENDLIMIT), group_no)
+			updateRows, err := databasepool.DB.Exec("update DHN_REQUEST_AT as a join (select id from DHN_REQUEST_AT where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit ?) as b on a.id = b.id set send_group = ?", strconv.Itoa(config.Conf.SENDLIMIT), group_no)
 
 			if err != nil {
-				config.Stdlog.Println(user_id, " - Alimtalk send_group update error : ", err)
+				config.Stdlog.Println("Alimtalk send_group update error : ", err)
 				tx.Rollback()
 				continue
 			}
@@ -50,44 +49,45 @@ func AlimtalkProc(user_id string, ctx context.Context) {
 			rowCount, err := updateRows.RowsAffected()
 
 			if err != nil {
-				config.Stdlog.Println(user_id, " - Alimtalk RowsAffected error : ", err)
+				config.Stdlog.Println("Alimtalk RowsAffected error : ", err)
 				tx.Rollback()
 				continue
 			}
 
 			if rowCount == 0 {
 				tx.Rollback()
+				time.Sleep(50 * time.Millisecond)
 				continue
 			}
 
 			if err := tx.Commit(); err != nil {
-				config.Stdlog.Println(user_id, " - Alimtalk tx Commit 오류 : ", err)
+				config.Stdlog.Println("Alimtalk tx Commit 오류 : ", err)
 				tx.Rollback()
 				continue
 			}
 
 			atprocCnt++
-			config.Stdlog.Println(user_id, " - Alimtalk 발송 처리 시작 ( ", group_no, " ) : ", rowCount, " 건  ( Proc Cnt :", atprocCnt, ") - START")
+			config.Stdlog.Println("Alimtalk 발송 처리 시작 ( ", group_no, " ) : ", rowCount, " 건  ( Proc Cnt :", atprocCnt, ") - START")
 
 			go func() {
 				defer func() {
 					atprocCnt--
 				}()
-				atsendProcess(group_no, user_id, atprocCnt)
+				atsendProcess(group_no, atprocCnt)
 			}()
 		}
 	}
 
 }
 
-func atsendProcess(group_no, user_id string, pc int) {
+func atsendProcess(group_no string, pc int) {
 	defer func(){
 		if r := recover(); r != nil {
-			config.Stdlog.Println(user_id, " - atsendProcess panic error : ", r, " / group_no : ", group_no, " / userid  : ", user_id)
+			config.Stdlog.Println("atsendProcess panic error : ", r, " / group_no : ", group_no)
 			if err, ok := r.(error); ok {
 				if s.Contains(err.Error(), "connection refused") {
 					for {
-						config.Stdlog.Println(user_id, " - atsendProcess send ping to DB / group_no : ", group_no, " / userid  : ", user_id)
+						config.Stdlog.Println("atsendProcess send ping to DB / group_no : ", group_no)
 						err := databasepool.DB.Ping()
 						if err == nil {
 							break
@@ -110,17 +110,17 @@ func atsendProcess(group_no, user_id string, pc int) {
 	var stdlog = config.Stdlog
 	var errlog = config.Stdlog
 
-	reqsql := "select * from DHN_REQUEST_AT where send_group = '" + group_no + "' and userid = '" + user_id + "'"
+	reqsql := "select * from DHN_REQUEST_AT where send_group = '" + group_no + "'"
 
 	reqrows, err := db.Query(reqsql)
 	if err != nil {
-		errlog.Println(user_id, " - atsendProcess select error : ", err, " / group_no : ", group_no, " / userid  : ", user_id," / query : ", reqsql)
+		errlog.Println("atsendProcess select error : ", err, " / group_no : ", group_no, " / query : ", reqsql)
 		panic(err)
 	}
 
 	columnTypes, err := reqrows.ColumnTypes()
 	if err != nil {
-		errlog.Println(user_id, " - atsendProcess column init error : ", err, " / group_no : ", group_no, " / userid  : ", user_id)
+		errlog.Println("atsendProcess column init error : ", err, " / group_no : ", group_no)
 		time.Sleep(5 * time.Second)
 	}
 	count := len(columnTypes)
@@ -147,7 +147,7 @@ func atsendProcess(group_no, user_id string, pc int) {
 
 		err := reqrows.Scan(scanArgs...)
 		if err != nil {
-			errlog.Println(user_id, " - atsendProcess column scan error : ", err, " / group_no : ", group_no)
+			errlog.Println("atsendProcess column scan error : ", err, " / group_no : ", group_no)
 			time.Sleep(5 * time.Second)
 		}
 
@@ -425,7 +425,7 @@ func atsendProcess(group_no, user_id string, pc int) {
 					_, err := databasepool.DB.Exec(stmt, atreqinsValues...)
 
 					if err != nil {
-						stdlog.Println(user_id, " - Alimtalk 9999 resend - Resend Table Insert 처리 중 오류 발생 ", err)
+						stdlog.Println("Alimtalk 9999 resend - Resend Table Insert 처리 중 오류 발생 ", err)
 					}
 
 					atreqinsStrs = nil
@@ -433,7 +433,7 @@ func atsendProcess(group_no, user_id string, pc int) {
 				}
 			}
 		} else {
-			stdlog.Println(user_id, " - alimtalk server process error : ( ", string(resChan.BodyData), " )", result["msgid"])
+			stdlog.Println("alimtalk server process error : ( ", string(resChan.BodyData), " )", result["msgid"])
 			db.Exec("update DHN_REQUEST_AT set send_group = null where msgid = '" + result["msgid"] + "'")
 		}
 
@@ -445,7 +445,7 @@ func atsendProcess(group_no, user_id string, pc int) {
 		_, err := databasepool.DB.Exec(stmt, atreqinsValues...)
 
 		if err != nil {
-			stdlog.Println(user_id, " - Alimtalk 9999 resend - Resend Table Insert 처리 중 오류 발생 ", err)
+			stdlog.Println("Alimtalk 9999 resend - Resend Table Insert 처리 중 오류 발생 ", err)
 		}
 	}
 
@@ -457,7 +457,7 @@ func atsendProcess(group_no, user_id string, pc int) {
 	//알림톡 발송 후 DHN_REQUEST_AT 테이블의 데이터는 제거한다.
 	db.Exec("delete from DHN_REQUEST_AT where send_group = '" + group_no + "'")
 	
-	stdlog.Println(user_id, " - Alimtalk 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건 ( Proc Cnt :", pc, ") - END")
+	stdlog.Println("Alimtalk 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건 ( Proc Cnt :", pc, ") - END")
 	
 }
 

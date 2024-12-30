@@ -217,6 +217,7 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 				reqinsValues = append(reqinsValues, msg[i].Currencytype)
 				reqinsValues = append(reqinsValues, msg[i].Title)
 				reqinsValues = append(reqinsValues, msg[i].Header)
+				reqinsValues = append(reqinsValues, msg[i].Attachments)
 				reqinsValues = append(reqinsValues, msg[i].Carousel)
 				reqinsValues = append(reqinsValues, msg[i].Att_items)
 				reqinsValues = append(reqinsValues, msg[i].Att_coupon)

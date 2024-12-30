@@ -1,9 +1,11 @@
 package databasepool
 
 import (
-	"database/sql"
-	config "mycs/src/kaoconfig"
 	"log"
+	"time"
+	"database/sql"
+
+	config "mycs/src/kaoconfig"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -18,6 +20,7 @@ func InitDatabase() {
 
 	db.SetMaxIdleConns(250)
 	db.SetMaxOpenConns(500)
+	db.SetConnMaxIdleTime(1 * time.Minute)
 
 	DB = db
 

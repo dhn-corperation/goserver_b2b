@@ -64,6 +64,8 @@ func LguProcess(ctx context.Context) {
 								resProcess(ctx, group_no, procCnt)
 							}()
 						}
+					} else {
+						time.Sleep(50 * time.Millisecond)
 					}
 				}
 			}

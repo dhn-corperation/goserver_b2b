@@ -63,6 +63,8 @@ limit 1
 								resProcess(group_no, procCnt)
 							}()
 						}
+					} else {
+						time.Sleep(50 * time.Millisecond)
 					}
 				}
 			}

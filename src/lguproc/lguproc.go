@@ -70,6 +70,8 @@ func LguProcess(user_id string, ctx context.Context) {
 								resProcess(ctx, group_no, user_id, procCnt)
 							}()
 						}
+					} else {
+						time.Sleep(50 * time.Millisecond)
 					}
 				}
 			}

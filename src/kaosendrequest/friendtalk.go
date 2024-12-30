@@ -17,33 +17,32 @@ import (
 	krt "mycs/src/kaoresulttable"
 )
 
-func FriendtalkProc(user_id string, ctx context.Context) {
+func FriendtalkProc(ctx context.Context) {
 	ftprocCnt := 0
-	config.Stdlog.Println(user_id, " - Friendtalk Process 시작 됨.") 
+	config.Stdlog.Println("Friendtalk Process 시작 됨.") 
 	for {
 		select {
 		case <- ctx.Done():
-		
-		    config.Stdlog.Println(user_id, " - Friendtalk process가 10초 후에 종료 됨.")
+		    config.Stdlog.Println("Friendtalk process가 10초 후에 종료 됨.")
 		    time.Sleep(10 * time.Second)
-		    config.Stdlog.Println(user_id, " - Friendtalk process 종료 완료")
+		    config.Stdlog.Println("Friendtalk process 종료 완료")
 		    return
 		default:
 
 			tx, err := databasepool.DB.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
 
 			if err != nil {
-				config.Stdlog.Println(user_id, " - Friendtalk init tx : ", err)
+				config.Stdlog.Println("Friendtalk init tx : ", err)
 				continue
 			}
 
 			var startNow = time.Now()
 			var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond()) + strconv.Itoa(ftprocCnt)
 
-			updateRows, err := databasepool.DB.Exec("update DHN_REQUEST as a join (select id from DHN_REQUEST where send_group is null and userid = ? and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit ?) as b on a.id = b.id set send_group = ?", user_id, strconv.Itoa(config.Conf.SENDLIMIT), group_no)
+			updateRows, err := databasepool.DB.Exec("update DHN_REQUEST as a join (select id from DHN_REQUEST where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit ?) as b on a.id = b.id set send_group = ?", strconv.Itoa(config.Conf.SENDLIMIT), group_no)
 
 			if err != nil {
-				config.Stdlog.Println(user_id, " - Friendtalk send_group update error : ", err)
+				config.Stdlog.Println("Friendtalk send_group update error : ", err)
 				tx.Rollback()
 				continue
 			}
@@ -51,43 +50,44 @@ func FriendtalkProc(user_id string, ctx context.Context) {
 			rowCount, err := updateRows.RowsAffected()
 
 			if err != nil {
-				config.Stdlog.Println(user_id, " - Friendtalk RowsAffected error : ", err)
+				config.Stdlog.Println("Friendtalk RowsAffected error : ", err)
 				tx.Rollback()
 				continue
 			}
 
 			if rowCount == 0 {
 				tx.Rollback()
+				time.Sleep(50 * time.Millisecond)
 				continue
 			}
 
 			if err := tx.Commit(); err != nil {
-				config.Stdlog.Println(user_id, " - Friendtalk tx Commit 오류 : ", err)
+				config.Stdlog.Println("Friendtalk tx Commit 오류 : ", err)
 				tx.Rollback()
 				continue
 			}
 
 			ftprocCnt++
-			config.Stdlog.Println(user_id, " - Friendtalk 발송 처리 시작 ( ", group_no, " ) : ", rowCount, " 건  ( Proc Cnt :", ftprocCnt, ") - START")
+			config.Stdlog.Println("Friendtalk 발송 처리 시작 ( ", group_no, " ) : ", rowCount, " 건  ( Proc Cnt :", ftprocCnt, ") - START")
 
 			go func() {
 				defer func() {
 					ftprocCnt--
 				}()
-				ftsendProcess(group_no, user_id, ftprocCnt)
+				ftsendProcess(group_no, ftprocCnt)
 			}()
 		}
 	}
 }
 
-func ftsendProcess(group_no, user_id string, pc int) {
+func ftsendProcess(group_no string, pc int) {
 	defer func(){
 		if r := recover(); r != nil {
-			config.Stdlog.Println(user_id, " - ftsendProcess panic 발생 원인 : ", r)
+			config.Stdlog.Println("ftsendProcess panic 발생 원인 : ", r)
 			if err, ok := r.(error); ok {
 				if s.Contains(err.Error(), "connection refused") {
 					for {
-						config.Stdlog.Println(user_id, " - ftsendProcess send ping to DB")
+						config.Stdlog.Println("ftsendProcess send ping to DB")
 						err := databasepool.DB.Ping()
 						if err == nil {
 							break
@@ -109,19 +109,19 @@ func ftsendProcess(group_no, user_id string, pc int) {
 	var stdlog = config.Stdlog
 	var errlog = config.Stdlog
 
-	reqsql := "select * from DHN_REQUEST where send_group = '" + group_no + "' and message_type like 'f%' and userid = '" + user_id + "'"
+	reqsql := "select * from DHN_REQUEST where send_group = '" + group_no + "'"
 
 	reqrows, err := db.Query(reqsql)
 	if err != nil {
-		errlog.Println(user_id, " - ftsendProcess 쿼리 에러 group_no : ", group_no, " / userid  : ", user_id," / query : ", reqsql)
-		errlog.Println(user_id, " - ftsendProcess 쿼리 에러 : ", err)
+		errlog.Println("ftsendProcess 쿼리 에러 group_no : ", group_no, " / query : ", reqsql)
+		errlog.Println("ftsendProcess 쿼리 에러 : ", err)
 		panic(err)
 	}
 
 	columnTypes, err := reqrows.ColumnTypes()
 	if err != nil {
-		errlog.Println(user_id, " - ftsendProcess 컬럼 초기화 에러 group_no : ", group_no)
-		errlog.Println(user_id, " - ftsendProcess 컬럼 초기화 에러 : ", err)
+		errlog.Println("ftsendProcess 컬럼 초기화 에러 group_no : ", group_no)
+		errlog.Println("ftsendProcess 컬럼 초기화 에러 : ", err)
 		time.Sleep(5 * time.Second)
 	}
 	count := len(columnTypes)
@@ -148,7 +148,7 @@ func ftsendProcess(group_no, user_id string, pc int) {
 
 		err := reqrows.Scan(scanArgs...)
 		if err != nil {
-			errlog.Println(user_id, " - ftsendProcess column scan error : ", err, " / group_no : ", group_no)
+			errlog.Println("ftsendProcess column scan error : ", err, " / group_no : ", group_no)
 			time.Sleep(5 * time.Second)
 		}
 
@@ -406,7 +406,7 @@ func ftsendProcess(group_no, user_id string, pc int) {
 					_, err := databasepool.DB.Exec(stmt, ftreqinsValues...)
 
 					if err != nil {
-						stdlog.Println(user_id, " - Friendtalk 9999 resend - Resend Table Insert 처리 중 오류 발생 ", err)
+						stdlog.Println("Friendtalk 9999 resend - Resend Table Insert 처리 중 오류 발생 ", err)
 					}
 
 					ftreqinsStrs = nil
@@ -414,7 +414,7 @@ func ftsendProcess(group_no, user_id string, pc int) {
 				}
 			}
 		} else {
-			stdlog.Println(user_id, " - Friendtalk server process error : ( ", string(resChan.BodyData), " )", result["msgid"])
+			stdlog.Println("Friendtalk server process error : ( ", string(resChan.BodyData), " )", result["msgid"])
 			db.Exec("update DHN_REQUEST set send_group = null where msgid = '" + result["msgid"] + "'")
 		}
 
@@ -426,7 +426,7 @@ func ftsendProcess(group_no, user_id string, pc int) {
 		_, err := databasepool.DB.Exec(stmt, ftreqinsValues...)
 
 		if err != nil {
-			stdlog.Println(user_id, " - Friendtalk 9999 resend - Resend Table Insert 처리 중 오류 발생 ", err)
+			stdlog.Println("Friendtalk 9999 resend - Resend Table Insert 처리 중 오류 발생 ", err)
 		}
 	}
 
@@ -436,7 +436,7 @@ func ftsendProcess(group_no, user_id string, pc int) {
 
 	db.Exec("delete from DHN_REQUEST where send_group = '" + group_no + "'")
 
-	stdlog.Println(user_id, " - Friendtalk 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건  ( Proc Cnt :", pc, ") - END" )
+	stdlog.Println("Friendtalk 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건  ( Proc Cnt :", pc, ") - END" )
 	
 
 }

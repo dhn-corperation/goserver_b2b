@@ -126,67 +126,29 @@ func resultProc() {
 	allService := map[string]string{}
 	allCtxC := map[string]interface{}{}
 
-	alim_user_list, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST where use_flag = 'Y' and alimtalk='Y'")
-	isAlim := true
-	if error != nil {
-		config.Stdlog.Println("알림톡 유저 select 오류 ")
-		isAlim = false
-	}
-	defer alim_user_list.Close()
+	//알림톡
+	atctx, cancel := context.WithCancel(context.Background())
+	go kaosendrequest.AlimtalkProc(atctx)
+	allCtxC["AL"] = cancel
+	allService["AL"] = "AL"
 
-	alimUser := map[string]string{}
-	alimCtxC := map[string]interface{}{}
-
-	if isAlim {
-		var user_id sql.NullString
-		for alim_user_list.Next() {
-
-			alim_user_list.Scan(&user_id)
-
-			ctx, cancel := context.WithCancel(context.Background())
-			go kaosendrequest.AlimtalkProc(user_id.String, ctx)
-
-			alimCtxC[user_id.String] = cancel
-			alimUser[user_id.String] = user_id.String
-
-			allCtxC["AL"+user_id.String] = cancel
-			allService["AL"+user_id.String] = user_id.String
-
-		}
-	}
-	atrsctx, _ := context.WithCancel(context.Background())
+	//알림톡 재발송
+	atrsctx, cancel := context.WithCancel(context.Background())
 	go kaosendrequest.AlimtalkResendProc(atrsctx)
+	allCtxC["ALRS"] = cancel
+	allService["ALRS"] = "ALRS"
 
-	friend_user_list, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST where use_flag = 'Y' and friendtalk='Y'")
-	isFriend := true
-	if error != nil {
-		config.Stdlog.Println("친구톡 유저 select 오류 ")
-		isFriend = false
-	}
-	defer friend_user_list.Close()
+	//친구톡
+	frctx, cancel := context.WithCancel(context.Background())
+	go kaosendrequest.FriendtalkProc(frctx)
+	allCtxC["FR"] = cancel
+	allService["FR"] = "FR"
 
-	friendUser := map[string]string{}
-	friendCtxC := map[string]interface{}{}
-
-	if isFriend {
-		var user_id sql.NullString
-		for friend_user_list.Next() {
-
-			friend_user_list.Scan(&user_id)
-
-			ctx, cancel := context.WithCancel(context.Background())
-			go kaosendrequest.FriendtalkProc(user_id.String, ctx)
-
-			friendCtxC[user_id.String] = cancel
-			friendUser[user_id.String] = user_id.String
-
-			allCtxC["FR"+user_id.String] = cancel
-			allService["FR"+user_id.String] = user_id.String
-
-		} 
-	}
-	ftrsctx, _ := context.WithCancel(context.Background())
+	//친구톡 재발송
+	ftrsctx, cancel := context.WithCancel(context.Background())
 	go kaosendrequest.FriendtalkResendProc(ftrsctx)
+	allCtxC["FRRS"] = cancel
+	allService["FRRS"] = "FRRS"
 
 	if s.EqualFold(config.Conf.RESPONSE_METHOD, "polling") {
 
@@ -460,10 +422,6 @@ func resultProc() {
 	r.Use(gin.Recovery())
 	serCmd := `DHN Server API
 Command :
-/astop?uid=dhn   	 	-> dhn 알림톡 process stop.
-/arun?uid=dhn    	 	-> dhn 알림톡 process run.
-/alist           	 	-> 실행 중인 알림톡 process User List.
-
 /ostop?uid=dhn   	 	-> dhn Oshot process stop.
 /orun?uid=dhn    	 	-> dhn Oshot process run.
 /olist           	 	-> 실행 중인 Oshot process User List.
@@ -540,56 +498,6 @@ Command :
 	r.GET("/olist", func(c *gin.Context) {
 		var key string
 		for k := range oshotUser {
-			key = key + k + "\n"
-		}
-		c.String(200, key)
-	})
-
-	r.GET("/astop", func(c *gin.Context) {
-		var uid string
-		uid = c.Query("uid")
-		temp := alimCtxC[uid]
-		if temp != nil {
-			cancel := alimCtxC[uid].(context.CancelFunc)
-			cancel()
-			delete(alimCtxC, uid)
-			delete(alimUser, uid)
-
-			delete(allService, "AL"+uid)
-			delete(allCtxC, "AL"+uid)
-
-			c.String(200, uid+" 종료 신호 전달 완료")
-		} else {
-			c.String(200, uid+"는 실행 중이지 않습니다.")
-		}
-
-	})
-
-	r.GET("/arun", func(c *gin.Context) {
-		var uid string
-		uid = c.Query("uid")
-		temp := alimCtxC[uid]
-		if temp != nil {
-			c.String(200, uid+" 이미 실행 중입니다.")
-		} else {
-
-			ctx, cancel := context.WithCancel(context.Background())
-			ctx = context.WithValue(ctx, "user_id", uid)
-			go kaosendrequest.AlimtalkProc(uid, ctx)
-
-			alimCtxC[uid] = cancel
-			alimUser[uid] = uid
-
-			allCtxC["AL"+uid] = cancel
-			allService["AL"+uid] = uid
-
-			c.String(200, uid+" 시작 신호 전달 완료")
-		}
-	})
-
-	r.GET("/alist", func(c *gin.Context) {
-		var key string
-		for k := range alimUser {
 			key = key + k + "\n"
 		}
 		c.String(200, key)

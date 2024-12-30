@@ -39,7 +39,7 @@ func FriendtalkResendProc(ctx context.Context) {
 					config.Stdlog.Println("Friendtalk 9999 resend - DHN_REQUEST_RESEND Table - select 오류 : " + cnterr.Error())
 					time.Sleep(10 * time.Second)
 				} else {
-					if count.Valid && count.Int64 > 0 {		
+					if count.Valid && count.Int64 > 0 {
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond())
 						
@@ -61,6 +61,8 @@ func FriendtalkResendProc(ctx context.Context) {
 								ftResendProcess(group_no, procCnt)
 							}()
 						}
+					} else {
+						time.Sleep(10 * time.Second)
 					}
 				}
 			}

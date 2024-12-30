@@ -66,6 +66,8 @@ func NanoProcess_N(user_id string, ctx context.Context) {
 								resProcess_N(group_no, user_id, procCnt_N)
 							}()
 						}
+					} else {
+						time.Sleep(50 * time.Millisecond)
 					}
 				}
 			}
