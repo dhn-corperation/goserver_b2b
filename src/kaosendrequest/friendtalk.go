@@ -6,6 +6,7 @@ import (
 	"time"
 	"strconv"
 	"context"
+	"sync/atomic"
 	"database/sql"
 	"encoding/json"
 	s "strings"
@@ -445,11 +446,13 @@ func sendKakao(reswg *sync.WaitGroup, c chan<- krt.ResultStr, friendtalk kakao.F
 	defer reswg.Done()
 
 	for {
-		if config.RL > 0 {
-			config.RL--
-			break
+		currentRL := atomic.LoadInt32(&config.RL)
+		if currentRL > 0 {
+			if atomic.CompareAndSwapInt32(&config.RL, currentRL, currentRL - 1) {
+				break
+			}
 		}
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(50 * time.Millisecond)
 	}
 
 	resp, err := config.Client.R().

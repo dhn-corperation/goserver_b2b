@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 	"crypto/tls"
+	"sync/atomic"
 
 	ini "github.com/BurntSushi/toml"
 	"github.com/go-resty/resty/v2"
@@ -43,7 +44,7 @@ var BasePath string
 var IsRunning bool = true
 var ResultLimit int = 1000
 var Client *resty.Client
-var RL int
+var RL int32
 
 func InitConfig() {
 	realpath, _ := os.Executable()
@@ -79,12 +80,12 @@ func InitConfig() {
 		SetRetryCount(3).
 		SetRetryWaitTime(2 * time.Second)
 
-	RL = Conf.REALLIMIT
+	RL = int32(Conf.REALLIMIT)
 
 	go func(){
 		for{
 			time.Sleep(1 * time.Second)
-			RL = Conf.REALLIMIT
+			atomic.StoreInt32(&RL, int32(Conf.REALLIMIT))
 		}
 	}()
 
