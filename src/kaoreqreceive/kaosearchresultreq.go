@@ -229,19 +229,10 @@ func SearchResultReq(c *fasthttp.RequestCtx) {
 			ids = cm.RemoveValueInPlace(ids, mid)
 		}
 
-		
 		errlog.Println(userid, " - 발송 결과 재수신 결과 전송 끝 건수 : ", len(finalRows))
-		if len(finalRows) > 0 {
-			
-			var commastr = "update DHN_RESULT set sync='Y' where userid = '" + userid + "' and msgid in (?)"
 
-			_, err := db.Exec(commastr, msgids)
-
-			if err != nil {
-				errlog.Println(userid, " - 발송 결과 재수신 searchResult Table Update 처리 중 오류 발생")
-			}
-
-		}
+		var commastr = "update DHN_RESULT set sync='Y' where userid = '" + userid + "' and msgid in (" + msgids + ")"
+		db.Exec(commastr)
 
 		unmarshalRes := map[string]interface{}{
 			"code": "00",
