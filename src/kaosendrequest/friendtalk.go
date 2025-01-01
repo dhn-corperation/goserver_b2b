@@ -142,6 +142,8 @@ func ftsendProcess(group_no string, pc int) {
 	ftreqinsQuery := `insert IGNORE into DHN_REQUEST_RESEND(`+resendFtColumnStr+`) values %s`
 
 	resultChan := make(chan krt.ResultStr, config.Conf.SENDLIMIT)
+	defer close(resultChan)
+	
 	var reswg sync.WaitGroup
 
 	for reqrows.Next() {

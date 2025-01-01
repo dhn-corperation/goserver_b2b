@@ -141,6 +141,8 @@ func atsendProcess(group_no string, pc int) {
 	atreqinsQuery := `insert IGNORE into DHN_REQUEST_AT_RESEND(`+resendAtColumnStr+`) values %s`
 
 	resultChan := make(chan krt.ResultStr, config.Conf.SENDLIMIT)
+	defer close(resultChan)
+
 	var reswg sync.WaitGroup
 
 	for reqrows.Next() {
