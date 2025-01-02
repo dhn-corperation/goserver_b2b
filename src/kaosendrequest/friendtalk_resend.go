@@ -312,7 +312,7 @@ func ftResendProcess(group_no string, pc int) {
 			var resCode = kakaoResp.Code
 
 			resinsStrs = append(resinsStrs, "("+ftQmarkStr+")")
-			resinsValues = append(resinsValues, result["msgid"])
+			resinsValues = append(resinsValues, result["real_msgid"])
 			resinsValues = append(resinsValues, result["userid"])
 			resinsValues = append(resinsValues, result["ad_flag"])
 			resinsValues = append(resinsValues, result["button1"])

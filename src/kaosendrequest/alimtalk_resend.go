@@ -319,7 +319,7 @@ func atResendProcess(group_no string, pc int) {
 			}
 
 			resinsStrs = append(resinsStrs, "("+atQmarkStr+")")
-			resinsValues = append(resinsValues, result["msgid"])
+			resinsValues = append(resinsValues, result["real_msgid"])
 			resinsValues = append(resinsValues, result["userid"])
 			resinsValues = append(resinsValues, result["ad_flag"])
 			resinsValues = append(resinsValues, result["button1"])

@@ -82,12 +82,12 @@ func InitConfig() {
 
 	RL = int32(Conf.REALLIMIT)
 
-	go func(){
+	go func(rl int32){
 		for{
 			time.Sleep(1 * time.Second)
-			atomic.StoreInt32(&RL, int32(Conf.REALLIMIT))
+			atomic.StoreInt32(&RL, rl)
 		}
-	}()
+	}(RL)
 
 }
 
