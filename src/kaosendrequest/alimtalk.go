@@ -110,7 +110,6 @@ func atsendProcess(group_no string, pc int) {
 	var conf = config.Conf
 	var stdlog = config.Stdlog
 	var errlog = config.Stdlog
-
 	reqsql := "select * from DHN_REQUEST_AT where send_group = '" + group_no + "'"
 
 	reqrows, err := db.Query(reqsql)
@@ -321,7 +320,6 @@ func atsendProcess(group_no string, pc int) {
 	resendAtQmarkStr := cm.GetQuestionMark(resendAtColumn)
 
 	nineErrCnt := 0
-
 	for i := 0; i < chanCnt; i++ {
 
 		resChan := <-resultChan
@@ -489,6 +487,7 @@ func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- krt.ResultStr, alimtalk k
 		temp.Statuscode = resp.StatusCode()
 		temp.BodyData = resp.Body()
 	}
+	
 	c <- temp
 }
 
