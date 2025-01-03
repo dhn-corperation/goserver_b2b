@@ -23,9 +23,11 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 	ftColumn := cm.GetReqFtColumn()
 	atColumn := cm.GetReqAtColumn()
 	msgColumn := cm.GetReqMsgColumn()
+	apColumn := cm.GetReqApColumn()
 	ftColumnStr := s.Join(ftColumn, ",")
 	atColumnStr := s.Join(atColumn, ",")
 	msgColumnStr := s.Join(msgColumn, ",")
+	apColumnStr := s.Join(apColumn, ",")
 
 	errlog := config.Stdlog
 
@@ -92,6 +94,11 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 		//수신 value interface 배열 생성
 		insValues := []interface{}{}
 
+		apreqinsStrs := []string{}
+		//앱푸쉬 value interface 배열 생성
+		apreqinsValues := []interface{}{}
+
+
 		//친구톡 insert 컬럼 셋팅
 		reqinsQuery := `insert IGNORE into DHN_REQUEST(`+ftColumnStr+`) values %s`
 
@@ -104,12 +111,16 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 		//수신 insert 컬럼 셋팅
 		insQuery := `insert IGNORE into DHN_RECEPTION(msgid, userid) values %s`
 
+		//앱푸쉬 insert 컬럼 셋팅
+		apreqinsQuery := `insert IGNORE into DHN_REQUEST_APP(`+apColumnStr+`) values %s`
+
 		//temp 테이블 컬럼 셋팅(DHN_RESULT_TEMP : 에러 시 데이터 유실을 막기 위한 테이블)
 		resinstempquery := `insert IGNORE into DHN_RESULT_TEMP(`+msgColumnStr+`) values %s`
 
 		ftQmarkStr := cm.GetQuestionMark(ftColumn)
 		atQmarkStr := cm.GetQuestionMark(atColumn)
 		msgQmarkStr := cm.GetQuestionMark(msgColumn)
+		apQmarkStr := cm.GetQuestionMark(apColumn)
 
 		//맵핑한 데이터 row 처리
 		for i, _ := range msg {
@@ -298,6 +309,85 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 				resinsValues = append(resinsValues, nil) //attachments
 				resinsValues = append(resinsValues, msg[i].Carousel)
 				resinsValues = append(resinsValues, msg[i].MmsImageId)
+			//앱푸쉬 insert values 만들기
+			} else if s.HasPrefix(s.ToUpper(msg[i].Messagetype), "AP") {
+				apreqinsStrs = append(apreqinsStrs, "("+apQmarkStr+")")
+				apreqinsValues = append(apreqinsValues, msg[i].Msgid)
+				apreqinsValues = append(apreqinsValues, userid)
+				apreqinsValues = append(apreqinsValues, msg[i].Adflag)
+				apreqinsValues = append(apreqinsValues, msg[i].Button1)
+				apreqinsValues = append(apreqinsValues, msg[i].Button2)
+				apreqinsValues = append(apreqinsValues, msg[i].Button3)
+				apreqinsValues = append(apreqinsValues, msg[i].Button4)
+				apreqinsValues = append(apreqinsValues, msg[i].Button5)
+				apreqinsValues = append(apreqinsValues, msg[i].Imagelink)
+				apreqinsValues = append(apreqinsValues, msg[i].Imageurl)
+				apreqinsValues = append(apreqinsValues, msg[i].Messagetype)
+				if s.Contains(s.ToLower(msg[i].Crypto), "msg") {
+					apreqinsValues = append(apreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msg, nonce))
+				} else {
+					apreqinsValues = append(apreqinsValues, msg[i].Msg)
+				}
+
+				if s.Contains(s.ToLower(msg[i].Crypto), "msg") && len(msg[i].Msgsms) > 0 {
+					apreqinsValues = append(apreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Msgsms, nonce))
+				} else {
+					apreqinsValues = append(apreqinsValues, msg[i].Msgsms)
+				}
+				apreqinsValues = append(apreqinsValues, msg[i].Onlysms)
+				if s.Contains(s.ToLower(msg[i].Crypto), "phn") && msg[i].Phn != "" {
+					apreqinsValues = append(apreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Phn, nonce))
+				} else {
+					apreqinsValues = append(apreqinsValues, msg[i].Phn)
+				}
+				if s.Contains(s.ToLower(msg[i].Crypto), "profile") && len(msg[i].Profile) > 0 {
+					apreqinsValues = append(apreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Profile, nonce))
+				} else {
+					apreqinsValues = append(apreqinsValues, msg[i].Profile)
+				}
+				apreqinsValues = append(apreqinsValues, msg[i].Pcom)
+				apreqinsValues = append(apreqinsValues, msg[i].Pinvoice)
+				apreqinsValues = append(apreqinsValues, msg[i].Regdt)
+				apreqinsValues = append(apreqinsValues, msg[i].Remark1)
+				apreqinsValues = append(apreqinsValues, msg[i].Remark2)
+				apreqinsValues = append(apreqinsValues, msg[i].Remark3)
+				apreqinsValues = append(apreqinsValues, msg[i].Remark4)
+				apreqinsValues = append(apreqinsValues, msg[i].Remark5)
+				apreqinsValues = append(apreqinsValues, msg[i].Reservedt)
+				apreqinsValues = append(apreqinsValues, smsKind)
+				if s.Contains(s.ToLower(msg[i].Crypto), "smslmstit") && len(msg[i].Smslmstit) > 0 {
+					apreqinsValues = append(apreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
+				} else {
+					apreqinsValues = append(apreqinsValues, msg[i].Smslmstit)
+				}
+
+				if s.Contains(s.ToLower(msg[i].Crypto), "smssender") && len(msg[i].Smssender) > 0 {
+					apreqinsValues = append(apreqinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smssender, nonce))
+				} else {
+					apreqinsValues = append(apreqinsValues, msg[i].Smssender)
+				}
+				apreqinsValues = append(apreqinsValues, msg[i].Scode)
+				apreqinsValues = append(apreqinsValues, msg[i].Tmplid)
+				apreqinsValues = append(apreqinsValues, msg[i].Wide)
+				apreqinsValues = append(apreqinsValues, nil) //send_group
+				apreqinsValues = append(apreqinsValues, msg[i].Supplement)
+
+				if len(msg[i].Price) > 0 {
+					price, _ := strconv.Atoi(msg[i].Price)
+					apreqinsValues = append(apreqinsValues, price)
+				} else {
+					apreqinsValues = append(apreqinsValues, nil)
+				}
+
+				apreqinsValues = append(apreqinsValues, msg[i].Currencytype)
+				apreqinsValues = append(apreqinsValues, msg[i].Title)
+				apreqinsValues = append(apreqinsValues, msg[i].MmsImageId)
+				apreqinsValues = append(apreqinsValues, msg[i].Pushid)
+				apreqinsValues = append(apreqinsValues, msg[i].Appkey)
+				apreqinsValues = append(apreqinsValues, msg[i].Appsecret)
+				apreqinsValues = append(apreqinsValues, msg[i].Applink)
+				apreqinsValues = append(apreqinsValues, msg[i].Applaunch)
+				apreqinsValues = append(apreqinsValues, msg[i].Atchfilesn)
 			//알림톡 insert values 만들기
 			} else {
 				atreqinsStrs = append(atreqinsStrs, "("+atQmarkStr+")")
@@ -390,6 +480,10 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 				resinsStrs, resinsValues = cm.InsMsgTemp(resinsQuery, resinsStrs, resinsValues, true, resinstempquery)
 			}
 
+			if len(apreqinsStrs) >= saveCount {
+				apreqinsStrs, apreqinsValues = cm.InsMsg(apreqinsQuery, apreqinsStrs, apreqinsValues)
+			}
+
 			if len(insStrs) >= saveCount {
 				insStrs, insValues = cm.InsMsg(insQuery, insStrs, insValues)
 			}
@@ -406,6 +500,10 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 
 		if len(resinsStrs) > 0 {
 			resinsStrs, resinsValues = cm.InsMsgTemp(resinsQuery, resinsStrs, resinsValues, true, resinstempquery)
+		}
+
+		if len(apreqinsStrs) > 0 {
+			apreqinsStrs, apreqinsValues = cm.InsMsg(apreqinsQuery, apreqinsStrs, apreqinsValues)
 		}
 
 		if len(insStrs) > 0 {
