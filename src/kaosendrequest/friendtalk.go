@@ -135,11 +135,11 @@ func ftsendProcess(group_no string, pc int) {
 
 	resinsStrs := []string{}
 	resinsValues := []interface{}{}
-	resinsQuery := `insert IGNORE into DHN_RESULT(`+ftColumnStr+`) values %s`
+	resinsQuery := `insert into DHN_RESULT(`+ftColumnStr+`) values %s`
 
 	ftreqinsStrs := []string{}
 	ftreqinsValues := []interface{}{}
-	ftreqinsQuery := `insert IGNORE into DHN_REQUEST_RESEND(`+resendFtColumnStr+`) values %s`
+	ftreqinsQuery := `insert into DHN_REQUEST_RESEND(`+resendFtColumnStr+`) values %s`
 
 	resultChan := make(chan krt.ResultStr, config.Conf.SENDLIMIT)
 	defer close(resultChan)

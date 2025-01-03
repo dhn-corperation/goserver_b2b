@@ -134,11 +134,11 @@ func atsendProcess(group_no string, pc int) {
 
 	resinsStrs := []string{}
 	resinsValues := []interface{}{}
-	resinsQuery := `insert IGNORE into DHN_RESULT(`+atColumnStr+`) values %s`
+	resinsQuery := `insert into DHN_RESULT(`+atColumnStr+`) values %s`
 
 	atreqinsStrs := []string{}
 	atreqinsValues := []interface{}{}
-	atreqinsQuery := `insert IGNORE into DHN_REQUEST_AT_RESEND(`+resendAtColumnStr+`) values %s`
+	atreqinsQuery := `insert into DHN_REQUEST_AT_RESEND(`+resendAtColumnStr+`) values %s`
 
 	resultChan := make(chan krt.ResultStr, config.Conf.SENDLIMIT)
 	defer close(resultChan)

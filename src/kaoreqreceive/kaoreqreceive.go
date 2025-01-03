@@ -93,10 +93,10 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 		insValues := []interface{}{}
 
 		//친구톡 insert 컬럼 셋팅
-		reqinsQuery := `insert IGNORE into DHN_REQUEST(`+ftColumnStr+`) values %s`
+		reqinsQuery := `insert into DHN_REQUEST(`+ftColumnStr+`) values %s`
 
 		//알림톡 insert 컬럼 셋팅
-		atreqinsQuery := `insert IGNORE into DHN_REQUEST_AT(`+atColumnStr+`) values %s`
+		atreqinsQuery := `insert into DHN_REQUEST_AT(`+atColumnStr+`) values %s`
 
 		//문자 insert 컬럼 셋팅
 		resinsQuery := `insert IGNORE into DHN_RESULT(`+msgColumnStr+`) values %s`
