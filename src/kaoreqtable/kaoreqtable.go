@@ -45,4 +45,10 @@ type Reqtable struct {
 	Att_coupon   string `json:"att_coupon"`
 	MmsImageId   string `json:"mmsimageid"`
 	Crypto       string `json:"crypto"`
+	Pushid		 string `json:"pushid"`
+	Appkey		 string `json:"appkey"`
+	Appsecret	 string `json:"appsecret"`
+	Applink		 string `json:"applink"`
+	Applaunch	 string `json:"applaunch"`
+	Atchfilesn	 string `json:"atchfilesn"`
 }

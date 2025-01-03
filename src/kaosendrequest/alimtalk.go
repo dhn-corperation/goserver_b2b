@@ -39,7 +39,7 @@ func AlimtalkProc(ctx context.Context) {
 			var startNow = time.Now()
 			var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond()) + strconv.Itoa(atprocCnt)
 
-			updateRows, err := databasepool.DB.Exec("update DHN_REQUEST_AT as a join (select id from DHN_REQUEST_AT where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit ?) as b on a.id = b.id set send_group = ?", strconv.Itoa(config.Conf.SENDLIMIT), group_no)
+			updateRows, err := tx.Exec("update DHN_REQUEST_AT as a join (select id from DHN_REQUEST_AT where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit ?) as b on a.id = b.id set send_group = ?", strconv.Itoa(config.Conf.SENDLIMIT), group_no)
 
 			if err != nil {
 				config.Stdlog.Println("Alimtalk send_group update error : ", err)

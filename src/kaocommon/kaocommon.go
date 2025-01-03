@@ -149,6 +149,57 @@ func GetReqFtColumn() []string {
 	return reqFtColumn
 }
 
+func GetReqApColumn() []string {
+	apReqColumn := []string{
+		"msgid",
+		"userid",
+		"ad_flag",
+		"button1",
+		"button2",
+		"button3",
+		"button4",
+		"button5",
+		"image_link",
+		"image_url",
+		"message_type",
+		"msg",
+		"msg_sms",
+		"only_sms",
+		"phn",
+		"profile",
+		"p_com",
+		"p_invoice",
+		"reg_dt",
+		"remark1",
+		"remark2",
+		"remark3",
+		"remark4",
+		"remark5",
+		"reserve_dt",
+		"sms_kind",
+		"sms_lms_tit",
+		"sms_sender",
+		"s_code",
+		"tmpl_id",
+		"wide",
+		"send_group",
+		"supplement",
+		"price",
+		"currency_type",
+		"title",
+		"mms_image_id",
+		// "header",
+		// "carousel",
+		"push_id",
+		"app_key",
+		"app_secret",
+		"app_link",
+		"app_launch",
+		"atch_file_sn",
+	}
+	return apReqColumn
+}
+
 //재발송 전 알림톡 추가 칼럼(삽입 테이블 : DHN_REQUEST_AT_RESEND)
 func GetResendReqAtColumn() []string {
 	resendReqAtColumn := GetReqAtColumn()

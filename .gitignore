@@ -10,5 +10,7 @@
 /src/DHNServer/DHNCenter
 /src/DHNServer/DHNServer
 /logs
-DHNCenter2
-DHNServer2
+DHNCenter5
+DHNServer5
+DHNCenter_b2b_test
+DHNServer_b2b_test
