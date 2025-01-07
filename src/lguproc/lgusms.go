@@ -35,7 +35,7 @@ func SMSProcess(ctx context.Context) {
 		LguTable.Scan(&ltable)
 		lguTable = append(lguTable, ltable.String)
 	}
-	errlog.Println("Lgu SMS length : ", len(lguTable))
+
 	for {
 		select {
 			case <- ctx.Done():

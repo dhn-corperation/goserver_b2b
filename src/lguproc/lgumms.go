@@ -35,7 +35,7 @@ func LMSProcess(ctx context.Context) {
 		LguTable.Scan(&ltable)
 		lguTable = append(lguTable, ltable.String)
 	}
-	errlog.Println("Lgu LMS length : ", len(lguTable))
+	
 	for {
 		select {
 			case <- ctx.Done():
