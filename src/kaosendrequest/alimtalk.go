@@ -22,60 +22,62 @@ func AlimtalkProc(ctx context.Context) {
 	atprocCnt := 0
 	config.Stdlog.Println("Alimtalk Process 시작 됨.") 
 	for {
-		select {
-		case <- ctx.Done():
-		    config.Stdlog.Println("Alimtalk process가 10초 후에 종료 됨.")
-		    time.Sleep(10 * time.Second)
-		    config.Stdlog.Println("Alimtalk process 종료 완료")
-		    return
-		default:
-			tx, err := databasepool.DB.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
+		if atprocCnt < 50 {
+			select {
+			case <- ctx.Done():
+			    config.Stdlog.Println("Alimtalk process가 10초 후에 종료 됨.")
+			    time.Sleep(10 * time.Second)
+			    config.Stdlog.Println("Alimtalk process 종료 완료")
+			    return
+			default:
+				tx, err := databasepool.DB.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
 
-			if err != nil {
-				config.Stdlog.Println("Alimtalk init tx : ", err)
-				continue
-			}
+				if err != nil {
+					config.Stdlog.Println("Alimtalk init tx : ", err)
+					continue
+				}
 
-			var startNow = time.Now()
-			var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond()) + strconv.Itoa(atprocCnt)
+				var startNow = time.Now()
+				var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond()) + strconv.Itoa(atprocCnt)
 
-			updateRows, err := tx.Exec("update DHN_REQUEST_AT as a join (select id from DHN_REQUEST_AT where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit ?) as b on a.id = b.id set send_group = ?", strconv.Itoa(config.Conf.SENDLIMIT), group_no)
+				updateRows, err := tx.Exec("update DHN_REQUEST_AT as a join (select id from DHN_REQUEST_AT where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit ?) as b on a.id = b.id set send_group = ?", strconv.Itoa(config.Conf.SENDLIMIT), group_no)
 
-			if err != nil {
-				config.Stdlog.Println("Alimtalk send_group update error : ", err)
-				tx.Rollback()
-				continue
-			}
+				if err != nil {
+					config.Stdlog.Println("Alimtalk send_group update error : ", err)
+					tx.Rollback()
+					continue
+				}
 
-			rowCount, err := updateRows.RowsAffected()
+				rowCount, err := updateRows.RowsAffected()
 
-			if err != nil {
-				config.Stdlog.Println("Alimtalk RowsAffected error : ", err)
-				tx.Rollback()
-				continue
-			}
+				if err != nil {
+					config.Stdlog.Println("Alimtalk RowsAffected error : ", err)
+					tx.Rollback()
+					continue
+				}
 
-			if rowCount == 0 {
-				tx.Rollback()
-				time.Sleep(50 * time.Millisecond)
-				continue
-			}
+				if rowCount == 0 {
+					tx.Rollback()
+					time.Sleep(50 * time.Millisecond)
+					continue
+				}
 
-			if err := tx.Commit(); err != nil {
-				config.Stdlog.Println("Alimtalk tx Commit 오류 : ", err)
-				tx.Rollback()
-				continue
-			}
+				if err := tx.Commit(); err != nil {
+					config.Stdlog.Println("Alimtalk tx Commit 오류 : ", err)
+					tx.Rollback()
+					continue
+				}
 
-			atprocCnt++
-			config.Stdlog.Println("Alimtalk 발송 처리 시작 ( ", group_no, " ) : ", rowCount, " 건  ( Proc Cnt :", atprocCnt, ") - START")
+				atprocCnt++
+				config.Stdlog.Println("Alimtalk 발송 처리 시작 ( ", group_no, " ) : ", rowCount, " 건  ( Proc Cnt :", atprocCnt, ") - START")
 
-			go func() {
-				defer func() {
-					atprocCnt--
+				go func() {
+					defer func() {
+						atprocCnt--
+					}()
+					atsendProcess(group_no, atprocCnt)
 				}()
-				atsendProcess(group_no, atprocCnt)
-			}()
+			}
 		}
 	}
 

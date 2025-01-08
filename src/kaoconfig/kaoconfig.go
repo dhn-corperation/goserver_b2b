@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"time"
+	"os/exec"
+	"net/http"
 	"crypto/tls"
 	"sync/atomic"
+	"path/filepath"
 
 	ini "github.com/BurntSushi/toml"
 	"github.com/go-resty/resty/v2"
@@ -78,7 +79,12 @@ func InitConfig() {
 		SetTimeout(100 * time.Second).
 		SetTLSClientConfig(&tls.Config{MinVersion: tls.VersionTLS12}).
 		SetRetryCount(3).
-		SetRetryWaitTime(2 * time.Second)
+		SetRetryWaitTime(2 * time.Second).
+		SetTransport(&http.Transport{
+			MaxIdleConns:		Conf.REALLIMIT,
+			MaxIdleConnsPerHost: Conf.REALLIMIT/5,
+			IdleConnTimeout:	 90 * time.Second,
+		})
 
 	RL = int32(Conf.REALLIMIT)
 
@@ -202,7 +208,8 @@ func createConfig(dirName string) error {
 		`# DB`,
 		`DB = "DB종류"`,
 		`DBURL = "사용자:패스워드@tcp(000.000.000.000:포트번호)/데이터베이스"`,
-		`SENDLIMIT = 숫자`,
+		`SENDLIMIT = 그룹핑건수(숫자)`,
+		`REALLIMIT = 실발송건수(숫자)`,
 		``,
 		`# AGENT`,
 		`CENTER_PORT = "센터서버 포트번호"`,
