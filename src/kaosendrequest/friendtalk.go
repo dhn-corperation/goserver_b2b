@@ -22,61 +22,63 @@ func FriendtalkProc(ctx context.Context) {
 	ftprocCnt := 0
 	config.Stdlog.Println("Friendtalk Process 시작 됨.") 
 	for {
-		select {
-		case <- ctx.Done():
-		    config.Stdlog.Println("Friendtalk process가 10초 후에 종료 됨.")
-		    time.Sleep(10 * time.Second)
-		    config.Stdlog.Println("Friendtalk process 종료 완료")
-		    return
-		default:
+		if ftprocCnt < 50 {
+			select {
+			case <- ctx.Done():
+			    config.Stdlog.Println("Friendtalk process가 10초 후에 종료 됨.")
+			    time.Sleep(10 * time.Second)
+			    config.Stdlog.Println("Friendtalk process 종료 완료")
+			    return
+			default:
 
-			tx, err := databasepool.DB.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
+				tx, err := databasepool.DB.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
 
-			if err != nil {
-				config.Stdlog.Println("Friendtalk init tx : ", err)
-				continue
-			}
+				if err != nil {
+					config.Stdlog.Println("Friendtalk init tx : ", err)
+					continue
+				}
 
-			var startNow = time.Now()
-			var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond()) + strconv.Itoa(ftprocCnt)
+				var startNow = time.Now()
+				var group_no = fmt.Sprintf("%02d%02d%02d%09d", startNow.Hour(), startNow.Minute(), startNow.Second(), startNow.Nanosecond()) + strconv.Itoa(ftprocCnt)
 
-			updateRows, err := tx.Exec("update DHN_REQUEST as a join (select id from DHN_REQUEST where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit ?) as b on a.id = b.id set send_group = ?", strconv.Itoa(config.Conf.SENDLIMIT), group_no)
+				updateRows, err := tx.Exec("update DHN_REQUEST as a join (select id from DHN_REQUEST where send_group is null and ifnull(reserve_dt,'00000000000000') <= date_format(now(), '%Y%m%d%H%i%S') limit ?) as b on a.id = b.id set send_group = ?", strconv.Itoa(config.Conf.SENDLIMIT), group_no)
 
-			if err != nil {
-				config.Stdlog.Println("Friendtalk send_group update error : ", err)
-				tx.Rollback()
-				continue
-			}
+				if err != nil {
+					config.Stdlog.Println("Friendtalk send_group update error : ", err)
+					tx.Rollback()
+					continue
+				}
 
-			rowCount, err := updateRows.RowsAffected()
+				rowCount, err := updateRows.RowsAffected()
 
-			if err != nil {
-				config.Stdlog.Println("Friendtalk RowsAffected error : ", err)
-				tx.Rollback()
-				continue
-			}
+				if err != nil {
+					config.Stdlog.Println("Friendtalk RowsAffected error : ", err)
+					tx.Rollback()
+					continue
+				}
 
-			if rowCount == 0 {
-				tx.Rollback()
-				time.Sleep(50 * time.Millisecond)
-				continue
-			}
+				if rowCount == 0 {
+					tx.Rollback()
+					time.Sleep(50 * time.Millisecond)
+					continue
+				}
 
-			if err := tx.Commit(); err != nil {
-				config.Stdlog.Println("Friendtalk tx Commit 오류 : ", err)
-				tx.Rollback()
-				continue
-			}
+				if err := tx.Commit(); err != nil {
+					config.Stdlog.Println("Friendtalk tx Commit 오류 : ", err)
+					tx.Rollback()
+					continue
+				}
 
-			ftprocCnt++
-			config.Stdlog.Println("Friendtalk 발송 처리 시작 ( ", group_no, " ) : ", rowCount, " 건  ( Proc Cnt :", ftprocCnt, ") - START")
+				ftprocCnt++
+				config.Stdlog.Println("Friendtalk 발송 처리 시작 ( ", group_no, " ) : ", rowCount, " 건  ( Proc Cnt :", ftprocCnt, ") - START")
 
-			go func() {
-				defer func() {
-					ftprocCnt--
+				go func() {
+					defer func() {
+						ftprocCnt--
+					}()
+					ftsendProcess(group_no, ftprocCnt)
 				}()
-				ftsendProcess(group_no, ftprocCnt)
-			}()
+			}
 		}
 	}
 }
