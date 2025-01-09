@@ -1,10 +1,24 @@
 # Version
 
-#### Latest
+### Latest
 
 # Install
 
-#### NOTE
+### NOTE
+
+##### CMD
+
+- install : /agent/path/DHNCenter install
+
+- remove : /agent/path/DHNCenter remove
+
+- start : systemctl start DHNCenter
+
+- stop : systemctl stop DHNCenter
+
+- restart : systemctl restart DHNCenter
+
+- status : systemctl status DHNCenter
 
 ##### DB
 
@@ -90,7 +104,7 @@ write_buffer = 2M
 
 # TEST
 
-#### 알림톡 500건
+### 알림톡 500건
 
 - Center : 0.1s
 
