@@ -12,7 +12,6 @@
   
 - my.cnf
 ```ini
-----------------------------------------------------------------------------------------------------
 #
 # This group is read both by the client and the server
 # use it for options that affect everything
@@ -87,7 +86,6 @@ key_buffer_size = 128M
 sort_buffer_size = 128M
 read_buffer = 2M
 write_buffer = 2M
-----------------------------------------------------------------------------------------------------
 ```
 
 # TEST
