@@ -83,6 +83,10 @@ innodb_log_buffer_size = 16M
 innodb_write_io_threads=32
 innodb_read_io_threads=32
 innodb_io_capacity=2000
+innodb_flush_neighbors = 1
+
+innodb_buffer_pool_instances = 8
+innodb_page_cleaners = 8
 
 sql_mode=NO_ENGINE_SUBSTITUTION
 transaction_isolation = READ-COMMITTED
