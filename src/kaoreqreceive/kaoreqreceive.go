@@ -60,8 +60,6 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 	if isValidation {
 
 		var msg []kaoreqtable.Reqtable
-		//전달온 데이터 kaoreqtable.Reqtable에 맵핑
-		// err1 := c.ShouldBindJSON(&msg)
 		if err1 := json.Unmarshal(c.PostBody(), &msg); err1 != nil {
 			errlog.Println(err1)
 			res, _ := json.Marshal(map[string]string{
@@ -111,8 +109,30 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 		atQmarkStr := cm.GetQuestionMark(atColumn)
 		msgQmarkStr := cm.GetQuestionMark(msgColumn)
 
+		ftCnt := 0
+		atCnt := 0
+		msgCnt := 0
+		duplCnt := 0
+		duplMsgid := []string{}
+
 		//맵핑한 데이터 row 처리
 		for i, _ := range msg {
+			// TODO 날짜 넣어야함
+			msgidsSql := "select count(1) as cnt from DHN_RECEPTION where userid = '" + userid + "' and msgid = '" + msg[i].Msgid + "' and insert_date > date_sub(now(), interval 1 day)"
+
+			err := databasepool.DB.QueryRow(msgidsSql).Scan(&cnt)
+			if err != nil { 
+				errlog.Println("DHN_RECEPTION 테이블 조회 에러 : ", err)
+				errlog.Println("DHN_RECEPTION 테이블 조회 에러 (userid : ", userid, "/ msgid : ", msg[i].Msgid, ")")
+				continue
+			}
+
+			if cnt > 0 { 
+				errlog.Println("중복된 발송아이디 발송 요청!! (userid : ", userid, "/ msgid : ", msg[i].Msgid, ")")
+				duplMsgid = append(duplMsgid, msg[i].Msgid)
+				duplCnt++
+				continue
+			}
 
 			insStrs = append(insStrs, "(?,?)")
 			insValues = append(insValues, msg[i].Msgid)
@@ -222,6 +242,7 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 				reqinsValues = append(reqinsValues, msg[i].Att_items)
 				reqinsValues = append(reqinsValues, msg[i].Att_coupon)
 				reqinsValues = append(reqinsValues, msg[i].MmsImageId)
+				ftCnt++
 			//문자 insert values 만들기
 			} else if s.EqualFold(msg[i].Messagetype, "PH") {
 				var resdt = time.Now()
@@ -298,6 +319,7 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 				resinsValues = append(resinsValues, nil) //attachments
 				resinsValues = append(resinsValues, msg[i].Carousel)
 				resinsValues = append(resinsValues, msg[i].MmsImageId)
+				msgCnt++
 			//알림톡 insert values 만들기
 			} else {
 				atreqinsStrs = append(atreqinsStrs, "("+atQmarkStr+")")
@@ -374,6 +396,7 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 				atreqinsValues = append(atreqinsValues, msg[i].Header)
 				atreqinsValues = append(atreqinsValues, msg[i].Attachments)
 				atreqinsValues = append(atreqinsValues, msg[i].Link)
+				atCnt++
 			}
 
 			// 500건 단위로 처리한다(클라이언트에서 1000건씩 전송하더라도 지정한 단위의 건수로 insert한다.)
@@ -414,9 +437,14 @@ func ReqReceive(c *fasthttp.RequestCtx) {
 
 		errlog.Println("발송 메세지 수신 끝 ( ", userid, ") : ", len(msg), startTime)
 
-		res, _ := json.Marshal(map[string]string{
+		res, _ := json.Marshal(map[string]interface{}{
 			"code": "00",
 			"message": "발송 요청이 완료되었습니다.",
+			"atcnt": atCnt,
+			"ftcnt": ftCnt,
+			"msgcnt": msgCnt,
+			"duplcnt": duplCnt,
+			"duplMsgId": duplMsgid,
 		})
 
 		c.SetContentType("application/json")

@@ -92,12 +92,12 @@ func Resultreq(c *fasthttp.RequestCtx) {
 
 		reqrows, err := db.Query(sqlstr)
 		if err != nil {
-			errlog.Fatal(sqlstr, err)
+			errlog.Println(sqlstr, err)
 		}
 
 		columnTypes, err := reqrows.ColumnTypes()
 		if err != nil {
-			errlog.Fatal(err)
+			errlog.Println(err)
 		}
 		
 		count := len(columnTypes)
