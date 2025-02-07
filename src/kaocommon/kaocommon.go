@@ -2,6 +2,7 @@ package kaocommon
 
 import(
 	"fmt"
+	"time"
 	"crypto/aes"
 	"crypto/cipher"
 	config "mycs/src/kaoconfig"
@@ -339,19 +340,24 @@ func InsMsg(query string, insStrs []string, insValues []interface{}) ([]string, 
 
 	if err != nil{
 		config.Stdlog.Println("InsMsg init tx : ",err)
+		time.Sleep(time.Millisecond * 100)
 		return InsMsg(query, insStrs, insValues)
 	}
+
+	defer tx.Rollback()
 
 	_, err = tx.Exec(stmt, insValues...)
 
 	if err != nil {
 		errlog.Println("Result Table Insert 처리 중 오류 발생 ", err.Error())
 		errlog.Println("table : ", query)
+		time.Sleep(time.Millisecond * 100)
 		return InsMsg(query, insStrs, insValues)
 	}
 
 	if err := tx.Commit(); err != nil {
 		config.Stdlog.Println("Result Table Insert tx Commit 오류 발생 : ", err)
+		time.Sleep(time.Millisecond * 100)
 		return InsMsg(query, insStrs, insValues)
 	}
 	return nil, nil

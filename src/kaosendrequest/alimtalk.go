@@ -135,7 +135,7 @@ func atsendProcess(group_no string, pc int) {
 
 	resinsStrs := []string{}
 	resinsValues := []interface{}{}
-	resinsQuery := `insert into DHN_RESULT(`+atColumnStr+`) values %s`
+	resinsQuery := `insert ignore into DHN_RESULT(`+atColumnStr+`) values %s`
 
 	atreqinsStrs := []string{}
 	atreqinsValues := []interface{}{}

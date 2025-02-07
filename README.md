@@ -69,26 +69,27 @@ long_query_time=5
 
 skip-external-locking
 
-max_connections=1432
-binlog_format=mixed
-server-id=1
+max_connections = 1432
+binlog_format = mixed
+server-id = 1
 
-expire_logs_days=3
+expire_logs_days = 3
 innodb_buffer_pool_size = 64G
 innodb_file_per_table=1
 innodb_flush_log_at_trx_commit = 0
 innodb_lock_wait_timeout = 300
 innodb_log_file_size = 1024M
 innodb_log_buffer_size = 16M
-innodb_write_io_threads=32
-innodb_read_io_threads=32
-innodb_io_capacity=2000
+innodb_write_io_threads = 32
+innodb_read_io_threads = 32
+innodb_io_capacity = 2000
 innodb_flush_neighbors = 1
 
 innodb_buffer_pool_instances = 8
 innodb_page_cleaners = 8
+innodb_autoinc_lock_mod = 2
 
-sql_mode=NO_ENGINE_SUBSTITUTION
+sql_mode = NO_ENGINE_SUBSTITUTION
 transaction_isolation = READ-COMMITTED
 
 

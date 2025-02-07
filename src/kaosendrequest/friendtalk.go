@@ -137,7 +137,7 @@ func ftsendProcess(group_no string, pc int) {
 
 	resinsStrs := []string{}
 	resinsValues := []interface{}{}
-	resinsQuery := `insert into DHN_RESULT(`+ftColumnStr+`) values %s`
+	resinsQuery := `insert ignore into DHN_RESULT(`+ftColumnStr+`) values %s`
 
 	ftreqinsStrs := []string{}
 	ftreqinsValues := []interface{}{}
