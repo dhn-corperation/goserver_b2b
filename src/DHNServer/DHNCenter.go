@@ -444,6 +444,47 @@ func resultProc() {
 	r.GET("/dm/freestyle/response/message", kaocenter.TestFunc)
 	// TODO ----------------------------------------------------------------
 
+
+////////////////////////////////////////////////////NPS AREA////////////////////////////////////////////////////
+
+	// 템플릿 등록
+	// POST /api/v2/{partner_key}/alimtalk/template/create
+	r.POST("/nps/template/create", kaocenter.CreateTemplateNps)
+
+	// 템플릿 조회
+	// GET /api/v2/{partner_key}/alimtalk/template
+	r.GET("/nps/template/search", kaocenter.SearchTemplateNps)
+
+	// 검수 요청
+	// POST /api/v2/{partner_key}/alimtalk/template/request
+	// r.POST("/template/request", kaocenter.Template_Request)
+
+	// 검수 요청 취소
+	// POST /api/v2/{partner_key}/alimtalk/template/cancel_request
+	// r.POST("/template/cancel_request", kaocenter.Template_Cancel_Request)
+
+	// 템플릿 수정
+	// POST /api/v2/{partner_key}/alimtalk/template/update
+	r.POST("/nps/template/update", kaocenter.UpdateTemplateNps)
+
+	// 템플릿 사용 중지
+	// POST /api/v2/{partner_key}/alimtalk/template/stop
+	// r.POST("/template/stop", kaocenter.Template_Stop)
+
+	// 템플릿 사용 중지 해제
+	// POST /api/v2/{partner_key}/alimtalk/template/reuse
+	// r.POST("/template/reuse", kaocenter.Template_Reuse)
+
+	// 템플릿 삭제
+	// POST /api/v2/{partner_key}/alimtalk/template/delete
+	r.POST("/nps/template/delete", kaocenter.DeleteTemplateNps)
+
+	// 템플릿 검수 코멘트
+	r.POST("/nps/template/comment", kaocenter.SetComment)
+
+////////////////////////////////////////////////////NPS AREA////////////////////////////////////////////////////
+
+
 	topLevelHandler := recoveryMiddleware(r.Handler)
 
 	if config.Conf.SSL_FLAG == "Y" {

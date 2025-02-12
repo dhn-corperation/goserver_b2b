@@ -14,10 +14,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"database/sql"
 
 	config "mycs/src/kaoconfig"
 	db "mycs/src/kaodatabasepool"
 	cm "mycs/src/kaocommon"
+	kj "mycs/src/kakaojson"
 
 	"github.com/google/uuid"
 	"github.com/valyala/fasthttp"
@@ -2145,3 +2147,327 @@ func saveUploadedFile(fileHeader *multipart.FileHeader, dst string) error {
 
 	return nil
 }
+
+
+////////////////////////////////////////////////////NPS AREA////////////////////////////////////////////////////
+
+func checkAuthSiteId(c *fasthttp.RequestCtx) bool{
+	authKey := string(c.Request.Header.Peek("auth_key"))
+	siteId := string(c.Request.Header.Peek("siteid"))
+
+	var count sql.NullInt64
+	sql := `
+	select
+		count(1) as cnt
+	from
+		DHN_AUTH
+	where
+		auth_key = ? and siteId = ?
+		`
+	cnterr := db.DB.QueryRow(sql, authKey, siteId).Scan(&count)
+
+	if count.Valid && count.Int64 > 0 && cnterr == nil{
+		return true
+	} else {
+		return false
+	}
+}
+
+// 템플릿 등록 API
+func CreateTemplateNps(c *fasthttp.RequestCtx) {
+	// checkAuthSiteId(c)
+
+	conf := config.Conf
+
+	var npsReqParam kj.CtReq17
+	var npsResParam kj.CtRes17
+	var kakakoReqParam kj.CtKakaoReq
+	var kakakoResParam kj.StKakaoRes
+	var kakakoResParam2 kj.StKakaoRes
+
+	if err := json.Unmarshal(c.PostBody(), &npsReqParam); err != nil {
+		config.Stdlog.Println(err)
+		npsResParam.Code = "405"
+		res, _ := json.Marshal(npsResParam)
+		c.SetContentType("application/json")
+		c.SetStatusCode(fasthttp.StatusBadRequest)
+		c.SetBody(res)
+		return
+	}
+
+	kakakoReqParam.SenderKey = npsReqParam.SenderKey
+	kakakoReqParam.SenderKeyType = npsReqParam.SenderKeyType
+	kakakoReqParam.TemplateCode = npsReqParam.TemplateCode
+	kakakoReqParam.TemplateName = npsReqParam.TemplateName
+	kakakoReqParam.TemplateContent = npsReqParam.TemplateContent
+
+	if npsReqParam.Buttons != nil && len(*npsReqParam.Buttons) > 0 {
+		var npsButtons []kj.CtReqButton17
+
+		btBytes, _ := io.ReadAll(strings.NewReader(*npsReqParam.Buttons))
+		json.Unmarshal(btBytes, &npsButtons)
+
+		var tempBts []kj.KakaoButtonsNps
+		for _, v := range npsButtons {
+			var tempBt kj.KakaoButtonsNps
+			if v.Name != nil {
+				tempBt.Name = v.Name
+			}
+			if v.Type != nil {
+				tempBt.LinkType = v.Type
+			}
+			if v.Ordering != nil {
+				intValue, err := strconv.Atoi(*v.Ordering)
+				if err == nil {
+					tempBt.Ordering = &intValue
+				} else {
+					tempBt.Ordering = nil
+				}
+			}
+			if v.SchemeAndroid != nil {
+				tempBt.Name = v.SchemeAndroid
+			}
+			if v.SchemeIos != nil {
+				tempBt.Name = v.SchemeIos
+			}
+			if v.UrlMobile != nil {
+				tempBt.Name = v.UrlMobile
+			}
+			if v.UrlPc != nil {
+				tempBt.Name = v.UrlPc
+			}
+			if v.PluginId != nil {
+				tempBt.Name = v.PluginId
+			}
+			tempBts = append(tempBts, tempBt)
+		}
+
+		kakakoReqParam.Buttons = &tempBts
+	}
+
+	jsonData, _ := json.Marshal(kakakoReqParam)
+	buff := bytes.NewBuffer(jsonData)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/create", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	json.Unmarshal(bytes, &kakakoResParam)
+
+	if strings.EqualFold(*kakakoResParam.Code, "200") {
+		var reqData kj.KsReqNps
+		var reqRes kj.KtrResNps
+		reqData.SenderKey = kakakoResParam.Data.SenderKey
+		reqData.SenderKeyType = kakakoResParam.Data.SenderKeyType
+		reqData.TemplateCode = kakakoResParam.Data.TemplateCode
+		reqRes = templateRequestNps(reqData)
+
+		if strings.EqualFold(reqRes.Code, "200") {
+			kakakoResParam2 = templateNps(reqData)
+		} else {
+			res, _ := json.Marshal(reqRes)
+			c.SetContentType("application/json")
+			c.SetStatusCode(fasthttp.StatusOK)
+			c.SetBody(res)
+			return
+		}
+
+		res, _ := json.Marshal(kakakoResParam2)
+
+		c.SetContentType("application/json")
+		c.SetStatusCode(fasthttp.StatusOK)
+		c.SetBody(res)
+		return
+	} else {
+		res, _ := json.Marshal(kakakoResParam)
+
+		c.SetContentType("application/json")
+		c.SetStatusCode(fasthttp.StatusOK)
+		c.SetBody(res)
+		return
+	}
+
+	
+
+}
+
+// 템플릿 조회 API
+func SearchTemplateNps(c *fasthttp.RequestCtx) {
+	// checkAuthSiteId(c)
+
+	senderKey := string(c.QueryArgs().Peek("senderKey"))
+	templateCode := string(c.QueryArgs().Peek("templateCode"))
+	senderKeyType := string(c.QueryArgs().Peek("senderKeyType"))
+
+	var reqData kj.KsReqNps
+	var kakakoResParam kj.StKakaoRes
+
+	*reqData.SenderKey = senderKey
+	*reqData.SenderKeyType = senderKeyType
+	*reqData.TemplateCode = templateCode
+
+	kakakoResParam = templateNps(reqData)
+
+	res, _ := json.Marshal(kakakoResParam)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(res)
+	return
+}
+
+// 템플릿 수정 API
+func UpdateTemplateNps(c *fasthttp.RequestCtx) {
+	// checkAuthSiteId(c)
+}
+
+// 템플릿 삭제 API
+func DeleteTemplateNps(c *fasthttp.RequestCtx) {
+	// checkAuthSiteId(c)
+}
+
+// 템플릿 코멘트 등록 API
+func SetComment(c *fasthttp.RequestCtx) {
+	// checkAuthSiteId(c)
+}
+
+// 템플리 검수 함수
+func templateRequestNps(data kj.KsReqNps) kj.KtrResNps {
+	var reqRes kj.KtrResNps
+
+	jsonData, _ := json.Marshal(data)
+	buff := bytes.NewBuffer(jsonData)
+	req, _ := http.NewRequest("POST", config.Conf.CENTER_SERVER+"api/v2/"+config.Conf.PROFILE_KEY+"/alimtalk/template/request", buff)
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, _ := centerClient.Do(req)
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	json.Unmarshal(bytes, &reqRes)
+
+	return reqRes
+}
+
+// 템플리 조회 함수
+func templateNps(data kj.KsReqNps) kj.StKakaoRes {
+	var reqRes kj.StKakaoRes 
+
+	req, _ := http.NewRequest("GET", config.Conf.CENTER_SERVER+"api/v2/"+config.Conf.PROFILE_KEY+"/alimtalk/template?senderKey="+*data.SenderKey+"&templateCode="+url.QueryEscape(*data.TemplateCode)+"&senderKeyType="+*data.SenderKeyType, nil)
+	
+	req.Header.Add("Accept-Charset", "utf-8")
+	
+	resp, _ := centerClient.Do(req)
+
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	json.Unmarshal(bytes, &reqRes)
+
+	return reqRes
+}
+
+// func commentLoop(list []kj.commentsListNps) bool {
+// 	if count(list) > 0 {
+// 		return true
+// 	} else {
+// 		return false
+// 	}
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////NPS AREA////////////////////////////////////////////////////
+
+
+
+
+
+
+
