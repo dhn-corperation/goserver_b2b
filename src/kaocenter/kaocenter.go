@@ -2200,6 +2200,8 @@ func CreateTemplateNps(c *fasthttp.RequestCtx) {
 	kakakoReqParam.TemplateCode = npsReqParam.TemplateCode
 	kakakoReqParam.TemplateName = npsReqParam.TemplateName
 	kakakoReqParam.TemplateContent = npsReqParam.TemplateContent
+	kakakoReqParam.TemplateMessageType = "BA"
+	kakakoReqParam.TemplateEmphasizeType = "NONE"
 
 	if npsReqParam.Buttons != nil && len(*npsReqParam.Buttons) > 0 {
 		var npsButtons []kj.CtReqButton17
@@ -2225,19 +2227,19 @@ func CreateTemplateNps(c *fasthttp.RequestCtx) {
 				}
 			}
 			if v.SchemeAndroid != nil {
-				tempBt.Name = v.SchemeAndroid
+				tempBt.LinkAnd = v.SchemeAndroid
 			}
 			if v.SchemeIos != nil {
-				tempBt.Name = v.SchemeIos
+				tempBt.LinkIos = v.SchemeIos
 			}
 			if v.UrlMobile != nil {
-				tempBt.Name = v.UrlMobile
+				tempBt.LinkMo = v.UrlMobile
 			}
 			if v.UrlPc != nil {
-				tempBt.Name = v.UrlPc
+				tempBt.LinkPc = v.UrlPc
 			}
 			if v.PluginId != nil {
-				tempBt.Name = v.PluginId
+				tempBt.PluginId = v.PluginId
 			}
 			tempBts = append(tempBts, tempBt)
 		}
@@ -2249,6 +2251,7 @@ func CreateTemplateNps(c *fasthttp.RequestCtx) {
 	buff := bytes.NewBuffer(jsonData)
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/create", buff)
 	if err != nil {
+		config.Stdlog.Println(err)
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
@@ -2256,6 +2259,7 @@ func CreateTemplateNps(c *fasthttp.RequestCtx) {
 	req.Header.Add("Content-Type", "application/json")
 	resp, err := centerClient.Do(req)
 	if err != nil {
+		config.Stdlog.Println(err)
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
@@ -2283,6 +2287,8 @@ func CreateTemplateNps(c *fasthttp.RequestCtx) {
 			return
 		}
 
+		kakakoResParam2.Data.InspectionStatus = inspectionMapper(kakakoResParam2.Data.InspectionStatus)
+
 		res, _ := json.Marshal(kakakoResParam2)
 
 		c.SetContentType("application/json")
@@ -2298,8 +2304,6 @@ func CreateTemplateNps(c *fasthttp.RequestCtx) {
 		return
 	}
 
-	
-
 }
 
 // 템플릿 조회 API
@@ -2313,11 +2317,13 @@ func SearchTemplateNps(c *fasthttp.RequestCtx) {
 	var reqData kj.KsReqNps
 	var kakakoResParam kj.StKakaoRes
 
-	*reqData.SenderKey = senderKey
-	*reqData.SenderKeyType = senderKeyType
-	*reqData.TemplateCode = templateCode
+	reqData.SenderKey = &senderKey
+	reqData.SenderKeyType = &senderKeyType
+	reqData.TemplateCode = &templateCode
 
 	kakakoResParam = templateNps(reqData)
+
+	kakakoResParam.Data.InspectionStatus = inspectionMapper(kakakoResParam.Data.InspectionStatus)
 
 	res, _ := json.Marshal(kakakoResParam)
 
@@ -2330,6 +2336,142 @@ func SearchTemplateNps(c *fasthttp.RequestCtx) {
 // 템플릿 수정 API
 func UpdateTemplateNps(c *fasthttp.RequestCtx) {
 	// checkAuthSiteId(c)
+
+	conf := config.Conf
+
+	var npsReqParam kj.UtReq17
+	var npsResParam kj.UtRes17
+	var kakakoReqParam kj.UtKakaoReq
+	var kakakoResParam kj.StKakaoRes
+	var kakakoResParam2 kj.StKakaoRes
+
+	if err := json.Unmarshal(c.PostBody(), &npsReqParam); err != nil {
+		config.Stdlog.Println(err)
+		npsResParam.Code = "405"
+		res, _ := json.Marshal(npsResParam)
+		c.SetContentType("application/json")
+		c.SetStatusCode(fasthttp.StatusBadRequest)
+		c.SetBody(res)
+		return
+	}
+
+	kakakoReqParam.SenderKey = npsReqParam.SenderKey
+	if npsReqParam.SenderKeyType != nil {
+		kakakoReqParam.SenderKeyType = npsReqParam.SenderKeyType	
+	}
+	kakakoReqParam.TemplateCode = npsReqParam.TemplateCode
+
+	kakakoReqParam.NewSenderKey = npsReqParam.NewSenderKey
+	if npsReqParam.NewSenderKeyType != nil {
+		kakakoReqParam.NewSenderKeyType = npsReqParam.NewSenderKeyType	
+	}
+	kakakoReqParam.NewTemplateCode = npsReqParam.NewTemplateCode
+	kakakoReqParam.NewTemplateName = npsReqParam.NewTemplateName
+	kakakoReqParam.NewTemplateContent = npsReqParam.NewTemplateContent
+	kakakoReqParam.NewTemplateMessageType = "BA"
+	kakakoReqParam.NewTemplateEmphasizeType = "NONE"
+
+	if npsReqParam.Buttons != nil && len(*npsReqParam.Buttons) > 0 {
+		var npsButtons []kj.CtReqButton17
+
+		btBytes, _ := io.ReadAll(strings.NewReader(*npsReqParam.Buttons))
+		json.Unmarshal(btBytes, &npsButtons)
+
+		var tempBts []kj.KakaoButtonsNps
+		for _, v := range npsButtons {
+			var tempBt kj.KakaoButtonsNps
+			if v.Name != nil {
+				tempBt.Name = v.Name
+			}
+			if v.Type != nil {
+				tempBt.LinkType = v.Type
+			}
+			if v.Ordering != nil {
+				intValue, err := strconv.Atoi(*v.Ordering)
+				if err == nil {
+					tempBt.Ordering = &intValue
+				} else {
+					tempBt.Ordering = nil
+				}
+			}
+			if v.SchemeAndroid != nil {
+				tempBt.LinkAnd = v.SchemeAndroid
+			}
+			if v.SchemeIos != nil {
+				tempBt.LinkIos = v.SchemeIos
+			}
+			if v.UrlMobile != nil {
+				tempBt.LinkMo = v.UrlMobile
+			}
+			if v.UrlPc != nil {
+				tempBt.LinkPc = v.UrlPc
+			}
+			if v.PluginId != nil {
+				tempBt.PluginId = v.PluginId
+			}
+			tempBts = append(tempBts, tempBt)
+		}
+
+		kakakoReqParam.Buttons = &tempBts
+	}
+
+	jsonData, _ := json.Marshal(kakakoReqParam)
+	buff := bytes.NewBuffer(jsonData)
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/update", buff)
+	if err != nil {
+		config.Stdlog.Println(err)
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		config.Stdlog.Println(err)
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	json.Unmarshal(bytes, &kakakoResParam)
+
+	if strings.EqualFold(*kakakoResParam.Code, "200") {
+		var reqData kj.KsReqNps
+		var reqRes kj.KtrResNps
+		reqData.SenderKey = kakakoResParam.Data.SenderKey
+		reqData.SenderKeyType = kakakoResParam.Data.SenderKeyType
+		reqData.TemplateCode = kakakoResParam.Data.TemplateCode
+		reqRes = templateRequestNps(reqData)
+
+		if strings.EqualFold(reqRes.Code, "200") {
+			kakakoResParam2 = templateNps(reqData)
+		} else {
+			res, _ := json.Marshal(reqRes)
+			c.SetContentType("application/json")
+			c.SetStatusCode(fasthttp.StatusOK)
+			c.SetBody(res)
+			return
+		}
+
+		kakakoResParam2.Data.InspectionStatus = inspectionMapper(kakakoResParam2.Data.InspectionStatus)
+
+		res, _ := json.Marshal(kakakoResParam2)
+
+		c.SetContentType("application/json")
+		c.SetStatusCode(fasthttp.StatusOK)
+		c.SetBody(res)
+		return
+	} else {
+		res, _ := json.Marshal(kakakoResParam)
+
+		c.SetContentType("application/json")
+		c.SetStatusCode(fasthttp.StatusOK)
+		c.SetBody(res)
+		return
+	}
+
 }
 
 // 템플릿 삭제 API
@@ -2340,9 +2482,118 @@ func DeleteTemplateNps(c *fasthttp.RequestCtx) {
 // 템플릿 코멘트 등록 API
 func SetComment(c *fasthttp.RequestCtx) {
 	// checkAuthSiteId(c)
+
+	conf := config.Conf
+
+	var reqData kj.KsReqNps
+	var npsResParam kj.UtRes17
+	var kakakoResParam kj.StKakaoRes
+
+	if err := json.Unmarshal(c.PostBody(), &reqData); err != nil {
+		// config.Stdlog.Println(err)
+		npsResParam.Code = "405"
+		res, _ := json.Marshal(npsResParam)
+		c.SetContentType("application/json")
+		c.SetStatusCode(fasthttp.StatusBadRequest)
+		c.SetBody(res)
+		return
+	}
+
+	kakakoResParam = templateNps(reqData)
+
+	if strings.EqualFold(*kakakoResParam.Code, "200") {
+		if strings.EqualFold(kakakoResParam.Data.InspectionStatus, "REG") {
+			var reqRes kj.KtrResNps
+			reqRes = templateRequestNps(reqData)
+
+			res, _ := json.Marshal(reqRes)
+
+			if strings.EqualFold(reqRes.Code, "200") {
+				reqRes = cancelTemplateRequestNps(reqData)
+			}
+
+			c.SetContentType("application/json")
+			c.SetStatusCode(fasthttp.StatusOK)
+			c.SetBody(res)
+			return
+		} else if strings.EqualFold(kakakoResParam.Data.InspectionStatus, "REJ") {
+			var kakakoReqParam kj.UtKakaoReq
+
+			kakakoReqParam.SenderKey = kakakoResParam.Data.SenderKey
+			if kakakoResParam.Data.SenderKeyType != nil {
+				kakakoReqParam.SenderKeyType = kakakoResParam.Data.SenderKeyType	
+			}
+			kakakoReqParam.TemplateCode = kakakoResParam.Data.TemplateCode
+
+			kakakoReqParam.NewSenderKey = kakakoResParam.Data.SenderKey
+			if kakakoResParam.Data.SenderKey != nil {
+				kakakoReqParam.NewSenderKeyType = kakakoResParam.Data.SenderKeyType	
+			}
+			kakakoReqParam.NewTemplateCode = kakakoResParam.Data.TemplateCode
+			kakakoReqParam.NewTemplateName = kakakoResParam.Data.TemplateName
+			kakakoReqParam.NewTemplateContent = kakakoResParam.Data.TemplateContent
+			kakakoReqParam.NewTemplateMessageType = "BA"
+			kakakoReqParam.NewTemplateEmphasizeType = "NONE"
+			kakakoReqParam.Buttons = kakakoResParam.Data.Buttons
+
+			jsonData, _ := json.Marshal(kakakoReqParam)
+			buff := bytes.NewBuffer(jsonData)
+			req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/update", buff)
+			if err != nil {
+				config.Stdlog.Println(err)
+				c.Error(err.Error(), fasthttp.StatusBadRequest)
+				return
+			}
+
+			req.Header.Add("Content-Type", "application/json")
+			resp, err := centerClient.Do(req)
+			if err != nil {
+				config.Stdlog.Println(err)
+				c.Error(err.Error(), fasthttp.StatusBadRequest)
+				return
+			}
+			defer resp.Body.Close()
+
+			bytes, _ := ioutil.ReadAll(resp.Body)
+
+			json.Unmarshal(bytes, &kakakoResParam)
+
+			if strings.EqualFold(*kakakoResParam.Code, "200") {
+				var reqRes kj.KtrResNps
+				reqRes = templateRequestNps(reqData)
+
+				res, _ := json.Marshal(reqRes)
+
+				if strings.EqualFold(reqRes.Code, "200") {
+					reqRes = cancelTemplateRequestNps(reqData)
+				}
+
+				c.SetContentType("application/json")
+				c.SetStatusCode(fasthttp.StatusOK)
+				c.SetBody(res)
+				return
+			} else {
+				npsResParam.Code = *kakakoResParam.Code
+				res, _ := json.Marshal(npsResParam)
+				c.SetContentType("application/json")
+				c.SetStatusCode(fasthttp.StatusBadRequest)
+				c.SetBody(res)
+				return
+			}
+			
+		}
+	} else {
+		npsResParam.Code = *kakakoResParam.Code
+		res, _ := json.Marshal(npsResParam)
+		c.SetContentType("application/json")
+		c.SetStatusCode(fasthttp.StatusBadRequest)
+		c.SetBody(res)
+		return
+	}
+
 }
 
-// 템플리 검수 함수
+// 템플릿 검수 함수
 func templateRequestNps(data kj.KsReqNps) kj.KtrResNps {
 	var reqRes kj.KtrResNps
 
@@ -2361,7 +2612,7 @@ func templateRequestNps(data kj.KsReqNps) kj.KtrResNps {
 	return reqRes
 }
 
-// 템플리 조회 함수
+// 템플릿 조회 함수
 func templateNps(data kj.KsReqNps) kj.StKakaoRes {
 	var reqRes kj.StKakaoRes 
 
@@ -2380,88 +2631,38 @@ func templateNps(data kj.KsReqNps) kj.StKakaoRes {
 	return reqRes
 }
 
-// func commentLoop(list []kj.commentsListNps) bool {
-// 	if count(list) > 0 {
-// 		return true
-// 	} else {
-// 		return false
-// 	}
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// 템플릿 검수 취소 함수
+func cancelTemplateRequestNps(data kj.KsReqNps) kj.KtrResNps {
+	var reqRes kj.KtrResNps
+
+	jsonData, _ := json.Marshal(data)
+	buff := bytes.NewBuffer(jsonData)
+	req, _ := http.NewRequest("POST", config.Conf.CENTER_SERVER+"api/v2/"+config.Conf.PROFILE_KEY+"/alimtalk/template/cancel_request", buff)
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, _ := centerClient.Do(req)
+	defer resp.Body.Close()
+
+	bytes, _ := io.ReadAll(resp.Body)
+
+	json.Unmarshal(bytes, &reqRes)
+
+	return reqRes
+}
+
+func inspectionMapper(stat string) string {
+	ret := ""
+	if strings.EqualFold(stat, "REG") {
+		ret = "REG"
+	} else if strings.EqualFold(stat, "REQ"){
+		ret = "INS"
+	} else if strings.EqualFold(stat, "APR"){
+		ret = "COM"
+	} else if strings.EqualFold(stat, "REJ"){
+		ret = "REJ"
+	}
+	return ret
+}
 
 ////////////////////////////////////////////////////NPS AREA////////////////////////////////////////////////////
 

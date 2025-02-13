@@ -253,11 +253,11 @@ type CtReqButton17 struct {
 	Name           *string `json:"name"`
 	Type           *string `json:"type"`
 	Ordering       *string `json:"ordering"`
-	SchemeAndroid  *string `json:"schemeAndroid,omitempty"`
-	SchemeIos      *string `json:"schemeIos,omitempty"`
-	UrlMobile      *string `json:"urlMobile,omitempty"`
-	UrlPc          *string `json:"urlPc,omitempty"`
-	PluginId       *string `json:"pluginId,omitempty"`
+	SchemeAndroid  *string `json:"scheme_android,omitempty"`
+	SchemeIos      *string `json:"scheme_ios,omitempty"`
+	UrlMobile      *string `json:"url_mobile,omitempty"`
+	UrlPc          *string `json:"url_pc,omitempty"`
+	PluginId       *string `json:"plugin_id,omitempty"`
 }
 
 type CtRes17 struct {
@@ -270,8 +270,8 @@ type CtKakaoReq struct {
 	SenderKeyType *string `json:"senderKeyType,omitempty"`
 	TemplateCode *string `json:"templateCode,omitempty"`
 	TemplateName *string `json:"templateName,omitempty"`
-	TemplateMessageType *string `json:"templateMessageType,omitempty"`
-	TemplateEmphasizeType *string `json:"templateEmphasizeType,omitempty"`
+	TemplateMessageType string `json:"templateMessageType,omitempty"`
+	TemplateEmphasizeType string `json:"templateEmphasizeType,omitempty"`
 	TemplateContent *string `json:"templateContent,omitempty"`
 	TemplatePreviewMessage *string `json:"templatePreviewMessage,omitempty"`
 	TemplateExtra *string `json:"templateExtra,omitempty"`
@@ -303,13 +303,13 @@ type KakaoTemplateRepresentLinkNps struct {
 
 type KakaoButtonsNps struct {
 	Name         *string `json:"name,omitempty"`
-	LinkType     *string `json:"linktype,omitempty"`
-	Ordering     *int `json:"ordering,omitempty"`
+	LinkType     *string `json:"linkType,omitempty"`
+	Ordering     *int    `json:"ordering,omitempty"`
 	LinkMo       *string `json:"linkMo,omitempty"`
 	LinkPc       *string `json:"linkPc,omitempty"`
 	LinkAnd      *string `json:"linkAnd,omitempty"`
-	inkIos       *string `json:"linkIos,omitempty"`
-	PluginId     *string `json:"pluginid,omitempty"`
+	LinkIos      *string `json:"linkIos,omitempty"`
+	PluginId     *string `json:"pluginId,omitempty"`
 	BizFormId    *string `json:"bizFormId,omitempty"`
 }
 
@@ -346,7 +346,7 @@ type StKakaoData struct {
 	TemplateHeader *string `json:"templateHeader,omitempty"`
 	TemplateItemHighlight *KakaoTemplateItemHighlightNps `json:"templateItemHighlight,omitempty"`
 	TemplateRepresentLink *KakaoTemplateRepresentLinkNps `json:"templateRepresentLink,omitempty"`
-	InspectionStatus *string `json:"inspectionStatus,omitempty"`
+	InspectionStatus string `json:"inspectionStatus,omitempty"`
 	CreatedAt *string `json:"createdAt,omitempty"`
 	ModifiedAt *string `json:"modifiedAt,omitempty"`
 	Status *string `json:"status,omitempty"`
@@ -391,7 +391,57 @@ type KtrResNps struct {
 	Message *string `json:"message"`
 }
 
+type UtReq17 struct {
+	SenderKey *string `json:"senderKey,omitempty"`
+	SenderKeyType *string `json:"senderKeyType,omitempty"`
+	TemplateCode *string `json:"templateCode,omitempty"`
 
+	NewSenderKey *string `json:"newSenderKey,omitempty"`
+	NewSenderKeyType *string `json:"newSenderKeyType,omitempty"`
+	NewTemplateCode *string `json:"newTemplateCode,omitempty"`
+	NewTemplateName *string `json:"newTemplateName,omitempty"`
+	NewTemplateContent *string `json:"newTemplateContent,omitempty"`
+	ButtonType *string `json:"buttonType,omitempty"`
+	ButtonName *string `json:"buttonName,omitempty"`
+	ButtonUrl *string `json:"buttonUrl,omitempty"`
+	Buttons *string `json:"buttons,omitempty"`
+}
+
+type UtRes17 struct {
+	Code string `json:"code"`
+	Data *StKakaoRes `json:"data,omitempty"` 
+}
+
+type UtKakaoReq struct {
+	SenderKey *string `json:"senderKey,omitempty"`
+	SenderKeyType *string `json:"senderKeyType,omitempty"`
+	TemplateCode *string `json:"templateCode,omitempty"`
+
+	NewSenderKey *string `json:"newSenderKey,omitempty"`
+	NewSenderKeyType *string `json:"newSenderKeyType,omitempty"`
+	NewTemplateCode *string `json:"newTemplateCode,omitempty"`
+	NewTemplateName *string `json:"newTemplateName,omitempty"`
+	NewTemplateMessageType string `json:"newTemplateMessageType,omitempty"`
+	NewTemplateEmphasizeType string `json:"newTemplateEmphasizeType,omitempty"`
+	NewTemplateContent *string `json:"newTemplateContent,omitempty"`
+	NewTemplatePreviewMessage *string `json:"newTemplatePreviewMessage,omitempty"`
+	NewTemplateExtra *string `json:"newTemplateExtra,omitempty"`
+	NewTemplateImageName *string `json:"newTemplateImageName,omitempty"`
+	NewTemplateImageUrl *string `json:"newTemplateImageUrl,omitempty"`
+	NewTemplateTitle *string `json:"newTemplateTitle,omitempty"`
+	NewTemplateSubtitle *string `json:"newTemplateSubtitle,omitempty"`
+	NewTemplateHeader *string `json:"newTemplateHeader,omitempty"`
+	NewTemplateItemHighlight *KakaoTemplateItemHighlightNps `json:"newTemplateItemHighlight,omitempty"`
+	NewTemplateRepresentLink *KakaoTemplateRepresentLinkNps `json:"newTemplateRepresentLink,omitempty"`
+	NewCategoryCode *string `json:"newCategoryCode,omitempty"`
+	SecurityFlag *bool `json:"securityFlag,omitempty"`
+	Buttons *[]KakaoButtonsNps `json:"buttons,omitempty"`
+	QuickReplies *[]KakaoQuickRepliesNps `json:"quickReplies,omitempty"`
+}
+
+type CmtRes17 struct {
+	Code string `json:"code"`
+}
 
 
 ////////////////////////////////////////////////////NPS AREA////////////////////////////////////////////////////
