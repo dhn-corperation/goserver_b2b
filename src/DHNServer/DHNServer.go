@@ -168,6 +168,40 @@ func resultProc() {
 
 	}
 
+	noshotUser := map[string]string{}
+	noshotCtxC := map[string]interface{}{}
+
+	noshotUserList, error := databasepool.DB.Query("select distinct user_id from DHN_CLIENT_LIST dcl where dcl.use_flag = 'Y' and upper(ifnull(dcl.dest, '')) = 'NOSHOT'")
+	isNOshot := true
+	if error != nil {
+		config.Stdlog.Println("오샷 유저 select 오류 ")
+		isNOshot = false
+	}
+	defer noshotUserList.Close()
+
+	if isNOshot {
+		var user_id sql.NullString
+
+		for noshotUserList.Next() {
+			noshotUserList.Scan(&user_id)
+			ctx, cancel := context.WithCancel(context.Background())
+			ctx = context.WithValue(ctx, "user_id", user_id.String)
+			go oshotproc.NOshotProcess(user_id.String, ctx)
+
+			noshotUser[user_id.String] = user_id.String
+			noshotCtxC[user_id.String] = cancel
+
+			allCtxC["NOS"+user_id.String] = cancel
+			allService["NOS"+user_id.String] = user_id.String
+
+		}
+	}
+
+	nolctx, nolcancel := context.WithCancel(context.Background())
+	go oshotproc.NMSGProcess(nolctx)
+	allCtxC["noshotmsg"] = nolcancel
+	allService["noshotmsg"] = "NOshot MSG"
+
 	oshotUser := map[string]string{}
 	oshotCtxC := map[string]interface{}{}
 
