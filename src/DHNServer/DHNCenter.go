@@ -467,14 +467,6 @@ func resultProc() {
 	// POST /api/v2/{partner_key}/alimtalk/template/update
 	r.POST("/nps/template/update", kaocenter.UpdateTemplateNps)
 
-	// 템플릿 사용 중지
-	// POST /api/v2/{partner_key}/alimtalk/template/stop
-	// r.POST("/template/stop", kaocenter.Template_Stop)
-
-	// 템플릿 사용 중지 해제
-	// POST /api/v2/{partner_key}/alimtalk/template/reuse
-	// r.POST("/template/reuse", kaocenter.Template_Reuse)
-
 	// 템플릿 삭제
 	// POST /api/v2/{partner_key}/alimtalk/template/delete
 	r.POST("/nps/template/delete", kaocenter.DeleteTemplateNps)

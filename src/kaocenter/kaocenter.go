@@ -2477,6 +2477,30 @@ func UpdateTemplateNps(c *fasthttp.RequestCtx) {
 // 템플릿 삭제 API
 func DeleteTemplateNps(c *fasthttp.RequestCtx) {
 	// checkAuthSiteId(c)
+
+	conf := config.Conf
+
+	buff := bytes.NewBuffer(c.PostBody())
+	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/delete", buff)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := centerClient.Do(req)
+	if err != nil {
+		c.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	c.SetContentType("application/json")
+	c.SetStatusCode(fasthttp.StatusOK)
+	c.SetBody(bytes)
+
 }
 
 // 템플릿 코멘트 등록 API
