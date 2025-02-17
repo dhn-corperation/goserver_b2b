@@ -231,7 +231,7 @@ func nresProcess(ctx context.Context, group_no, user_id string, pc int) {
 
 			osmmsStrs = append(osmmsStrs, "(?,?,?,?,?,?,?,null,?,?,?,?,?,?)")
 			osmmsValues = append(osmmsValues, group_no+"-"+strconv.Itoa(lmscnt))
-			if sms_sender.String == "S" {
+			if sms_kind.String == "S" {
 				osmmsValues = append(osmmsValues, "SMS")
 				smscnt++
 			} else {
