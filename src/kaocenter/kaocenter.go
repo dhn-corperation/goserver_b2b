@@ -2151,25 +2151,23 @@ func saveUploadedFile(fileHeader *multipart.FileHeader, dst string) error {
 
 ////////////////////////////////////////////////////NPS AREA////////////////////////////////////////////////////
 
-func checkAuthSiteId(c *fasthttp.RequestCtx) bool{
-	authKey := string(c.Request.Header.Peek("auth_key"))
-	siteId := string(c.Request.Header.Peek("siteid"))
-
-	var count sql.NullInt64
+func checkAuthSiteId(auth, siteId string) string {
+	var pk sql.NullString
 	sql := `
 	select
-		count(1) as cnt
+		profile_key
 	from
 		DHN_AUTH
 	where
-		auth_key = ? and siteId = ?
+		auth_key = ? and site_id = ?
 		`
-	cnterr := db.DB.QueryRow(sql, authKey, siteId).Scan(&count)
+		
+	db.DB.QueryRow(sql, auth, siteId).Scan(&pk)
 
-	if count.Valid && count.Int64 > 0 && cnterr == nil{
-		return true
+	if pk.Valid{
+		return pk.String
 	} else {
-		return false
+		return ""
 	}
 }
 
@@ -2179,34 +2177,53 @@ func CreateTemplateNps(c *fasthttp.RequestCtx) {
 
 	conf := config.Conf
 
-	var npsReqParam kj.CtReq17
-	var npsResParam kj.CtRes17
 	var kakakoReqParam kj.CtKakaoReq
 	var kakakoResParam kj.StKakaoRes
 	var kakakoResParam2 kj.StKakaoRes
 
-	if err := json.Unmarshal(c.PostBody(), &npsReqParam); err != nil {
-		config.Stdlog.Println(err)
-		npsResParam.Code = "405"
-		res, _ := json.Marshal(npsResParam)
-		c.SetContentType("application/json")
-		c.SetStatusCode(fasthttp.StatusBadRequest)
-		c.SetBody(res)
-		return
+	senderKey := c.PostArgs().Peek("senderKey")
+	senderKeyType := c.PostArgs().Peek("senderKeyType")
+	templateCode := c.PostArgs().Peek("templateCode")
+	templateName := c.PostArgs().Peek("templateName")
+	templateContent := c.PostArgs().Peek("templateContent")
+	buttons := c.PostArgs().Peek("buttons")
+
+	if len(senderKey) > 0 {
+		strSenderKey := string(senderKey)
+		kakakoReqParam.SenderKey = &strSenderKey
+	} else {
+		pk := checkAuthSiteId(string(c.Request.Header.Peek("auth_key")), string(c.Request.Header.Peek("siteid")))
+		kakakoReqParam.SenderKey = &pk
 	}
 
-	kakakoReqParam.SenderKey = npsReqParam.SenderKey
-	kakakoReqParam.SenderKeyType = npsReqParam.SenderKeyType
-	kakakoReqParam.TemplateCode = npsReqParam.TemplateCode
-	kakakoReqParam.TemplateName = npsReqParam.TemplateName
-	kakakoReqParam.TemplateContent = npsReqParam.TemplateContent
+	if len(senderKeyType) > 0 {
+		strSenderKeyType := string(senderKeyType)
+		kakakoReqParam.SenderKeyType = &strSenderKeyType
+	}
+
+	if len(templateCode) > 0 {
+		strTemplateCode := string(templateCode)
+		kakakoReqParam.TemplateCode = &strTemplateCode
+	}
+
+	if len(templateName) > 0 {
+		strTemplateName := string(templateName)
+		kakakoReqParam.TemplateName = &strTemplateName
+	}
+
+	if len(templateContent) > 0 {
+		strTemplateContent := string(templateContent)
+		kakakoReqParam.TemplateContent = &strTemplateContent
+	}
+	
 	kakakoReqParam.TemplateMessageType = "BA"
 	kakakoReqParam.TemplateEmphasizeType = "NONE"
 
-	if npsReqParam.Buttons != nil && len(*npsReqParam.Buttons) > 0 {
+	if len(buttons) > 0 {
+		strButtons := string(buttons)
 		var npsButtons []kj.CtReqButton17
 
-		btBytes, _ := io.ReadAll(strings.NewReader(*npsReqParam.Buttons))
+		btBytes, _ := io.ReadAll(strings.NewReader(strButtons))
 		json.Unmarshal(btBytes, &npsButtons)
 
 		var tempBts []kj.KakaoButtonsNps
@@ -2249,6 +2266,7 @@ func CreateTemplateNps(c *fasthttp.RequestCtx) {
 
 	jsonData, _ := json.Marshal(kakakoReqParam)
 	buff := bytes.NewBuffer(jsonData)
+
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/create", buff)
 	if err != nil {
 		config.Stdlog.Println(err)
@@ -2268,7 +2286,6 @@ func CreateTemplateNps(c *fasthttp.RequestCtx) {
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	json.Unmarshal(bytes, &kakakoResParam)
-
 	if strings.EqualFold(*kakakoResParam.Code, "200") {
 		var reqData kj.KsReqNps
 		var reqRes kj.KtrResNps
@@ -2339,42 +2356,69 @@ func UpdateTemplateNps(c *fasthttp.RequestCtx) {
 
 	conf := config.Conf
 
-	var npsReqParam kj.UtReq17
-	var npsResParam kj.UtRes17
+	// var npsReqParam kj.UtReq17
+	// var npsResParam kj.UtRes17
 	var kakakoReqParam kj.UtKakaoReq
 	var kakakoResParam kj.StKakaoRes
 	var kakakoResParam2 kj.StKakaoRes
 
-	if err := json.Unmarshal(c.PostBody(), &npsReqParam); err != nil {
-		config.Stdlog.Println(err)
-		npsResParam.Code = "405"
-		res, _ := json.Marshal(npsResParam)
-		c.SetContentType("application/json")
-		c.SetStatusCode(fasthttp.StatusBadRequest)
-		c.SetBody(res)
-		return
+	senderKey := c.PostArgs().Peek("senderKey")
+	templateCode := c.PostArgs().Peek("templateCode")
+
+	newSenderKey := c.PostArgs().Peek("newSenderKey")
+	newSenderKeyType := c.PostArgs().Peek("newSenderKeyType")
+	newTemplateCode := c.PostArgs().Peek("newTemplateCode")
+	newTemplateName := c.PostArgs().Peek("newTemplateName")
+	newTemplateContent := c.PostArgs().Peek("newTemplateContent")
+
+	buttons := c.PostArgs().Peek("buttons")
+
+	if len(senderKey) > 0 {
+		strSenderKey := string(senderKey)
+		kakakoReqParam.SenderKey = &strSenderKey
+	} else {
+		pk := checkAuthSiteId(string(c.Request.Header.Peek("auth_key")), string(c.Request.Header.Peek("siteid")))
+		kakakoReqParam.SenderKey = &pk
 	}
 
-	kakakoReqParam.SenderKey = npsReqParam.SenderKey
-	if npsReqParam.SenderKeyType != nil {
-		kakakoReqParam.SenderKeyType = npsReqParam.SenderKeyType	
+	if len(templateCode) > 0 {
+		strTemplateCode := string(templateCode)
+		kakakoReqParam.TemplateCode = &strTemplateCode
 	}
-	kakakoReqParam.TemplateCode = npsReqParam.TemplateCode
 
-	kakakoReqParam.NewSenderKey = npsReqParam.NewSenderKey
-	if npsReqParam.NewSenderKeyType != nil {
-		kakakoReqParam.NewSenderKeyType = npsReqParam.NewSenderKeyType	
+	if len(newSenderKey) > 0 {
+		strNewSenderKey := string(newSenderKey)
+		kakakoReqParam.NewSenderKey = &strNewSenderKey
 	}
-	kakakoReqParam.NewTemplateCode = npsReqParam.NewTemplateCode
-	kakakoReqParam.NewTemplateName = npsReqParam.NewTemplateName
-	kakakoReqParam.NewTemplateContent = npsReqParam.NewTemplateContent
+
+	if len(newSenderKeyType) > 0 {
+		strNewSenderKeyType := string(newSenderKeyType)
+		kakakoReqParam.NewSenderKeyType = &strNewSenderKeyType
+	}
+
+	if len(newTemplateCode) > 0 {
+		strNewTemplateCode := string(newTemplateCode)
+		kakakoReqParam.NewTemplateCode = &strNewTemplateCode
+	}
+
+	if len(newTemplateName) > 0 {
+		strNewTemplateName := string(newTemplateName)
+		kakakoReqParam.NewTemplateName = &strNewTemplateName
+	}
+
+	if len(newTemplateContent) > 0 {
+		strNewTemplateContent := string(newTemplateContent)
+		kakakoReqParam.NewTemplateContent = &strNewTemplateContent
+	}
+
 	kakakoReqParam.NewTemplateMessageType = "BA"
 	kakakoReqParam.NewTemplateEmphasizeType = "NONE"
 
-	if npsReqParam.Buttons != nil && len(*npsReqParam.Buttons) > 0 {
+	if len(buttons) > 0 {
+		strButtons := string(buttons)
 		var npsButtons []kj.CtReqButton17
 
-		btBytes, _ := io.ReadAll(strings.NewReader(*npsReqParam.Buttons))
+		btBytes, _ := io.ReadAll(strings.NewReader(strButtons))
 		json.Unmarshal(btBytes, &npsButtons)
 
 		var tempBts []kj.KakaoButtonsNps
@@ -2480,7 +2524,31 @@ func DeleteTemplateNps(c *fasthttp.RequestCtx) {
 
 	conf := config.Conf
 
-	buff := bytes.NewBuffer(c.PostBody())
+	var reqData kj.KsReqNps
+
+	senderKey := c.PostArgs().Peek("senderKey")
+	senderKeyType := c.PostArgs().Peek("senderKeyType")
+	templateCode := c.PostArgs().Peek("templateCode")
+
+	if len(senderKey) > 0 {
+		strSenderKey := string(senderKey)
+		reqData.SenderKey = &strSenderKey
+	} else {
+		pk := checkAuthSiteId(string(c.Request.Header.Peek("auth_key")), string(c.Request.Header.Peek("siteid")))
+		reqData.SenderKey = &pk
+	}
+
+	if len(senderKeyType) > 0 {
+		strSenderKeyType := string(senderKeyType)
+		reqData.SenderKeyType = &strSenderKeyType
+	}
+
+	if len(templateCode) > 0 {
+		strTemplateCode := string(templateCode)
+		reqData.TemplateCode = &strTemplateCode
+	}
+	jsonData, _ := json.Marshal(reqData)
+	buff := bytes.NewBuffer(jsonData)
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/delete", buff)
 	if err != nil {
 		c.Error(err.Error(), fasthttp.StatusBadRequest)
@@ -2513,14 +2581,32 @@ func SetComment(c *fasthttp.RequestCtx) {
 	var npsResParam kj.UtRes17
 	var kakakoResParam kj.StKakaoRes
 
-	if err := json.Unmarshal(c.PostBody(), &reqData); err != nil {
-		// config.Stdlog.Println(err)
-		npsResParam.Code = "405"
-		res, _ := json.Marshal(npsResParam)
-		c.SetContentType("application/json")
-		c.SetStatusCode(fasthttp.StatusBadRequest)
-		c.SetBody(res)
-		return
+	senderKey := c.PostArgs().Peek("senderKey")
+	senderKeyType := c.PostArgs().Peek("senderKeyType")
+	templateCode := c.PostArgs().Peek("templateCode")
+	comment := c.PostArgs().Peek("comment")
+
+	if len(senderKey) > 0 {
+		strSenderKey := string(senderKey)
+		reqData.SenderKey = &strSenderKey
+	} else {
+		pk := checkAuthSiteId(string(c.Request.Header.Peek("auth_key")), string(c.Request.Header.Peek("siteid")))
+		reqData.SenderKey = &pk
+	}
+
+	if len(senderKeyType) > 0 {
+		strSenderKeyType := string(senderKeyType)
+		reqData.SenderKeyType = &strSenderKeyType
+	}
+
+	if len(templateCode) > 0 {
+		strTemplateCode := string(templateCode)
+		reqData.TemplateCode = &strTemplateCode
+	}
+
+	if len(comment) > 0 {
+		strComment := string(comment)
+		reqData.Comment = &strComment
 	}
 
 	kakakoResParam = templateNps(reqData)
@@ -2534,6 +2620,20 @@ func SetComment(c *fasthttp.RequestCtx) {
 
 			if strings.EqualFold(reqRes.Code, "200") {
 				reqRes = cancelTemplateRequestNps(reqData)
+			}
+
+			c.SetContentType("application/json")
+			c.SetStatusCode(fasthttp.StatusOK)
+			c.SetBody(res)
+			return
+		} else if strings.EqualFold(kakakoResParam.Data.InspectionStatus, "REQ") {
+			var reqRes kj.KtrResNps
+			reqRes = cancelTemplateRequestNps(reqData)
+
+			res, _ := json.Marshal(reqRes)
+
+			if strings.EqualFold(reqRes.Code, "200") {
+				reqRes = templateRequestNps(reqData)
 			}
 
 			c.SetContentType("application/json")
