@@ -2174,6 +2174,7 @@ func checkAuthSiteId(auth, siteId string) string {
 // 템플릿 등록 API
 func CreateTemplateNps(c *fasthttp.RequestCtx) {
 	// checkAuthSiteId(c)
+	config.Stdlog.Println("CreateTemplateNps 시작")
 
 	conf := config.Conf
 
@@ -2181,85 +2182,121 @@ func CreateTemplateNps(c *fasthttp.RequestCtx) {
 	var kakakoResParam kj.StKakaoRes
 	var kakakoResParam2 kj.StKakaoRes
 
-	senderKey := c.PostArgs().Peek("senderKey")
-	senderKeyType := c.PostArgs().Peek("senderKeyType")
-	templateCode := c.PostArgs().Peek("templateCode")
-	templateName := c.PostArgs().Peek("templateName")
-	templateContent := c.PostArgs().Peek("templateContent")
-	buttons := c.PostArgs().Peek("buttons")
+	rawData := string(c.PostBody())
 
-	if len(senderKey) > 0 {
-		strSenderKey := string(senderKey)
+	values, err := url.ParseQuery(rawData)
+	if err != nil {
+		fmt.Println("Error parsing query:", err)
+		return
+	}
+
+	result := make(map[string]interface{})
+
+	for key, val := range values {
+		if len(val) == 1 {
+			// JSON 형태인지 확인 후 변환
+			var jsonData interface{}
+			if json.Unmarshal([]byte(val[0]), &jsonData) == nil {
+				result[key] = jsonData
+			} else {
+				result[key] = val[0]
+			}
+		} else {
+			result[key] = val
+		}
+	}
+
+	senderKey := result["senderKey"]
+	senderKeyType := result["senderKeyType"]
+	templateCode := result["templateCode"]
+	templateName := result["templateName"]
+	templateContent := result["templateContent"]
+	buttons := result["buttons"]
+
+	if senderKey != nil {
+		strSenderKey := senderKey.(string)
 		kakakoReqParam.SenderKey = &strSenderKey
 	} else {
 		pk := checkAuthSiteId(string(c.Request.Header.Peek("auth_key")), string(c.Request.Header.Peek("siteid")))
+		if len(pk) <= 0 {
+			pk = "4e0114103341bd98f65ae0f5fe2acd6df7a6ffe3"
+		}
 		kakakoReqParam.SenderKey = &pk
 	}
 
-	if len(senderKeyType) > 0 {
-		strSenderKeyType := string(senderKeyType)
+	if senderKeyType != nil {
+		strSenderKeyType := senderKeyType.(string)
+		kakakoReqParam.SenderKeyType = &strSenderKeyType
+	} else {
+		strSenderKeyType := "S"
 		kakakoReqParam.SenderKeyType = &strSenderKeyType
 	}
 
-	if len(templateCode) > 0 {
-		strTemplateCode := string(templateCode)
+	if templateCode != nil {
+		strTemplateCode := templateCode.(string)
 		kakakoReqParam.TemplateCode = &strTemplateCode
 	}
 
-	if len(templateName) > 0 {
-		strTemplateName := string(templateName)
+	if templateName != nil {
+		strTemplateName := templateName.(string)
 		kakakoReqParam.TemplateName = &strTemplateName
 	}
 
-	if len(templateContent) > 0 {
-		strTemplateContent := string(templateContent)
+	if templateContent != nil {
+		strTemplateContent := templateContent.(string)
 		kakakoReqParam.TemplateContent = &strTemplateContent
 	}
 	
 	kakakoReqParam.TemplateMessageType = "BA"
 	kakakoReqParam.TemplateEmphasizeType = "NONE"
 
-	if len(buttons) > 0 {
-		strButtons := string(buttons)
-		var npsButtons []kj.CtReqButton17
-
-		btBytes, _ := io.ReadAll(strings.NewReader(strButtons))
-		json.Unmarshal(btBytes, &npsButtons)
+	if buttons != nil {
 
 		var tempBts []kj.KakaoButtonsNps
-		for _, v := range npsButtons {
-			var tempBt kj.KakaoButtonsNps
-			if v.Name != nil {
-				tempBt.Name = v.Name
-			}
-			if v.Type != nil {
-				tempBt.LinkType = v.Type
-			}
-			if v.Ordering != nil {
-				intValue, err := strconv.Atoi(*v.Ordering)
-				if err == nil {
-					tempBt.Ordering = &intValue
-				} else {
-					tempBt.Ordering = nil
-				}
-			}
-			if v.SchemeAndroid != nil {
-				tempBt.LinkAnd = v.SchemeAndroid
-			}
-			if v.SchemeIos != nil {
-				tempBt.LinkIos = v.SchemeIos
-			}
-			if v.UrlMobile != nil {
-				tempBt.LinkMo = v.UrlMobile
-			}
-			if v.UrlPc != nil {
-				tempBt.LinkPc = v.UrlPc
-			}
-			if v.PluginId != nil {
-				tempBt.PluginId = v.PluginId
-			}
-			tempBts = append(tempBts, tempBt)
-		}
+
+	    btnList, ok := buttons.([]interface{})
+	    if !ok {
+	        fmt.Println("buttons is not an array")
+	        return
+	    }
+
+	    for _, item := range btnList {
+	        v, ok := item.(map[string]interface{})
+	        if !ok {
+	            fmt.Println("Invalid button format")
+	            continue
+	        }
+
+	        var tempBt kj.KakaoButtonsNps
+
+	        if name, exists := v["name"].(string); exists {
+	            tempBt.Name = &name
+	        }
+	        if linkType, exists := v["type"].(string); exists {
+	            tempBt.LinkType = &linkType
+	        }
+	        if ordering, exists := v["ordering"].(float64); exists { // JSON 숫자는 float64
+	            intValue := int(ordering)
+	            tempBt.Ordering = &intValue
+	        }
+	        if linkAnd, exists := v["schemeAndroid"].(string); exists {
+	            tempBt.LinkAnd = &linkAnd
+	        }
+	        if linkIos, exists := v["schemeIos"].(string); exists {
+	            tempBt.LinkIos = &linkIos
+	        }
+	        if linkMo, exists := v["url_mobile"].(string); exists {
+	            tempBt.LinkMo = &linkMo
+	        }
+	        if linkPc, exists := v["url_pc"].(string); exists {
+	            tempBt.LinkPc = &linkPc
+	        }
+	        if pluginId, exists := v["pluginId"].(string); exists {
+	            tempBt.PluginId = &pluginId
+	        }
+
+	        tempBts = append(tempBts, tempBt)
+	    }
 
 		kakakoReqParam.Buttons = &tempBts
 	}
@@ -2326,6 +2363,7 @@ func CreateTemplateNps(c *fasthttp.RequestCtx) {
 // 템플릿 조회 API
 func SearchTemplateNps(c *fasthttp.RequestCtx) {
 	// checkAuthSiteId(c)
+	config.Stdlog.Println("SearchTemplateNps 시작")
 
 	senderKey := string(c.QueryArgs().Peek("senderKey"))
 	templateCode := string(c.QueryArgs().Peek("templateCode"))
@@ -2353,7 +2391,7 @@ func SearchTemplateNps(c *fasthttp.RequestCtx) {
 // 템플릿 수정 API
 func UpdateTemplateNps(c *fasthttp.RequestCtx) {
 	// checkAuthSiteId(c)
-
+	config.Stdlog.Println("UpdateTemplateNps 시작")
 	conf := config.Conf
 
 	// var npsReqParam kj.UtReq17
@@ -2362,99 +2400,139 @@ func UpdateTemplateNps(c *fasthttp.RequestCtx) {
 	var kakakoResParam kj.StKakaoRes
 	var kakakoResParam2 kj.StKakaoRes
 
-	senderKey := c.PostArgs().Peek("senderKey")
-	templateCode := c.PostArgs().Peek("templateCode")
+	rawData := string(c.PostBody())
 
-	newSenderKey := c.PostArgs().Peek("newSenderKey")
-	newSenderKeyType := c.PostArgs().Peek("newSenderKeyType")
-	newTemplateCode := c.PostArgs().Peek("newTemplateCode")
-	newTemplateName := c.PostArgs().Peek("newTemplateName")
-	newTemplateContent := c.PostArgs().Peek("newTemplateContent")
+	values, err := url.ParseQuery(rawData)
+	if err != nil {
+		fmt.Println("Error parsing query:", err)
+		return
+	}
 
-	buttons := c.PostArgs().Peek("buttons")
+	result := make(map[string]interface{})
 
-	if len(senderKey) > 0 {
-		strSenderKey := string(senderKey)
+	for key, val := range values {
+		if len(val) == 1 {
+			// JSON 형태인지 확인 후 변환
+			var jsonData interface{}
+			if json.Unmarshal([]byte(val[0]), &jsonData) == nil {
+				result[key] = jsonData
+			} else {
+				result[key] = val[0]
+			}
+		} else {
+			result[key] = val
+		}
+	}
+
+	senderKey := result["senderKey"]
+	templateCode := result["templateCode"]
+
+	newSenderKey := result["newSenderKey"]
+	newSenderKeyType := result["newSenderKeyType"]
+	newTemplateCode := result["newTemplateCode"]
+	newTemplateName := result["newTemplateName"]
+	newTemplateContent := result["newTemplateContent"]
+
+	buttons := result["buttons"]
+
+	if senderKey != nil {
+		strSenderKey := senderKey.(string)
 		kakakoReqParam.SenderKey = &strSenderKey
 	} else {
 		pk := checkAuthSiteId(string(c.Request.Header.Peek("auth_key")), string(c.Request.Header.Peek("siteid")))
+		if len(pk) <= 0 {
+			pk = "4e0114103341bd98f65ae0f5fe2acd6df7a6ffe3"
+		}
 		kakakoReqParam.SenderKey = &pk
 	}
 
-	if len(templateCode) > 0 {
-		strTemplateCode := string(templateCode)
+	if templateCode != nil {
+		strTemplateCode := templateCode.(string)
 		kakakoReqParam.TemplateCode = &strTemplateCode
 	}
 
-	if len(newSenderKey) > 0 {
-		strNewSenderKey := string(newSenderKey)
+	if newSenderKey != nil {
+		strNewSenderKey := newSenderKey.(string)
 		kakakoReqParam.NewSenderKey = &strNewSenderKey
+	} else {
+		pk := checkAuthSiteId(string(c.Request.Header.Peek("auth_key")), string(c.Request.Header.Peek("siteid")))
+		if len(pk) <= 0 {
+			pk = "4e0114103341bd98f65ae0f5fe2acd6df7a6ffe3"
+		}
+		kakakoReqParam.NewSenderKey = &pk
 	}
 
-	if len(newSenderKeyType) > 0 {
-		strNewSenderKeyType := string(newSenderKeyType)
+	if newSenderKeyType != nil {
+		strNewSenderKeyType := newSenderKeyType.(string)
+		kakakoReqParam.NewSenderKeyType = &strNewSenderKeyType
+	} else {
+		strNewSenderKeyType := "S"
 		kakakoReqParam.NewSenderKeyType = &strNewSenderKeyType
 	}
 
-	if len(newTemplateCode) > 0 {
-		strNewTemplateCode := string(newTemplateCode)
+	if newTemplateCode != nil {
+		strNewTemplateCode := newTemplateCode.(string)
 		kakakoReqParam.NewTemplateCode = &strNewTemplateCode
 	}
 
-	if len(newTemplateName) > 0 {
-		strNewTemplateName := string(newTemplateName)
+	if newTemplateName != nil {
+		strNewTemplateName := newTemplateName.(string)
 		kakakoReqParam.NewTemplateName = &strNewTemplateName
 	}
 
-	if len(newTemplateContent) > 0 {
-		strNewTemplateContent := string(newTemplateContent)
+	if newTemplateContent != nil {
+		strNewTemplateContent := newTemplateContent.(string)
 		kakakoReqParam.NewTemplateContent = &strNewTemplateContent
 	}
 
 	kakakoReqParam.NewTemplateMessageType = "BA"
 	kakakoReqParam.NewTemplateEmphasizeType = "NONE"
 
-	if len(buttons) > 0 {
-		strButtons := string(buttons)
-		var npsButtons []kj.CtReqButton17
-
-		btBytes, _ := io.ReadAll(strings.NewReader(strButtons))
-		json.Unmarshal(btBytes, &npsButtons)
-
+	if buttons != nil {
 		var tempBts []kj.KakaoButtonsNps
-		for _, v := range npsButtons {
-			var tempBt kj.KakaoButtonsNps
-			if v.Name != nil {
-				tempBt.Name = v.Name
-			}
-			if v.Type != nil {
-				tempBt.LinkType = v.Type
-			}
-			if v.Ordering != nil {
-				intValue, err := strconv.Atoi(*v.Ordering)
-				if err == nil {
-					tempBt.Ordering = &intValue
-				} else {
-					tempBt.Ordering = nil
-				}
-			}
-			if v.SchemeAndroid != nil {
-				tempBt.LinkAnd = v.SchemeAndroid
-			}
-			if v.SchemeIos != nil {
-				tempBt.LinkIos = v.SchemeIos
-			}
-			if v.UrlMobile != nil {
-				tempBt.LinkMo = v.UrlMobile
-			}
-			if v.UrlPc != nil {
-				tempBt.LinkPc = v.UrlPc
-			}
-			if v.PluginId != nil {
-				tempBt.PluginId = v.PluginId
-			}
-			tempBts = append(tempBts, tempBt)
-		}
+		btnList, ok := buttons.([]interface{})
+	    if !ok {
+	        fmt.Println("buttons is not an array")
+	        return
+	    }
+
+	    for _, item := range btnList {
+	        v, ok := item.(map[string]interface{})
+	        if !ok {
+	            fmt.Println("Invalid button format")
+	            continue
+	        }
+
+	        var tempBt kj.KakaoButtonsNps
+
+	        if name, exists := v["name"].(string); exists {
+	            tempBt.Name = &name
+	        }
+	        if linkType, exists := v["type"].(string); exists {
+	            tempBt.LinkType = &linkType
+	        }
+	        if ordering, exists := v["ordering"].(float64); exists { // JSON 숫자는 float64
+	            intValue := int(ordering)
+	            tempBt.Ordering = &intValue
+	        }
+	        if linkAnd, exists := v["schemeAndroid"].(string); exists {
+	            tempBt.LinkAnd = &linkAnd
+	        }
+	        if linkIos, exists := v["schemeIos"].(string); exists {
+	            tempBt.LinkIos = &linkIos
+	        }
+	        if linkMo, exists := v["url_mobile"].(string); exists {
+	            tempBt.LinkMo = &linkMo
+	        }
+	        if linkPc, exists := v["url_pc"].(string); exists {
+	            tempBt.LinkPc = &linkPc
+	        }
+	        if pluginId, exists := v["pluginId"].(string); exists {
+	            tempBt.PluginId = &pluginId
+	        }
+
+	        tempBts = append(tempBts, tempBt)
+	    }
 
 		kakakoReqParam.Buttons = &tempBts
 	}
@@ -2480,6 +2558,10 @@ func UpdateTemplateNps(c *fasthttp.RequestCtx) {
 	bytes, _ := ioutil.ReadAll(resp.Body)
 
 	json.Unmarshal(bytes, &kakakoResParam)
+
+	if kakakoResParam.Message != nil {
+		config.Stdlog.Println(*kakakoResParam.Message)
+	}
 
 	if strings.EqualFold(*kakakoResParam.Code, "200") {
 		var reqData kj.KsReqNps
@@ -2526,27 +2608,55 @@ func DeleteTemplateNps(c *fasthttp.RequestCtx) {
 
 	var reqData kj.KsReqNps
 
-	senderKey := c.PostArgs().Peek("senderKey")
-	senderKeyType := c.PostArgs().Peek("senderKeyType")
-	templateCode := c.PostArgs().Peek("templateCode")
+	rawData := string(c.PostBody())
 
-	if len(senderKey) > 0 {
-		strSenderKey := string(senderKey)
+	values, err := url.ParseQuery(rawData)
+	if err != nil {
+		fmt.Println("Error parsing query:", err)
+		return
+	}
+
+	result := make(map[string]interface{})
+
+	for key, val := range values {
+		if len(val) == 1 {
+			// JSON 형태인지 확인 후 변환
+			var jsonData interface{}
+			if json.Unmarshal([]byte(val[0]), &jsonData) == nil {
+				result[key] = jsonData
+			} else {
+				result[key] = val[0]
+			}
+		} else {
+			result[key] = val
+		}
+	}
+
+	senderKey := result["senderKey"]
+	senderKeyType := result["senderKeyType"]
+	templateCode := result["templateCode"]
+
+	if senderKey != nil {
+		strSenderKey := senderKey.(string)
 		reqData.SenderKey = &strSenderKey
 	} else {
 		pk := checkAuthSiteId(string(c.Request.Header.Peek("auth_key")), string(c.Request.Header.Peek("siteid")))
 		reqData.SenderKey = &pk
 	}
 
-	if len(senderKeyType) > 0 {
-		strSenderKeyType := string(senderKeyType)
+	if senderKeyType != nil {
+		strSenderKeyType := senderKeyType.(string)
+		reqData.SenderKeyType = &strSenderKeyType
+	} else {
+		strSenderKeyType := "S"
 		reqData.SenderKeyType = &strSenderKeyType
 	}
 
-	if len(templateCode) > 0 {
-		strTemplateCode := string(templateCode)
+	if templateCode != nil {
+		strTemplateCode := templateCode.(string)
 		reqData.TemplateCode = &strTemplateCode
 	}
+
 	jsonData, _ := json.Marshal(reqData)
 	buff := bytes.NewBuffer(jsonData)
 	req, err := http.NewRequest("POST", conf.CENTER_SERVER+"api/v2/"+conf.PROFILE_KEY+"/alimtalk/template/delete", buff)
@@ -2574,6 +2684,7 @@ func DeleteTemplateNps(c *fasthttp.RequestCtx) {
 // 템플릿 코멘트 등록 API
 func SetComment(c *fasthttp.RequestCtx) {
 	// checkAuthSiteId(c)
+	config.Stdlog.Println("SetComment 시작")
 
 	conf := config.Conf
 
@@ -2581,32 +2692,72 @@ func SetComment(c *fasthttp.RequestCtx) {
 	var npsResParam kj.UtRes17
 	var kakakoResParam kj.StKakaoRes
 
-	senderKey := c.PostArgs().Peek("senderKey")
-	senderKeyType := c.PostArgs().Peek("senderKeyType")
-	templateCode := c.PostArgs().Peek("templateCode")
-	comment := c.PostArgs().Peek("comment")
+	rawData := string(c.PostBody())
 
-	if len(senderKey) > 0 {
-		strSenderKey := string(senderKey)
+	values, err := url.ParseQuery(rawData)
+	if err != nil {
+		fmt.Println("Error parsing query:", err)
+		return
+	}
+
+	result := make(map[string]interface{})
+
+	for key, val := range values {
+		if len(val) == 1 {
+			// JSON 형태인지 확인 후 변환
+			var jsonData interface{}
+			if json.Unmarshal([]byte(val[0]), &jsonData) == nil {
+				result[key] = jsonData
+			} else {
+				result[key] = val[0]
+			}
+		} else {
+			result[key] = val
+		}
+	}
+
+	senderKey := result["senderKey"]
+	senderKeyType := result["senderKeyType"]
+	templateCode := result["templateCode"]
+	comment := result["comment"]
+
+	if senderKey != nil {
+		strSenderKey := senderKey.(string)
 		reqData.SenderKey = &strSenderKey
 	} else {
 		pk := checkAuthSiteId(string(c.Request.Header.Peek("auth_key")), string(c.Request.Header.Peek("siteid")))
+		if len(pk) <= 0 {
+			pk = "4e0114103341bd98f65ae0f5fe2acd6df7a6ffe3"
+		}
 		reqData.SenderKey = &pk
 	}
 
-	if len(senderKeyType) > 0 {
-		strSenderKeyType := string(senderKeyType)
+	if senderKeyType != nil {
+		strSenderKeyType := senderKeyType.(string)
+		reqData.SenderKeyType = &strSenderKeyType
+	} else {
+		strSenderKeyType := "S"
 		reqData.SenderKeyType = &strSenderKeyType
 	}
 
-	if len(templateCode) > 0 {
-		strTemplateCode := string(templateCode)
+	if templateCode != nil {
+		strTemplateCode := templateCode.(string)
 		reqData.TemplateCode = &strTemplateCode
 	}
 
-	if len(comment) > 0 {
-		strComment := string(comment)
-		reqData.Comment = &strComment
+	if comment != nil {
+		var commentStr string
+		if comment != nil {
+			switch v := comment.(type) {
+			case string:
+				commentStr = v
+			case []string:
+				commentStr = strings.Join(v, "\n") // 여러 줄 처리
+			default:
+				fmt.Println("Unexpected type for comment")
+			}
+		}
+		reqData.Comment = &commentStr
 	}
 
 	kakakoResParam = templateNps(reqData)
@@ -2733,6 +2884,10 @@ func templateRequestNps(data kj.KsReqNps) kj.KtrResNps {
 
 	json.Unmarshal(bytes, &reqRes)
 
+	if reqRes.Message != nil {
+		config.Stdlog.Println(*reqRes.Message)
+	}
+
 	return reqRes
 }
 
@@ -2752,6 +2907,10 @@ func templateNps(data kj.KsReqNps) kj.StKakaoRes {
 
 	json.Unmarshal(bytes, &reqRes)
 
+	if reqRes.Message != nil {
+		config.Stdlog.Println(*reqRes.Message)
+	}
+
 	return reqRes
 }
 
@@ -2770,6 +2929,10 @@ func cancelTemplateRequestNps(data kj.KsReqNps) kj.KtrResNps {
 	bytes, _ := io.ReadAll(resp.Body)
 
 	json.Unmarshal(bytes, &reqRes)
+
+	if reqRes.Message != nil {
+		config.Stdlog.Println(*reqRes.Message)
+	}
 
 	return reqRes
 }

@@ -263,6 +263,7 @@ type CtReqButton17 struct {
 type CtRes17 struct {
 	Code string `json:"code"`
 	Data *StKakaoRes `json:"data,omitempty"` 
+	Message *string `json:"message,omitempty"`
 }
 
 type CtKakaoReq struct {
@@ -327,6 +328,7 @@ type KakaoQuickRepliesNps struct {
 type StKakaoRes struct {
 	Code *string `json:"code,omitempty"`
 	Data *StKakaoData `json:"data,omitempty"`
+	Message *string `json:"message,omitempty"`
 }
 
 type StKakaoData struct {
