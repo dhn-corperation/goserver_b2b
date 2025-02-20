@@ -2846,7 +2846,6 @@ func SetComment(c *fasthttp.RequestCtx) {
 				c.SetBody(res)
 				return
 			}
-			
 		}
 	} else {
 		npsResParam.Code = *kakakoResParam.Code
