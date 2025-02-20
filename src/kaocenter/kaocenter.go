@@ -2173,7 +2173,6 @@ func checkAuthSiteId(auth, siteId string) string {
 
 // 템플릿 등록 API
 func CreateTemplateNps(c *fasthttp.RequestCtx) {
-	// checkAuthSiteId(c)
 	config.Stdlog.Println("CreateTemplateNps 시작")
 
 	conf := config.Conf
@@ -2362,7 +2361,6 @@ func CreateTemplateNps(c *fasthttp.RequestCtx) {
 
 // 템플릿 조회 API
 func SearchTemplateNps(c *fasthttp.RequestCtx) {
-	// checkAuthSiteId(c)
 	config.Stdlog.Println("SearchTemplateNps 시작")
 
 	senderKey := string(c.QueryArgs().Peek("senderKey"))
@@ -2390,12 +2388,9 @@ func SearchTemplateNps(c *fasthttp.RequestCtx) {
 
 // 템플릿 수정 API
 func UpdateTemplateNps(c *fasthttp.RequestCtx) {
-	// checkAuthSiteId(c)
 	config.Stdlog.Println("UpdateTemplateNps 시작")
 	conf := config.Conf
 
-	// var npsReqParam kj.UtReq17
-	// var npsResParam kj.UtRes17
 	var kakakoReqParam kj.UtKakaoReq
 	var kakakoResParam kj.StKakaoRes
 	var kakakoResParam2 kj.StKakaoRes
@@ -2600,8 +2595,7 @@ func UpdateTemplateNps(c *fasthttp.RequestCtx) {
 
 // 템플릿 삭제 API
 func DeleteTemplateNps(c *fasthttp.RequestCtx) {
-	// checkAuthSiteId(c)
-
+	config.Stdlog.Println("DeleteTemplateNps 시작")
 	conf := config.Conf
 
 	var reqData kj.KsReqNps
@@ -2681,7 +2675,6 @@ func DeleteTemplateNps(c *fasthttp.RequestCtx) {
 
 // 템플릿 코멘트 등록 API
 func SetComment(c *fasthttp.RequestCtx) {
-	// checkAuthSiteId(c)
 	config.Stdlog.Println("SetComment 시작")
 
 	conf := config.Conf
@@ -2868,6 +2861,7 @@ func SetComment(c *fasthttp.RequestCtx) {
 
 // 템플릿 검수 함수
 func templateRequestNps(data kj.KsReqNps) kj.KtrResNps {
+	config.Stdlog.Println("templateRequestNps 시작")
 	var reqRes kj.KtrResNps
 
 	jsonData, _ := json.Marshal(data)
@@ -2891,6 +2885,7 @@ func templateRequestNps(data kj.KsReqNps) kj.KtrResNps {
 
 // 템플릿 조회 함수
 func templateNps(data kj.KsReqNps) kj.StKakaoRes {
+	config.Stdlog.Println("templateNps 시작")
 	var reqRes kj.StKakaoRes
 
 	skt := ""
@@ -2922,6 +2917,7 @@ func templateNps(data kj.KsReqNps) kj.StKakaoRes {
 
 // 템플릿 검수 취소 함수
 func cancelTemplateRequestNps(data kj.KsReqNps) kj.KtrResNps {
+	config.Stdlog.Println("cancelTemplateRequestNps 시작")
 	var reqRes kj.KtrResNps
 
 	jsonData, _ := json.Marshal(data)
