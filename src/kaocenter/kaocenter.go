@@ -2492,14 +2492,12 @@ func UpdateTemplateNps(c *fasthttp.RequestCtx) {
 		var tempBts []kj.KakaoButtonsNps
 		btnList, ok := buttons.([]interface{})
 	    if !ok {
-	        fmt.Println("buttons is not an array")
 	        return
 	    }
 
 	    for _, item := range btnList {
 	        v, ok := item.(map[string]interface{})
 	        if !ok {
-	            fmt.Println("Invalid button format")
 	            continue
 	        }
 
@@ -2893,9 +2891,17 @@ func templateRequestNps(data kj.KsReqNps) kj.KtrResNps {
 
 // 템플릿 조회 함수
 func templateNps(data kj.KsReqNps) kj.StKakaoRes {
-	var reqRes kj.StKakaoRes 
+	var reqRes kj.StKakaoRes
 
-	req, _ := http.NewRequest("GET", config.Conf.CENTER_SERVER+"api/v2/"+config.Conf.PROFILE_KEY+"/alimtalk/template?senderKey="+*data.SenderKey+"&templateCode="+url.QueryEscape(*data.TemplateCode)+"&senderKeyType="+*data.SenderKeyType, nil)
+	skt := ""
+
+	if data.SenderKeyType != nil {
+		skt = *data.SenderKeyType
+	} else {
+		skt = "S"
+	}
+
+	req, _ := http.NewRequest("GET", config.Conf.CENTER_SERVER+"api/v2/"+config.Conf.PROFILE_KEY+"/alimtalk/template?senderKey="+*data.SenderKey+"&templateCode="+url.QueryEscape(*data.TemplateCode)+"&senderKeyType="+skt, nil)
 	
 	req.Header.Add("Accept-Charset", "utf-8")
 	
