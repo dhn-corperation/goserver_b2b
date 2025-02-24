@@ -1,20 +1,21 @@
-package oshotproc
+package otposhotproc
 
 import (
-	"fmt"
-	"time"
-	"regexp"
-	"strconv"
-	"context"
-	s "strings"
 	"database/sql"
+	"fmt"
+	"encoding/hex"
+	"regexp"
+	s "strings"
+	"time"
+	"unicode/utf8"
+	"context"
 
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
 )
 
-func NOshotProcess(user_id string, ctx context.Context) {
-	config.Stdlog.Println(user_id, " - NOshot Proc Process 시작 됨.")
+func OshotProcess(ctx context.Context) {
+	config.Stdlog.Println("Oshot OTP Process 시작 됨.")
 	procCnt := 0
 	for {
 
@@ -23,10 +24,9 @@ func NOshotProcess(user_id string, ctx context.Context) {
 			select {
 			case <-ctx.Done():
 
-				uid := ctx.Value("user_id")
-				config.Stdlog.Println(uid, " - NOshot Proc process가 10초 후에 종료 됨.")
+				config.Stdlog.Println("Oshot OTP process가 10초 후에 종료 됨.")
 				time.Sleep(10 * time.Second)
-				config.Stdlog.Println(uid, " - NOshot Proc process 종료 완료")
+				config.Stdlog.Println("Oshot OTP process 종료 완료")
 				return
 			default:
 
@@ -37,33 +37,30 @@ func NOshotProcess(user_id string, ctx context.Context) {
 				from
 					DHN_RESULT dr
 				where
-					dr.result = 'P'
+					dr.result = 'O'
 					and dr.send_group is null
 					and ifnull(dr.reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
-					and userid = ?
 				limit 1
 					`
-				cnterr := databasepool.DB.QueryRowContext(ctx, tickSql, user_id).Scan(&count)
+				cnterr := databasepool.DB.QueryRowContext(ctx, tickSql).Scan(&count)
 
 				if cnterr != nil && cnterr != sql.ErrNoRows {
-					config.Stdlog.Println(user_id, " - NOshot Proc DHN_RESULT Table - select error : " + cnterr.Error())
+					config.Stdlog.Println("Oshot OTP Proc DHN_RESULT Table - select error : " + cnterr.Error())
 					time.Sleep(10 * time.Second)
 				} else {
 					if count.Int64 > 0 {
 						var startNow = time.Now()
 						var group_no = fmt.Sprintf("%02d%02d%02d%02d%06d", startNow.Day(), startNow.Hour(), startNow.Minute(), startNow.Second(), (startNow.Nanosecond() / 1000))
 
-						upError := nupdateReqeust(ctx, group_no, user_id)
+						upError := updateReqeust(ctx, group_no)
 						if upError != nil {
-							config.Stdlog.Println(user_id, " - NOshot Proc Group No Update error : ", upError, " / group_no : ", group_no)
+							config.Stdlog.Println("Oshot OTP Proc Group No Update error : ", upError, " / group_no : ", group_no)
 						} else {
 							go func() {
-								procCnt++
-								config.Stdlog.Println(user_id, " - NOshot 발송 처리 시작 ( ", group_no, " ) : ( Proc Cnt :", procCnt, ") - START")
 								defer func() {
 									procCnt--
 								}()
-								nresProcess(ctx, group_no, user_id, procCnt)
+								resProcess(ctx, group_no, procCnt)
 							}()
 						}
 					} else {
@@ -76,7 +73,7 @@ func NOshotProcess(user_id string, ctx context.Context) {
 	}
 }
 
-func nupdateReqeust(ctx context.Context, group_no, user_id string) error {
+func updateReqeust(ctx context.Context, group_no string) error {
 
 	tx, err := databasepool.DB.Begin()
 	if err != nil {
@@ -93,21 +90,20 @@ func nupdateReqeust(ctx context.Context, group_no, user_id string) error {
 		return err
 	}()
 
-	config.Stdlog.Println(user_id, " - NOshot Proc Group No Update 시작", group_no)
+	config.Stdlog.Println("Oshot OTP Group No Update 시작", group_no)
 
 	gudQuery := `
 	update DHN_RESULT dr
 	set	send_group = ?
-	where result = 'P'
+	where result = 'O'
 	  and send_group is null
 	  and ifnull(reserve_dt, '00000000000000') <= date_format(now(), '%Y%m%d%H%i%S')
-	  and userid = ?
 	LIMIT 500
 	`
-	_, err = tx.ExecContext(ctx, gudQuery, group_no, user_id)
+	_, err = tx.ExecContext(ctx, gudQuery, group_no)
 
 	if err != nil {
-		config.Stdlog.Println(user_id, " - NOshot Proc Group NO Update - Select error : ( group_no : "+group_no+" / user_id : "+user_id+" ) : "+err.Error())
+		config.Stdlog.Println("Oshot OTP Group NO Update - Select error : ( group_no : "+group_no+" ) : "+err.Error())
 		config.Stdlog.Println(gudQuery)
 		return err
 	}
@@ -115,14 +111,14 @@ func nupdateReqeust(ctx context.Context, group_no, user_id string) error {
 	return nil
 }
 
-func nresProcess(ctx context.Context, group_no, user_id string, pc int) {
+func resProcess(ctx context.Context, group_no string, pc int) {
 	defer func(){
 		if r := recover(); r != nil {
-			config.Stdlog.Println(user_id, " - NOshot Proc resProcess panic error : ", r)
+			config.Stdlog.Println("Oshot OTP resProcess panic error : ", r)
 			if err, ok := r.(error); ok {
 				if s.Contains(err.Error(), "connection refused") {
 					for {
-						config.Stdlog.Println(user_id, " - NOshot Proc resProcess send ping to DB")
+						config.Stdlog.Println("Oshot OTP resProcess send ping to DB")
 						err := databasepool.DB.Ping()
 						if err == nil {
 							break
@@ -137,7 +133,7 @@ func nresProcess(ctx context.Context, group_no, user_id string, pc int) {
 	var db = databasepool.DB
 	var stdlog = config.Stdlog
 
-	var msgid, code, message, message_type, msg_sms, phn, remark1, remark2, result, sms_lms_tit, sms_kind, sms_sender, res_dt, reserve_dt, mms_file1, mms_file2, mms_file3, userid, sms_len_check, oshot sql.NullString
+	var msgid, code, message, message_type, msg_sms, phn, remark1, remark2, result, sms_lms_tit, sms_kind, sms_sender, res_dt, reserve_dt, mms_file1, mms_file2, mms_file3, userid, sms_len_check sql.NullString
 	var msgLen sql.NullInt64
 	var phnstr string
 
@@ -159,28 +155,26 @@ func nresProcess(ctx context.Context, group_no, user_id string, pc int) {
 		remark1, 
 		remark2,
 		result, 
-		convert(REMOVE_WS(sms_lms_tit) using euckr) as sms_lms_tit,
-		sms_kind,
+		convert(REMOVE_WS(sms_lms_tit) using euckr) as sms_lms_tit, 
+		sms_kind, 
 		sms_sender, 
 		res_dt, 
 		reserve_dt, 
-		(select file1_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.mms_image_id) as mms_file1, 
-		(select file2_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.mms_image_id) as mms_file2, 
-		(select file3_path from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.mms_image_id) as mms_file3
-		,(case when sms_kind = 'S' then length(convert(REMOVE_WS(msg_sms) using euckr)) else 100 end) as msg_len
-		,userid
-		,(select max(sms_len_check) from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as sms_len_check
-		,(select ifnull(max(oshot), 'OShot') from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as oshot  
+		(select ifnull(file1_path, '') from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.mms_image_id) as mms_file1, 
+		(select ifnull(file2_path, '') from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.mms_image_id) as mms_file2, 
+		(select ifnull(file3_path, '') from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.mms_image_id) as mms_file3,
+		(case when sms_kind = 'S' then length(convert(REMOVE_WS(msg_sms) using euckr)) else 100 end) as msg_len,
+		userid,
+		(select max(sms_len_check) from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as sms_len_check
 	FROM DHN_RESULT drr 
 	WHERE send_group = ?
-	  and result = 'P'
-      and userid = ?
-	order by userid
+	  and result = 'O'
+	order by drr.reg_dt
 	`
-	resrows, err := db.QueryContext(ctx, resquery, group_no, user_id)
+	resrows, err := db.QueryContext(ctx, resquery, group_no)
 
 	if err != nil {
-		stdlog.Println(user_id, " - NOshot Proc Result Table select error : ", err)
+		stdlog.Println("Oshot OTP Result Table select error : ", err)
 		stdlog.Println(resquery)
 	}
 	defer resrows.Close()
@@ -189,6 +183,7 @@ func nresProcess(ctx context.Context, group_no, user_id string, pc int) {
 	lmscnt := 0
 	tcnt := 0
 	reg, err := regexp.Compile("[^0-9]+")
+
 	for resrows.Next() {
 		resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check, &oshot)
 
@@ -196,18 +191,18 @@ func nresProcess(ctx context.Context, group_no, user_id string, pc int) {
 
 		tcnt++
 		if len(osmmsStrs) > 500 {
-			stmt := fmt.Sprintf("insert into OShotMSG(MsgGroupID,SendType,Sender,Receiver,Subject,Msg,ReserveDT,TimeoutDT,SendResult,File_Path1,File_Path2,File_Path3,etc1,etc2) values %s", s.Join(osmmsStrs, ","))
+			stmt := fmt.Sprintf("insert into OTP_OShotMSG(MsgGroupID,SendType,Sender,Receiver,Subject,Msg,ReserveDT,TimeoutDT,SendResult,File_Path1,File_Path2,File_Path3,etc1,etc2) values %s", s.Join(osmmsStrs, ","))
 			_, err := db.Exec(stmt, osmmsValues...)
 
 			if err != nil {
 				for i := 0; i < len(osmmsValues); i = i + 13 {
-					eQuery := fmt.Sprintf("insert into OShotMSG(MsgGroupID,SendType,Sender,Receiver,Subject,Msg,ReserveDT,TimeoutDT,SendResult,File_Path1,File_Path2,File_Path3,etc1,etc2) "+
+					eQuery := fmt.Sprintf("insert into OTP_OShotMSG(MsgGroupID,SendType,Sender,Receiver,Subject,Msg,ReserveDT,TimeoutDT,SendResult,File_Path1,File_Path2,File_Path3,etc1,etc2) "+
 						"values('%v','%v','%v','%v','%v','%v',null,null,'%v','%v','%v','%v','%v','%v')", osmmsValues[i], osmmsValues[i+1], osmmsValues[i+2], osmmsValues[i+3], osmmsValues[i+4], osmmsValues[i+6], osmmsValues[i+7], osmmsValues[i+8], osmmsValues[i+9], osmmsValues[i+11], osmmsValues[i+12])
 					_, err := db.Exec(eQuery)
 					if err != nil {
 						msgKey := fmt.Sprintf("%v", osmmsValues[i+11])
 						useridt := fmt.Sprintf("%v", osmmsValues[i+12])
-						stdlog.Println(user_id, " - NOshot Proc MSG Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
+						stdlog.Println(user_id, " - Oshot OTP Proc MSG Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 						errcodemsg := err.Error()
 						if s.Index(errcodemsg, "1366") > 0 {
 							db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and msgid = '" + msgKey + "'")
@@ -215,7 +210,7 @@ func nresProcess(ctx context.Context, group_no, user_id string, pc int) {
 					}
 				}
 			} else {
-				stdlog.Println(user_id, " - NOshot Proc MSG Table Insert 처리 : ", len(osmmsStrs))
+				stdlog.Println(user_id, " - Oshot OTP Proc MSG Table Insert 처리 : ", len(osmmsStrs))
 			}
 			osmmsStrs = nil
 			osmmsValues = nil
@@ -261,18 +256,18 @@ func nresProcess(ctx context.Context, group_no, user_id string, pc int) {
 	}
 
 	if len(osmmsStrs) > 0 {
-		stmt := fmt.Sprintf("insert into OShotMSG(MsgGroupID,SendType,Sender,Receiver,Subject,Msg,ReserveDT,TimeoutDT,SendResult,File_Path1,File_Path2,File_Path3,etc1,etc2 ) values %s", s.Join(osmmsStrs, ","))
+		stmt := fmt.Sprintf("insert into OTP_OShotMSG(MsgGroupID,SendType,Sender,Receiver,Subject,Msg,ReserveDT,TimeoutDT,SendResult,File_Path1,File_Path2,File_Path3,etc1,etc2 ) values %s", s.Join(osmmsStrs, ","))
 		_, err := db.Exec(stmt, osmmsValues...)
 
 		if err != nil {
 			for i := 0; i < len(osmmsValues); i = i + 13 {
-				eQuery := fmt.Sprintf("insert into OShotMSG(MsgGroupID,SendType,Sender,Receiver,Subject,Msg,ReserveDT,TimeoutDT,SendResult,File_Path1,File_Path2,File_Path3,etc1,etc2 ) "+
+				eQuery := fmt.Sprintf("insert into OTP_OShotMSG(MsgGroupID,SendType,Sender,Receiver,Subject,Msg,ReserveDT,TimeoutDT,SendResult,File_Path1,File_Path2,File_Path3,etc1,etc2 ) "+
 					"values('%v','%v','%v','%v','%v',null,null,'%v','%v','%v','%v',null,'%v','%v')", osmmsValues[i], osmmsValues[i+1], osmmsValues[i+2], osmmsValues[i+3], osmmsValues[i+4], osmmsValues[i+6], osmmsValues[i+7], osmmsValues[i+8], osmmsValues[i+9], osmmsValues[i+11], osmmsValues[i+12])
 				_, err := db.Exec(eQuery)
 				if err != nil {
 					msgKey := fmt.Sprintf("%v", osmmsValues[i+11])
 					useridt := fmt.Sprintf("%v", osmmsValues[i+12])
-					stdlog.Println(user_id, " - NOshot Proc MSG Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
+					stdlog.Println(user_id, " - Oshot OTP Proc MSG Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 					errcodemsg := err.Error()
 					if s.Index(errcodemsg, "1366") > 0 {
 						db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and msgid = '" + msgKey + "'")
@@ -280,12 +275,35 @@ func nresProcess(ctx context.Context, group_no, user_id string, pc int) {
 				}
 			}
 		} else {
-			stdlog.Println(user_id, " - NOshot Proc MSG Table Insert 처리 : ", len(osmmsStrs))
+			stdlog.Println(user_id, " - Oshot OTP Proc MSG Table Insert 처리 : ", len(osmmsStrs))
 		}
 
 	}
 
 	if smscnt > 0 || lmscnt > 0 {
-		stdlog.Println(user_id, " - NOshot 발송 처리 완료 ( ", group_no, " ) : SMS - ", smscnt, " , LMS - ", lmscnt, ", 총 - ", tcnt, " : ( Proc Cnt :", pc, ") - END")
+		stdlog.Println(user_id, " - Oshot OTP 발송 처리 완료 ( ", group_no, " ) : SMS - ", smscnt, " , LMS - ", lmscnt, ", 총 - ", tcnt, " : ( Proc Cnt :", pc, ") - END")
 	}
+}
+
+func stringSplit(str string, lencnt int) string {
+	b := []byte(str)
+	idx := 0
+	for i := 0; i < lencnt; i++ {
+		_, size := utf8.DecodeRune(b[idx:])
+		idx += size
+	}
+	return str[:idx]
+}
+
+func utf8TOeuckr(str string) string {
+	sText := []byte(str)
+	eText := make([]byte, hex.EncodedLen(len(sText)))
+	hex.Encode(eText, sText)
+
+	temp := string(eText)
+	temp = s.Replace(temp, "e2808b", "", -1)
+
+	bs, _ := hex.DecodeString(temp)
+
+	return string(bs)
 }
