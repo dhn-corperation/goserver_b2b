@@ -1,4 +1,4 @@
-package oshotproc
+package otposhotproc
 
 import (
 	"fmt"

@@ -20,6 +20,7 @@ import (
 	"mycs/src/otpatproc"
 	"mycs/src/otplguproc"
 	"mycs/src/otpnanoproc"
+	"mycs/src/otposhotproc"
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
 
@@ -410,6 +411,8 @@ func resultProc() {
 	otpLguCtxC := map[string]interface{}{}
 	otpNanoUser := map[string]string{}
 	otpNanoCtxC := map[string]interface{}{}
+	otpOshotUser := map[string]string{}
+	otpOshotCtxC := map[string]interface{}{}
 
 	oatctx, cancel := context.WithCancel(context.Background())
 	go otpatproc.AlimtalkProc(oatctx)
@@ -420,14 +423,23 @@ func resultProc() {
 	allCtxC["OTPAT"] = cancel
 	allService["OTPAT"] = "OTPAT"
 
+	// ctx, cancel := context.WithCancel(context.Background())
+	// go otpnanoproc.NanoProcess(ctx)
+
+	// otpNanoUser["OTPNANO"] = "OTPNANO"
+	// otpNanoCtxC["OTPNANO"] = cancel
+
+	// allCtxC["OTPNANO"] = cancel
+	// allService["OTPNANO"] = "OTPNANO"
+
 	ctx, cancel := context.WithCancel(context.Background())
-	go otpnanoproc.NanoProcess(ctx)
+	go otposhotproc.OshotProcess(ctx)
 
-	otpNanoUser["OTPNANO"] = "OTPNANO"
-	otpNanoCtxC["OTPNANO"] = cancel
+	otpOshotUser["OTPOSHOT"] = "OTPOSHOT"
+	otpOshotCtxC["OTPOSHOT"] = cancel
 
-	allCtxC["OTPNANO"] = cancel
-	allService["OTPNANO"] = "OTPNANO"
+	allCtxC["OTPOSHOT"] = cancel
+	allService["OTPOSHOT"] = "OTPOSHOT"
 
 	ollctx, ollcancel := context.WithCancel(context.Background())
 	go otplguproc.LMSProcess(ollctx)
@@ -448,6 +460,11 @@ func resultProc() {
 	go otpnanoproc.SMSProcess(onsctx)
 	allCtxC["otpnanosms"] = onscancel
 	allService["otpnanosms"] = "NANO OTP SMS"
+
+	oomctx, oomcancel := context.WithCancel(context.Background())
+	go otposhotproc.MSGProcess(oomctx)
+	allCtxC["otposhotmsg"] = oomcancel
+	allService["otposhotmsg"] = "OSHOT OTP MSG"
 
 	//OTP 영역 종료
 

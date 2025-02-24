@@ -1,14 +1,15 @@
 package otposhotproc
 
 import (
-	"database/sql"
 	"fmt"
-	"encoding/hex"
-	"regexp"
-	s "strings"
 	"time"
-	"unicode/utf8"
+	"regexp"
 	"context"
+	"strconv"
+	s "strings"
+	"database/sql"
+	"encoding/hex"
+	"unicode/utf8"
 
 	config "mycs/src/kaoconfig"
 	databasepool "mycs/src/kaodatabasepool"
@@ -185,7 +186,7 @@ func resProcess(ctx context.Context, group_no string, pc int) {
 	reg, err := regexp.Compile("[^0-9]+")
 
 	for resrows.Next() {
-		resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check, &oshot)
+		resrows.Scan(&msgid, &code, &message, &message_type, &msg_sms, &phn, &remark1, &remark2, &result, &sms_lms_tit, &sms_kind, &sms_sender, &res_dt, &reserve_dt, &mms_file1, &mms_file2, &mms_file3, &msgLen, &userid, &sms_len_check)
 
 		phnstr = phn.String
 
@@ -202,7 +203,7 @@ func resProcess(ctx context.Context, group_no string, pc int) {
 					if err != nil {
 						msgKey := fmt.Sprintf("%v", osmmsValues[i+11])
 						useridt := fmt.Sprintf("%v", osmmsValues[i+12])
-						stdlog.Println(user_id, " - Oshot OTP Proc MSG Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
+						stdlog.Println("Oshot OTP Proc MSG Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 						errcodemsg := err.Error()
 						if s.Index(errcodemsg, "1366") > 0 {
 							db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and msgid = '" + msgKey + "'")
@@ -210,7 +211,7 @@ func resProcess(ctx context.Context, group_no string, pc int) {
 					}
 				}
 			} else {
-				stdlog.Println(user_id, " - Oshot OTP Proc MSG Table Insert 처리 : ", len(osmmsStrs))
+				stdlog.Println("Oshot OTP Proc MSG Table Insert 처리 : ", len(osmmsStrs))
 			}
 			osmmsStrs = nil
 			osmmsValues = nil
@@ -267,7 +268,7 @@ func resProcess(ctx context.Context, group_no string, pc int) {
 				if err != nil {
 					msgKey := fmt.Sprintf("%v", osmmsValues[i+11])
 					useridt := fmt.Sprintf("%v", osmmsValues[i+12])
-					stdlog.Println(user_id, " - Oshot OTP Proc MSG Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
+					stdlog.Println("Oshot OTP Proc MSG Table Insert error : "+err.Error(), " - DHN Msg Key : ", msgKey)
 					errcodemsg := err.Error()
 					if s.Index(errcodemsg, "1366") > 0 {
 						db.Exec("update DHN_RESULT dr set dr.result = 'Y', dr.code='7069', dr.message = concat(dr.message, ',부적절한 문자사용'),dr.remark2 = date_format(now(), '%Y-%m-%d %H:%i:%S') where userid = '" + useridt + "' and msgid = '" + msgKey + "'")
@@ -275,13 +276,13 @@ func resProcess(ctx context.Context, group_no string, pc int) {
 				}
 			}
 		} else {
-			stdlog.Println(user_id, " - Oshot OTP Proc MSG Table Insert 처리 : ", len(osmmsStrs))
+			stdlog.Println("Oshot OTP Proc MSG Table Insert 처리 : ", len(osmmsStrs))
 		}
 
 	}
 
 	if smscnt > 0 || lmscnt > 0 {
-		stdlog.Println(user_id, " - Oshot OTP 발송 처리 완료 ( ", group_no, " ) : SMS - ", smscnt, " , LMS - ", lmscnt, ", 총 - ", tcnt, " : ( Proc Cnt :", pc, ") - END")
+		stdlog.Println("Oshot OTP 발송 처리 완료 ( ", group_no, " ) : SMS - ", smscnt, " , LMS - ", lmscnt, ", 총 - ", tcnt, " : ( Proc Cnt :", pc, ") - END")
 	}
 }
 
