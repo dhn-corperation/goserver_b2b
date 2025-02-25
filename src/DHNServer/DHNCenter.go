@@ -474,6 +474,9 @@ func resultProc() {
 	// 템플릿 검수 코멘트
 	r.POST("/nps/template/comment", kaocenter.SetComment)
 
+	// 템플릿 승인 취소
+	r.POST("/nps/template/cancelapproval", kaocenter.CancelApproveTemplate)
+
 ////////////////////////////////////////////////////NPS AREA////////////////////////////////////////////////////
 
 
