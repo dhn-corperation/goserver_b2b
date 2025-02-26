@@ -602,7 +602,7 @@ func serveWs(ctx *fasthttp.RequestCtx) {
 			}
 
 			if msgType == websocket.TextMessage {
-
+				config.Stdlog.Println("Message : ", string(msg))
 			} else if msgType == websocket.BinaryMessage {
 
 			}
