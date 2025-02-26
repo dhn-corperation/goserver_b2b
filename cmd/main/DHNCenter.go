@@ -13,13 +13,13 @@ import (
 
 	"mycs/cmd/kakao/kaoreqreceive"
 	"mycs/cmd/kakao/kaocenter"
+	"mycs/cmd/sockets"
 	config "mycs/configs"
 	databasepool "mycs/configs/databasepool"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/takama/daemon"
 	"github.com/fasthttp/router"
-	"github.com/fasthttp/websocket"
 	"github.com/valyala/fasthttp"
 	"github.com/caddyserver/certmagic"
 )
@@ -33,16 +33,6 @@ const (
 var dependencies = []string{name+".service"}
 
 var resultTable string
-
-var upgrader = websocket.FastHTTPUpgrader{
-	ReadBufferSize:    1024 * 1024, // 1MB
-	WriteBufferSize:   1024 * 1024, // 1MB
-	EnableCompression: true, // 데이터 압축
-	CheckOrigin: func(ctx *fasthttp.RequestCtx) bool {
-		// 모든 요청을 허용하거나 특정 도메인만 허용 가능
-		return true // 보안이 필요하면 도메인 검사를 추가
-	},
-}
 
 type Service struct {
 	daemon.Daemon
@@ -126,10 +116,10 @@ func resultProc() {
 
 	r.GET("/", func(c *fasthttp.RequestCtx) {
 		c.SetStatusCode(fasthttp.StatusOK)
-		c.SetBodyString("Center Server : "+config.Conf.CENTER_SERVER+",   "+"Image Server : "+config.Conf.IMAGE_SERVER+"\n")
+		c.SetBodyString("정상 수신 완료 Center Server : "+config.Conf.CENTER_SERVER+",   "+"Image Server : "+config.Conf.IMAGE_SERVER+"\n")
 	})
 
-	r.GET("/ws", serveWs)
+	r.GET("/ws", sockets.ServeWs)
 
 	r.POST("/req", statusDatabaseMaddleware(kaoreqreceive.ReqReceive))
 
@@ -577,59 +567,6 @@ func statusDatabaseMaddleware(next fasthttp.RequestHandler) fasthttp.RequestHand
 			}
 		}
 		next(c)
-	}
-}
-
-func serveWs(ctx *fasthttp.RequestCtx) {
-	err := upgrader.Upgrade(ctx, func(ws *websocket.Conn) {
-		defer func() {
-			config.Stdlog.Println("WebSocket closed")
-			ws.Close()
-		}()
-		for {
-			msgType, msg, err := ws.ReadMessage()
-
-			// 연결이 끊기거나, 데이터 수신 중 문제가 발생
-			if err != nil {
-				if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
-					// 비정상 종료 (예상치 못한 종료)
-					log.Printf("WebSocket error: %v", err)
-				} else {
-					// 정상 종료 (CloseNormalClosure, CloseGoingAway)
-					config.Stdlog.Println("Client disconnected")
-				}
-				break
-			}
-
-			if msgType == websocket.TextMessage {
-				config.Stdlog.Println("Message : ", string(msg))
-			} else if msgType == websocket.BinaryMessage {
-
-			}
-
-			// JSON 파싱
-			// var receivedMsg Message
-			// if err := json.Unmarshal(msg, &receivedMsg); err != nil {
-			// 	config.Stdlog.Println("Invalid JSON:", err)
-			// 	continue
-			// }
-
-			config.Stdlog.Println("Received JSON:", msg)
-
-			// 응답 메시지 생성
-			// responseMsg := Message{
-			// 	Type: "response",
-			// 	Data: "Hello, " + receivedMsg.Data,
-			// }
-
-			// JSON 직렬화 후 전송
-			// respBytes, _ := json.Marshal(responseMsg)
-			// ws.WriteMessage(websocket.TextMessage, respBytes)
-		}
-	})
-
-	if err != nil {
-		config.Stdlog.Println("socket upgrader error :", err)
 	}
 }
 

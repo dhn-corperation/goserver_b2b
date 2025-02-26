@@ -3055,6 +3055,7 @@ func CancelApproveTemplate(c *fasthttp.RequestCtx){
 	}
 
 	kakakoResParam = cancelApproveTemplateNps(kakakoReqParam)
+	
 	if strings.EqualFold(kakakoResParam.Code, "200") {
 		jsonData, _ := json.Marshal(kakakoReqParam)
 		buff := bytes.NewBuffer(jsonData)
@@ -3086,7 +3087,7 @@ func CancelApproveTemplate(c *fasthttp.RequestCtx){
 			var req2 ss.KsReqNps
 			req2.SenderKey = kakakoReqParam.SenderKey
 			req2.SenderKeyType = kakakoReqParam.SenderKeyType
-			tc, _ := (*kakakoReqParam.TemplateCode).(string)
+			tc, _ := (*kakakoReqParam.NewTemplateCode).(string)
 			req2.TemplateCode = &tc
 			kakakoResParam = templateRequestNps(req2)
 

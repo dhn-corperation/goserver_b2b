@@ -468,3 +468,13 @@ func RemoveValueInPlace(slice []string, value string) []string {
     }
     return slice[:i]
 }
+
+func IsTextData(data []byte) bool {
+    for _, b := range data {
+        // 공백 문자(탭, 개행 등)와 일반적인 텍스트 문자만 포함되었는지 검사
+        if b < 0x09 || (b > 0x0D && b < 0x20) {
+            return false // 바이너리 데이터로 판단
+        }
+    }
+    return true // 텍스트 데이터로 판단
+}

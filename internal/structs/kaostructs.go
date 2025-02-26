@@ -280,6 +280,30 @@ type Reqtable struct {
 	Crypto       string `json:"crypto"`
 }
 
+type ReceiveRes struct {
+	Code string `json:"code"`
+	Message string `json:"message"`
+	AtCnt *int16 `json:"atcnt,omitempty"`
+	FtCnt *int16 `json:"ftcnt,omitempty"`
+	MsgCnt *int16 `json:"msgcnt,omitempty"`
+	DuplCnt *int16 `json:"duplcnt,omitempty"`
+	DuplMsgId *[]string `json:"duplMsgId,omitempty"`
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ////////////////////////////////////////////////////NPS AREA////////////////////////////////////////////////////
 
 type CtReq17 struct {
