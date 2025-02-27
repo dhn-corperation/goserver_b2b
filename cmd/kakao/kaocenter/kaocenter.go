@@ -2463,6 +2463,7 @@ func UpdateTemplateNps(c *fasthttp.RequestCtx) {
 	}
 
 	senderKey := result["senderKey"]
+	senderKeyType := result["senderKeyType"]
 	templateCode := result["templateCode"]
 
 	newSenderKey := result["newSenderKey"]
@@ -2482,6 +2483,14 @@ func UpdateTemplateNps(c *fasthttp.RequestCtx) {
 			pk = "4e0114103341bd98f65ae0f5fe2acd6df7a6ffe3"
 		}
 		kakakoReqParam.SenderKey = &pk
+	}
+
+	if senderKeyType != nil {
+		strSenderKeyType := senderKeyType.(string)
+		kakakoReqParam.SenderKeyType = &strSenderKeyType
+	} else {
+		strSenderKeyType := "S"
+		kakakoReqParam.SenderKeyType = &strSenderKeyType
 	}
 
 	if templateCode != nil {
