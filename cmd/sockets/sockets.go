@@ -46,7 +46,7 @@ func ServeWs(ctx *fasthttp.RequestCtx) {
 
 			if msgType == websocket.TextMessage {
 				var resp []byte
-				resp = krr.ReqReceiveSocket(msg)
+				resp = krr.ReqReceiveSocket(msg, clientIP)
 				config.Stdlog.Println("Message : ", string(resp))
 				ws.WriteMessage(msgType, resp)
 			} else if msgType == websocket.BinaryMessage {
