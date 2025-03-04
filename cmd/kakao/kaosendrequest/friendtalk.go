@@ -15,7 +15,6 @@ import (
 	config "mycs/configs"
 	databasepool "mycs/configs/databasepool"
 	cm "mycs/internal/commons"
-	krt "mycs/cmd/kakao/kaoresulttable"
 )
 
 func FriendtalkProc(ctx context.Context) {
@@ -143,7 +142,7 @@ func ftsendProcess(group_no string, pc int) {
 	ftreqinsValues := []interface{}{}
 	ftreqinsQuery := `insert into DHN_REQUEST_RESEND(`+resendFtColumnStr+`) values %s`
 
-	resultChan := make(chan krt.ResultStr, config.Conf.SENDLIMIT)
+	resultChan := make(chan ss.ResultStr, config.Conf.SENDLIMIT)
 	defer close(resultChan)
 	
 	var reswg sync.WaitGroup
@@ -305,7 +304,7 @@ func ftsendProcess(group_no string, pc int) {
 		}
 		friendtalk.Attachment = attache
 
-		var temp krt.ResultStr
+		var temp ss.ResultStr
 		temp.Result = result
 		reswg.Add(1)
 		go sendKakao(&reswg, resultChan, friendtalk, temp)
@@ -446,7 +445,7 @@ func ftsendProcess(group_no string, pc int) {
 
 }
 
-func sendKakao(reswg *sync.WaitGroup, c chan<- krt.ResultStr, friendtalk ss.Friendtalk, temp krt.ResultStr) {
+func sendKakao(reswg *sync.WaitGroup, c chan<- ss.ResultStr, friendtalk ss.Friendtalk, temp ss.ResultStr) {
 	defer reswg.Done()
 
 	for {

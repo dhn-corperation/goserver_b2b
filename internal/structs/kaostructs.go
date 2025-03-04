@@ -1,5 +1,16 @@
 package structs
 
+type ResultTable struct {
+	Msgid       []string `json:"msgid"`
+	Regdt       string   `json:"regdt"`
+}
+
+type ResultStr struct {
+	Statuscode int
+	BodyData   []byte
+	Result     map[string]string
+}
+
 type Alimtalk struct {
 	Message_type    string      `json:"message_type"`
 	Serial_number   string      `json:"serial_number"`

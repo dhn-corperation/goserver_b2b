@@ -14,7 +14,6 @@ import (
 	config "mycs/configs"
 	databasepool "mycs/configs/databasepool"
 	cm "mycs/internal/commons"
-	krt "mycs/cmd/kakao/kaoresulttable"
 )
 
 func AlimtalkProc(ctx context.Context) {
@@ -120,7 +119,7 @@ func atsendProcess(group_no string, pc int) {
 	resinsValues := []interface{}{}
 	resinsquery := `insert IGNORE into DHN_RESULT(`+atColumnStr+`) values %s`
 
-	resultChan := make(chan krt.ResultStr, config.Conf.SENDLIMIT)
+	resultChan := make(chan ss.ResultStr, config.Conf.SENDLIMIT)
 	var reswg sync.WaitGroup
 
 	for reqrows.Next() {
@@ -262,7 +261,7 @@ func atsendProcess(group_no string, pc int) {
 		alimtalk.Attachment = attache
 		alimtalk.Supplement = supplement
 
-		var temp krt.ResultStr
+		var temp ss.ResultStr
 		temp.Result = result
 		reswg.Add(1)
 		go sendKakaoAlimtalk(&reswg, resultChan, alimtalk, temp)
@@ -377,7 +376,7 @@ func atsendProcess(group_no string, pc int) {
 }
 
 //카카오 서버에 발송을 요청한다.
-func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- krt.ResultStr, alimtalk ss.Alimtalk, temp krt.ResultStr) {
+func sendKakaoAlimtalk(reswg *sync.WaitGroup, c chan<- ss.ResultStr, alimtalk ss.Alimtalk, temp ss.ResultStr) {
 	defer reswg.Done()
 
 	resp, err := config.Client.R().

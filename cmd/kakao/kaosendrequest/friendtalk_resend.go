@@ -14,7 +14,6 @@ import(
 	config "mycs/configs"
 	databasepool "mycs/configs/databasepool"
 	cm "mycs/internal/commons"
-	krt "mycs/cmd/kakao/kaoresulttable"
 )
 
 
@@ -135,7 +134,7 @@ func ftResendProcess(group_no string, pc int) {
 	resinsValues := []interface{}{}
 	resinsQuery := `insert IGNORE into DHN_RESULT(`+ftColumnStr+`) values %s`
 
-	resultChan := make(chan krt.ResultStr, config.Conf.SENDLIMIT)
+	resultChan := make(chan ss.ResultStr, config.Conf.SENDLIMIT)
 	var reswg sync.WaitGroup
 
 	for reqrows.Next() {
@@ -295,7 +294,7 @@ func ftResendProcess(group_no string, pc int) {
 		}
 		friendtalk.Attachment = attache
 
-		var temp krt.ResultStr
+		var temp ss.ResultStr
 		temp.Result = result
 		reswg.Add(1)
 		go resendKakao(&reswg, resultChan, friendtalk, temp)
@@ -399,7 +398,7 @@ func ftResendProcess(group_no string, pc int) {
 
 }
 
-func resendKakao(reswg *sync.WaitGroup, c chan<- krt.ResultStr, friendtalk ss.Friendtalk, temp krt.ResultStr) {
+func resendKakao(reswg *sync.WaitGroup, c chan<- ss.ResultStr, friendtalk ss.Friendtalk, temp ss.ResultStr) {
 	defer reswg.Done()
 
 	var seq int = 1

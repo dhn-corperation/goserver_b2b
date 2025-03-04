@@ -6,7 +6,7 @@ import (
 	"database/sql"
 	s "strings"
 
-	"mycs/cmd/kakao/kaoresulttable"
+	krt "mycs/internal/structs"
 	cm "mycs/internal/commons"
 	config "mycs/configs"
 	databasepool "mycs/configs/databasepool"
@@ -94,7 +94,7 @@ func SearchResultReq(c *fasthttp.RequestCtx) {
 			"title":         "title",
 		}
 		
-		var reqData kaoresulttable.ResultTable
+		var reqData krt.ResultTable
 		if err1 := json.Unmarshal(c.PostBody(), &reqData); err1 != nil {
 			errlog.Println(userid, " - 발송 결과 재수신 data decoding error : ", err1)
 		}
