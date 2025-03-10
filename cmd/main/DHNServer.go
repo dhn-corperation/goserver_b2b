@@ -405,12 +405,12 @@ Command :
 	r.GET("/nostop", func(c *gin.Context) {
 		var uid string
 		uid = c.Query("uid")
-		temp := oshotCtxC[uid]
+		temp := noshotCtxC[uid]
 		if temp != nil {
-			cancel := oshotCtxC[uid].(context.CancelFunc)
+			cancel := noshotCtxC[uid].(context.CancelFunc)
 			cancel()
-			delete(oshotCtxC, uid)
-			delete(oshotUser, uid)
+			delete(noshotCtxC, uid)
+			delete(noshotUser, uid)
 			delete(allService, "OS"+uid)
 			delete(allCtxC, "OS"+uid)
 			c.String(200, uid+" 종료 신호 전달 완료")
@@ -423,7 +423,7 @@ Command :
 	r.GET("/norun", func(c *gin.Context) {
 		var uid string
 		uid = c.Query("uid")
-		temp := oshotCtxC[uid]
+		temp := noshotCtxC[uid]
 		if temp != nil {
 			c.String(200, uid+" 이미 실행 중입니다.")
 		} else {
@@ -431,13 +431,13 @@ Command :
 			ctx = context.WithValue(ctx, "user_id", uid)
 			go oshotproc.OshotProcess(uid, ctx)
 
-			oshotCtxC[uid] = cancel
-			oshotUser[uid] = uid
+			noshotCtxC[uid] = cancel
+			noshotUser[uid] = uid
 
 			allCtxC["OS"+uid] = cancel
 			allService["OS"+uid] = uid
 
-			_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = 'OSHOT' where use_flag = 'Y' and user_id = ?", uid)
+			_, err := databasepool.DB.Exec("update DHN_CLIENT_LIST set dest = 'NOSHOT' where use_flag = 'Y' and user_id = ?", uid)
 				
 			if err != nil {
 				config.Stdlog.Println(uid," /orun 오샷 DHN_CLIENT_LIST 업데이트 실패 : ", err)
@@ -449,7 +449,7 @@ Command :
 
 	r.GET("/nolist", func(c *gin.Context) {
 		var key string
-		for k := range oshotUser {
+		for k := range noshotUser {
 			key = key + k + "\n"
 		}
 		c.String(200, key)

@@ -62,6 +62,7 @@ func LguProcess(user_id string, ctx context.Context) {
 							config.Stdlog.Println(user_id, " - 나노 Proc Group No Update error : ", upError, " / group_no : ", group_no)
 						} else {
 							go func() {
+								procCnt++
 								defer func() {
 									procCnt--
 								}()
