@@ -88,7 +88,7 @@ func MSGProcess(ctx context.Context) {
 		default:	
 			var t = time.Now()
 
-			if t.Day() < 4 {
+			if t.Day() <= 3 {
 				wg.Add(1)
 				go pre_msgProcess(&wg)
 			}

@@ -51,7 +51,7 @@ func LMSProcess(ctx context.Context) {
 				for _, tableName := range oshotTable {
 					var t = time.Now()
 		
-					if t.Day() < 3 {
+					if t.Day() <= 3 {
 						wg.Add(1)
 						go pre_mmsProcess(&wg, tableName[0])
 					}
