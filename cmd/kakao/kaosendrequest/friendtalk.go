@@ -391,7 +391,7 @@ func ftsendProcess(group_no string, pc int) {
 			resinsValues = append(resinsValues, result["att_coupon"])
 
 			if len(resinsStrs) >= 500 {
-				resinsStrs, resinsValues = cm.InsMsg(resinsQuery, resinsStrs, resinsValues)
+				resinsStrs, resinsValues = cm.InsMsg(resinsQuery, resinsStrs, resinsValues, 0)
 			}
 
 		} else if resChan.Statuscode == 500 {
@@ -435,7 +435,7 @@ func ftsendProcess(group_no string, pc int) {
 	}
 
 	if len(resinsStrs) > 0 {
-		resinsStrs, resinsValues = cm.InsMsg(resinsQuery, resinsStrs, resinsValues)
+		resinsStrs, resinsValues = cm.InsMsg(resinsQuery, resinsStrs, resinsValues, 0)
 	}
 
 	db.Exec("delete from DHN_REQUEST where send_group = '" + group_no + "'")

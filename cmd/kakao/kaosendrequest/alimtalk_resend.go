@@ -394,7 +394,7 @@ func atResendProcess(group_no string, pc int) {
 			resinsValues = append(resinsValues, result["link"])
 
 			if len(resinsStrs) >= 500 {
-				resinsStrs, resinsValues = cm.InsMsg(resinsQuery, resinsStrs, resinsValues)
+				resinsStrs, resinsValues = cm.InsMsg(resinsQuery, resinsStrs, resinsValues, 0)
 			}
 		} else {
 			stdlog.Println("Alimtalk 9999 resend - 알림톡 서버 처리 오류 !! ( status : ", resChan.Statuscode, " / body : ", string(resChan.BodyData), " )", result["msgid"])
@@ -405,7 +405,7 @@ func atResendProcess(group_no string, pc int) {
 	}
 
 	if len(resinsStrs) > 0 {
-		resinsStrs, resinsValues = cm.InsMsg(resinsQuery, resinsStrs, resinsValues)
+		resinsStrs, resinsValues = cm.InsMsg(resinsQuery, resinsStrs, resinsValues, 0)
 	}
 	
 	stdlog.Println("Alimtalk 9999 resend - 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건  ( Proc Cnt :", pc, ") - END")

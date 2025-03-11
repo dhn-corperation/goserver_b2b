@@ -334,7 +334,7 @@ func GetQuestionMark(column []string) string {
 }
 
 //테이블 insert 처리
-func InsMsg(query string, insStrs []string, insValues []interface{}) ([]string, []interface{}){
+func InsMsg(query string, insStrs []string, insValues []interface{}, retries int) ([]string, []interface{}){
 	var errlog = config.Stdlog
 	stmt := fmt.Sprintf(query, s.Join(insStrs, ","))
 
@@ -342,8 +342,9 @@ func InsMsg(query string, insStrs []string, insValues []interface{}) ([]string, 
 
 	if err != nil{
 		config.Stdlog.Println("InsMsg init tx : ",err)
-		time.Sleep(time.Millisecond * 100)
-		return InsMsg(query, insStrs, insValues)
+		sleepDuration := time.Millisecond * time.Duration(100 * (1 << retries))
+		time.Sleep(sleepDuration)
+		return InsMsg(query, insStrs, insValues, retries + 1)
 	}
 
 	defer tx.Rollback()
@@ -353,14 +354,16 @@ func InsMsg(query string, insStrs []string, insValues []interface{}) ([]string, 
 	if err != nil {
 		errlog.Println("Result Table Insert 처리 중 오류 발생 ", err.Error())
 		errlog.Println("table : ", query)
-		time.Sleep(time.Millisecond * 100)
-		return InsMsg(query, insStrs, insValues)
+		sleepDuration := time.Millisecond * time.Duration(100 * (1 << retries))
+		time.Sleep(sleepDuration)
+		return InsMsg(query, insStrs, insValues, retries + 1)
 	}
 
 	if err := tx.Commit(); err != nil {
 		config.Stdlog.Println("Result Table Insert tx Commit 오류 발생 : ", err)
-		time.Sleep(time.Millisecond * 100)
-		return InsMsg(query, insStrs, insValues)
+		sleepDuration := time.Millisecond * time.Duration(100 * (1 << retries))
+		time.Sleep(sleepDuration)
+		return InsMsg(query, insStrs, insValues, retries + 1)
 	}
 	return nil, nil
 }

@@ -117,6 +117,7 @@ func receiveProc(msg []ss.Reqtable, userid string) ss.ReceiveRes{
 	var resp ss.ReceiveRes
 
 	var cnt int
+	var otpFlag string
 
 	var startNow = time.Now()
 	var startTime = fmt.Sprintf("%02d:%02d:%02d", startNow.Hour(), startNow.Minute(), startNow.Second())
@@ -304,7 +305,7 @@ func receiveProc(msg []ss.Reqtable, userid string) ss.ReceiveRes{
 			reqinsValues = append(reqinsValues, msg[i].MmsImageId)
 			ftCnt++
 		//문자 insert values 만들기
-		} else if s.EqualFold(msg[i].Messagetype, "PH") {
+		} else if s.EqualFold(s.ToUpper(msg[i].Messagetype), "PH") || s.EqualFold(s.ToUpper(msg[i].Messagetype), "OT") {
 			var resdt = time.Now()
 			var resdtstr = fmt.Sprintf("%4d-%02d-%02d %02d:%02d:%02d", resdt.Year(), resdt.Month(), resdt.Day(), resdt.Hour(), resdt.Minute(), resdt.Second())
 			resinsStrs = append(resinsStrs, "("+msgQmarkStr+")")
@@ -354,9 +355,13 @@ func receiveProc(msg []ss.Reqtable, userid string) ss.ReceiveRes{
 			resinsValues = append(resinsValues, msg[i].Remark5)
 			resinsValues = append(resinsValues, resdtstr) // res_dt
 			resinsValues = append(resinsValues, msg[i].Reservedt)
-			resinsValues = append(resinsValues, "P") // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
+			otpFlag = "P"
+			if s.EqualFold(s.ToUpper(msg[i].Messagetype), "OT") {
+				otpFlag = "O"
+			}
+			resinsValues = append(resinsValues, otpFlag) 
 			resinsValues = append(resinsValues, msg[i].Scode)
-			resinsValues = append(resinsValues, smsKind)
+			resinsValues = append(resinsValues, smsKind) // sms_kind 가 SMS / LMS / MMS 이면 문자 발송 시도
 			if s.Contains(s.ToLower(msg[i].Crypto), "smslmstit") && len(msg[i].Smslmstit) > 0 {
 				resinsValues = append(resinsValues, cm.AES256GSMDecrypt([]byte(SecretKey), msg[i].Smslmstit, nonce))
 			} else {
@@ -462,11 +467,11 @@ func receiveProc(msg []ss.Reqtable, userid string) ss.ReceiveRes{
 		// 500건 단위로 처리한다(클라이언트에서 1000건씩 전송하더라도 지정한 단위의 건수로 insert한다.)
 		saveCount := 500
 		if len(reqinsStrs) >= saveCount {
-			reqinsStrs, reqinsValues = cm.InsMsg(reqinsQuery, reqinsStrs, reqinsValues)
+			reqinsStrs, reqinsValues = cm.InsMsg(reqinsQuery, reqinsStrs, reqinsValues, 0)
 		}
 
 		if len(atreqinsStrs) >= saveCount {
-			atreqinsStrs, atreqinsValues = cm.InsMsg(atreqinsQuery, atreqinsStrs, atreqinsValues)
+			atreqinsStrs, atreqinsValues = cm.InsMsg(atreqinsQuery, atreqinsStrs, atreqinsValues, 0)
 		}
 
 		if len(resinsStrs) >= saveCount {
@@ -474,17 +479,17 @@ func receiveProc(msg []ss.Reqtable, userid string) ss.ReceiveRes{
 		}
 
 		if len(insStrs) >= saveCount {
-			insStrs, insValues = cm.InsMsg(insQuery, insStrs, insValues)
+			insStrs, insValues = cm.InsMsg(insQuery, insStrs, insValues, 0)
 		}
 	}
 	
 	// 나머지 건수를 저장하기 위해 다시한번 정의
 	if len(reqinsStrs) > 0 {
-		reqinsStrs, reqinsValues = cm.InsMsg(reqinsQuery, reqinsStrs, reqinsValues)
+		reqinsStrs, reqinsValues = cm.InsMsg(reqinsQuery, reqinsStrs, reqinsValues, 0)
 	}
 
 	if len(atreqinsStrs) > 0 {
-		atreqinsStrs, atreqinsValues = cm.InsMsg(atreqinsQuery, atreqinsStrs, atreqinsValues)
+		atreqinsStrs, atreqinsValues = cm.InsMsg(atreqinsQuery, atreqinsStrs, atreqinsValues, 0)
 	}
 
 	if len(resinsStrs) > 0 {
@@ -492,7 +497,7 @@ func receiveProc(msg []ss.Reqtable, userid string) ss.ReceiveRes{
 	}
 
 	if len(insStrs) > 0 {
-		insStrs, insValues = cm.InsMsg(insQuery, insStrs, insValues)
+		insStrs, insValues = cm.InsMsg(insQuery, insStrs, insValues, 0)
 	}
 
 	errlog.Println("발송 메세지 수신 끝 ( ", userid, ") : ", len(msg), startTime)

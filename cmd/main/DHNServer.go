@@ -429,7 +429,7 @@ Command :
 		} else {
 			ctx, cancel := context.WithCancel(context.Background())
 			ctx = context.WithValue(ctx, "user_id", uid)
-			go oshotproc.OshotProcess(uid, ctx)
+			go oshotproc.NOshotProcess(uid, ctx)
 
 			noshotCtxC[uid] = cancel
 			noshotUser[uid] = uid

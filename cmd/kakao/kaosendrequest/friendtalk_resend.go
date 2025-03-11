@@ -378,7 +378,7 @@ func ftResendProcess(group_no string, pc int) {
 			resinsValues = append(resinsValues, result["att_coupon"])
 
 			if len(resinsStrs) >= 500 {
-				resinsStrs, resinsValues = cm.InsMsg(resinsQuery, resinsStrs, resinsValues)
+				resinsStrs, resinsValues = cm.InsMsg(resinsQuery, resinsStrs, resinsValues, 0)
 			}
 
 		} else {
@@ -390,7 +390,7 @@ func ftResendProcess(group_no string, pc int) {
 	}
 
 	if len(resinsStrs) > 0 {
-		resinsStrs, resinsValues = cm.InsMsg(resinsQuery, resinsStrs, resinsValues)
+		resinsStrs, resinsValues = cm.InsMsg(resinsQuery, resinsStrs, resinsValues, 0)
 	}
 
 	stdlog.Println("Friendtalk 9999 resend - 발송 처리 완료 ( ", group_no, " ) : ", procCount, " 건  ( Proc Cnt :", pc, ") - END" )

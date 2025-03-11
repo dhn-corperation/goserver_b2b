@@ -408,7 +408,7 @@ func atsendProcess(group_no string, pc int) {
 			resinsValues = append(resinsValues, result["link"])
 
 			if len(resinsStrs) >= 500 {
-				resinsStrs, resinsValues = cm.InsMsg(resinsQuery, resinsStrs, resinsValues)
+				resinsStrs, resinsValues = cm.InsMsg(resinsQuery, resinsStrs, resinsValues, 0)
 			}
 			
 		} else if resChan.Statuscode == 500 {
@@ -453,7 +453,7 @@ func atsendProcess(group_no string, pc int) {
 
 	//Center에서도 사용하고 있는 함수이므로 공용 라이브러리 생성이 필요함
 	if len(resinsStrs) > 0 {
-		resinsStrs, resinsValues = cm.InsMsg(resinsQuery, resinsStrs, resinsValues)
+		resinsStrs, resinsValues = cm.InsMsg(resinsQuery, resinsStrs, resinsValues, 0)
 	}
 
 	//알림톡 발송 후 DHN_REQUEST_AT 테이블의 데이터는 제거한다.
