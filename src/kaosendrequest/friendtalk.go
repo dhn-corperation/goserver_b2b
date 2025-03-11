@@ -31,7 +31,7 @@ func FriendtalkProc(ctx context.Context) {
 			    return
 			default:
 
-				tx, err := databasepool.DB.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
+				tx, err := databasepool.DB.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
 
 				if err != nil {
 					config.Stdlog.Println("Friendtalk init tx : ", err)
