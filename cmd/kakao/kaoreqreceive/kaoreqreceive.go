@@ -174,8 +174,6 @@ func receiveProc(msg []ss.Reqtable, userid string) ss.ReceiveRes{
 
 	//temp 테이블 컬럼 셋팅(DHN_RESULT_TEMP : 에러 시 데이터 유실을 막기 위한 테이블)
 	resinstempquery := `insert IGNORE into DHN_RESULT_TEMP(`+msgColumnStr+`) values %s`
-	
-	errlog.Println("발송 메세지 수신 시작 ( ", userid, ") : ", len(msg), startTime)
 
 	//맵핑한 데이터 row 처리
 	for i, _ := range msg {
