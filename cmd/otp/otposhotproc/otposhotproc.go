@@ -161,9 +161,9 @@ func resProcess(ctx context.Context, group_no string, pc int) {
 		sms_sender, 
 		res_dt, 
 		reserve_dt, 
-		(select ifnull(file1_path, '') from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.mms_image_id) as mms_file1, 
-		(select ifnull(file2_path, '') from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.mms_image_id) as mms_file2, 
-		(select ifnull(file3_path, '') from api_mms_images aa where aa.user_id = drr.userid and aa.mms_id = drr.mms_image_id) as mms_file3,
+		(select ifnull(file1_path, '') from API_MMS_IMAGES aa where aa.userid = drr.userid and aa.mms_image_id = drr.mms_image_id) as mms_file1, 
+		(select ifnull(file2_path, '') from API_MMS_IMAGES aa where aa.userid = drr.userid and aa.mms_image_id = drr.mms_image_id) as mms_file2, 
+		(select ifnull(file3_path, '') from API_MMS_IMAGES aa where aa.userid = drr.userid and aa.mms_image_id = drr.mms_image_id) as mms_file3,
 		(case when sms_kind = 'S' then length(convert(REMOVE_WS(msg_sms) using euckr)) else 100 end) as msg_len,
 		userid,
 		(select max(sms_len_check) from DHN_CLIENT_LIST dcl where dcl.user_id = drr.userid) as sms_len_check

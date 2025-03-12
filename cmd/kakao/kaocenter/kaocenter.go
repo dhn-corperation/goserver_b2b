@@ -1057,9 +1057,9 @@ func MMS_Image(c *fasthttp.RequestCtx) {
  
 	if len(newFileName1) > 0 || len(newFileName2) > 0 || len(newFileName3) > 0  {
 	
-		mmsinsQuery := `insert IGNORE into api_mms_images(
-  user_id,
-  mms_id,             
+		mmsinsQuery := `insert IGNORE into API_MMS_IMAGES(
+  userid,
+  mms_image_id,             
   origin1_path,
   origin2_path,
   origin3_path,
