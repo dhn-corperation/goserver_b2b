@@ -7,7 +7,7 @@ import(
 	"os/signal"
 	s "strings"
 
-	"mycs/api/dhnm"
+	"mycs/api/dhn"
 	config "mycs/configs"
 	databasepool "mycs/configs/databasepool"
 
@@ -19,7 +19,7 @@ type Program struct{}
 // 서비스 시작 시 실행되는 함수
 func (p *Program) Start(s service.Service) error {
 	config.Stdlog.Println("start Service")
-	serviceString := fmt.Sprintf("%v", s) // ✅ 인터페이스를 문자열로 변환
+	serviceString := fmt.Sprintf("%v", s)
 
 	go p.run(serviceString) // 백그라운드 실행
 	return nil
