@@ -1,4 +1,4 @@
-package kaocenter
+package dhnm
 
 import (
 	"database/sql"
@@ -8,7 +8,7 @@ import (
 	db "mycs/configs/databasepool"
 )
 
-func Get_crypto(c *fasthttp.RequestCtx){
+func get_crypto(c *fasthttp.RequestCtx){
 	userid := string(c.Request.Header.Peek("userid"))
 	userip := c.RemoteIP().String()
 	var crypto sql.NullString

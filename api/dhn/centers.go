@@ -42,7 +42,7 @@ func ResultProcC() {
 
 	r.POST("/sresult", kaoreqreceive.SearchResultReq)
 
-	// r.GET("/get_crypto", kaocenter.Get_crypto)
+	// r.GET("/get_crypto", get_crypto)
 
 	// 카카오톡 채널 인증 토큰 요청
 	// GET /api/v1/{partner_key}/sender/token
